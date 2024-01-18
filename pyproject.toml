@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "wes2024-joint-yaw-induction"
+version = "0.1.0"
+description = ""
+authors = ["Jaime Liew <jaimeliew1@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "WES2024" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = ">=1.16.5"
+scipy = ">=1.6"
+matplotlib = "^3.4"
+tqdm = "^4.65.0"
+polars = "^0.19.13"
+foreach = "^0.1.0"
+mitwindfarm = {git = "git@github.com:Howland-Lab/MITWindfarm.git"}
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.4.1"
+black = { version = "==22.*", extras = ["jupyter"] }
+ruff = "^0.1.7"
+jupyter = "^1.0.0"
+ipython = ">=7.23.1"
+ipykernel = "^6.25.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
