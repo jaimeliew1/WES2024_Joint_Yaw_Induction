@@ -11,7 +11,7 @@ def cache_pickle(cache_file: str | Path):
             cache_filepath = Path(cache_file)
             cache_filepath.parent.mkdir(exist_ok=True, parents=True)
             regenerate = kwargs.pop("regenerate", False)
-            
+
             # Check if the cache file exists and regeneration is not forced
             if not regenerate and cache_filepath.exists():
                 print(f"Loading data from cache: {cache_filepath}")
@@ -37,7 +37,7 @@ def cache_polars(cache_file: str | Path):
             cache_filepath = Path(cache_file)
             cache_filepath.parent.mkdir(exist_ok=True, parents=True)
             regenerate = kwargs.pop("regenerate", False)
-            
+
             # Check if the cache file exists and regeneration is not forced
             if not regenerate and cache_filepath.exists():
                 print(f"Loading data from cache: {cache_filepath}")
