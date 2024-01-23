@@ -15,8 +15,13 @@ tqdm = "^4.65.0"
 polars = "^0.19.13"
 foreach = "^0.1.0"
 mitwindfarm = {git = "git@github.com:Howland-Lab/MITWindfarm.git"}
+profilehooks = "^1.12.0"
+snakeviz = "^2.2.0"
+rich = "^13.7.0"
+pdir = "^0.2.2"
 
 [tool.poetry.group.dev.dependencies]
+pdir2 = "^1.1.0"
 mypy = "^1.4.1"
 black = { version = "==22.*", extras = ["jupyter"] }
 ruff = "^0.1.7"
