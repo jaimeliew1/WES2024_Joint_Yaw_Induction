@@ -55,7 +55,7 @@ def plot(df):
             .group_by("wdir")
             .agg(pl.col("Cp").mean(), pl.col("yaw").first(), pl.col("Ctprime").first())
         ).sort("wdir")
-
+        
         axes[0].plot(_df["wdir"], _df["Cp"], label=method)
         axes[1].plot(_df["wdir"], _df["Ctprime"], label=method)
         axes[2].plot(_df["wdir"], np.rad2deg(_df["yaw"]), label=method)
@@ -83,7 +83,7 @@ def plot_windfarms(df: pl.DataFrame):
 def main():
     df = generate(regenerate=False)
     plot(df)
-    # plot_windfarms(df)
+    plot_windfarms(df)
 
 
 if __name__ == "__main__":

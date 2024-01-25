@@ -19,6 +19,7 @@ profilehooks = "^1.12.0"
 snakeviz = "^2.2.0"
 rich = "^13.7.0"
 pdir = "^0.2.2"
+ffmpeg-python = "^0.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pdir2 = "^1.1.0"
