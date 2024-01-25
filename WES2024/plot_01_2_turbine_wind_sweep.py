@@ -13,6 +13,11 @@ from optimise import JointControl, NoControl, ThrustControl, YawControl
 
 from utilities import to_polars, from_polars
 
+# Use Latex Fonts
+plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
+
+
+
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
 
@@ -83,7 +88,7 @@ def plot_windfarms(df: pl.DataFrame):
 def main():
     df = generate(regenerate=False)
     plot(df)
-    plot_windfarms(df)
+    # plot_windfarms(df)
 
 
 if __name__ == "__main__":

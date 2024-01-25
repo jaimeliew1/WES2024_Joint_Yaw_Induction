@@ -12,6 +12,10 @@ from optimise import JointControl, NoControl, ThrustControl, YawControl
 
 from utilities import to_polars
 
+# Use Latex Fonts
+plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
+
+
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
 
@@ -32,14 +36,10 @@ def _generate(x):
     method, wdir = x
     sol = methods[method](layout.rotate(wdir), windfarm).optimise()
 
-    return to_polars(sol).with_columns(
-        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
-    )
+    return to_polars(sol).with_columns(pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir"))
 
 
-@cache_polars(
-    Path(__file__).parent.parent / "data/plot_03_2_turbine_uncertain_wdir_opt.csv"
-)
+@cache_polars(Path(__file__).parent.parent / "data/plot_03_2_turbine_uncertain_wdir_opt.csv")
 def generate_opt(regenerate=False):
     wdirs = np.arange(-20, 20, 0.25)
     params = list(product(methods, wdirs))
@@ -60,9 +60,7 @@ def extract_layout_and_setpoints(partial: pl.DataFrame) -> (Layout, list[tuple])
     return Layout(x, y, z), setpoints
 
 
-@cache_polars(
-    Path(__file__).parent.parent / "data/plot_03_2_turbine_uncertain_wdir.csv"
-)
+@cache_polars(Path(__file__).parent.parent / "data/plot_03_2_turbine_uncertain_wdir.csv")
 def generate(df_opt: pl.DataFrame, regenerate=False) -> pl.DataFrame:
     out = []
     for sigma in sigmas:
@@ -72,9 +70,7 @@ def generate(df_opt: pl.DataFrame, regenerate=False) -> pl.DataFrame:
             layout, setpoints = extract_layout_and_setpoints(_df)
 
             for _dwdir in dwdir:
-                asdf = to_polars(
-                    windfarm(layout.rotate(_dwdir), setpoints)
-                ).with_columns(
+                asdf = to_polars(windfarm(layout.rotate(_dwdir), setpoints)).with_columns(
                     wdir=wdir, eps=_dwdir, sigma=sigma, method=pl.lit(method)
                 )
                 out.append(asdf)
@@ -127,9 +123,7 @@ def main():
     df_opt = generate_opt(regenerate=False)
     df = generate(df_opt, regenerate=False)
 
-    df_piv = df.pivot(
-        index="sigma", columns="method", values="Cp", aggregate_function="mean"
-    )
+    df_piv = df.pivot(index="sigma", columns="method", values="Cp", aggregate_function="mean")
     df_farm_Cp = df_piv.select(
         pl.col("sigma"),
         pl.exclude("sigma", "NoControl") / pl.col("NoControl") * 100 - 100,
