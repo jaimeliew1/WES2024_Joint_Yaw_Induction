@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import numpy as np
 from mitwindfarm.windfarm import WindfarmSolution
 from numpy.typing import ArrayLike
@@ -5,47 +6,140 @@ from scipy.optimize import minimize
 from dualitic import DualVariables
 
 
-class Controller:
+class Controller(ABC):
+    """Abstract base class for wind farm control optimisation objects."""
+
+    @abstractmethod
+    def initial_guess(self) -> ArrayLike:
+        """Return an initial guess for optimization."""
+        pass
+
+    @abstractmethod
+    def bounds(self) -> ArrayLike:
+        """Return the bounds for optimization."""
+        pass
+
+    @abstractmethod
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        """Solve for setpoints based on the input variables.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            WindfarmSolution: Solution for the wind farm.
+        """
+        pass
+
     def __init__(self, layout, windfarm):
         self.layout = layout
         self.windfarm = windfarm
         self.N = len(layout)
 
-    def optimise(self, verbose=False, use_gradients=True) -> WindfarmSolution:
+    def optimise(self, verbose=False, use_gradients=True, Cp_constraint=None) -> WindfarmSolution:
+        """Optimize the wind farm layout.
+
+        Parameters:
+            verbose (bool): Whether to print optimisation information.
+            use_gradients (bool): Whether to use gradients in optimization.
+            Cp_constraint (float): Maximum Cp constraint for all turbines. None = no constraint.
+
+        Returns:
+            WindfarmSolution: Optimized wind farm solution.
+        """
         x0 = self.initial_guess()
         bounds = self.bounds()
 
-        if use_gradients:
-            sol = minimize(self.grad_objective_func, x0, bounds=bounds, jac=True)
+        if Cp_constraint:
+            self._Cp_max = Cp_constraint
+            constraint = dict(type="ineq", fun=self.constraint_func)
+            if use_gradients:
+                constraint["jac"] = self.constraint_jac_func
         else:
-            sol = minimize(self.objective_func, x0, bounds=bounds)
+            constraint = None
+
+        if use_gradients:
+            sol = minimize(self.grad_objective_func, x0, bounds=bounds, jac=True, constraints=constraint)
+        else:
+            sol = minimize(self.objective_func, x0, bounds=bounds, constraints=constraint)
+
         if verbose:
             print(f"{sol.nfev=}")
             print(f"{sol.njev=}")
-        asdf = self.solve_for_setpoints(sol.x)
-        return asdf
+            print(sol)
 
-    def objective_func(self, x):
+        optimized_solution = self.solve_for_setpoints(sol.x)
+        return optimized_solution
+
+    def objective_func(self, x) -> float:
+        """Calculate the objective function.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            float: Objective function value.
+        """
         windfarm_sol = self.solve_for_setpoints(x)
         return -windfarm_sol.Cp()
 
-    def grad_objective_func(self, x):
+    def grad_objective_func(self, x) -> (float, ArrayLike):
+        """Calculate the combined objective function and its gradient.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            Tuple[float, ArrayLike]: Objective function value and its gradient.
+        """
         x = DualVariables(x)
         windfarm_sol = self.solve_for_setpoints(x)
         Cp = windfarm_sol.Cp().real[0]
         Cp_grad = windfarm_sol.Cp().dual[0]
         return -Cp, -Cp_grad
 
+    def constraint_func(self, x) -> list[float]:
+        """Calculate the Cp constraint function on all turbines.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            List[float]: List of constraint values.
+        """
+        x = DualVariables(x)
+        sol = self.solve_for_setpoints(x)
+        Cps = [self._Cp_max - x.Cp.real[0] for x in sol.rotors]
+        self._grad = [-x.Cp.dual[0] for x in sol.rotors]
+        return Cps
+
+    def constraint_jac_func(self, x) -> ArrayLike:
+        """
+        Returns jacobian of constraint function. retrieved from cached call of
+        constraint_func.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            List[float]: Jacobian of the constraint function.
+        """
+        return self._grad
+
 
 class NoControl(Controller):
-    def __init__(self, layout, windfarm):
-        self.layout = layout
-        self.windfarm = windfarm
-        self.N = len(layout)
-
     def optimise(self, **kwargs) -> WindfarmSolution:
         setpoints = [(2.0, 0.0) for _ in range(self.N)]
         return self.windfarm(self.layout, setpoints)
+
+    def initial_guess(self):
+        ...
+
+    def bounds(self):
+        ...
+
+    def solve_for_setpoints(self, x):
+        ...
 
 
 class YawControl(Controller):
@@ -62,10 +156,10 @@ class YawControl(Controller):
 
 class ThrustControl(Controller):
     def initial_guess(self) -> ArrayLike:
-        return [2.0 for _ in range(self.N)]
+        return [0.2 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 3.0) for _ in range(self.N)]
+        return [(0.00001, 4.0) for _ in range(self.N)]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x, 0.0) for _x in x)
@@ -74,10 +168,10 @@ class ThrustControl(Controller):
 
 class JointControl(Controller):
     def initial_guess(self) -> ArrayLike:
-        return [2.0 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
+        return [0.2 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 2.0) for _ in range(self.N)] + [tuple(np.deg2rad((-50, 50))) for _ in range(self.N)]
+        return [(0.00001, 4.0) for _ in range(self.N)] + [tuple(np.deg2rad((-50, 50))) for _ in range(self.N)]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x1, _x2) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
