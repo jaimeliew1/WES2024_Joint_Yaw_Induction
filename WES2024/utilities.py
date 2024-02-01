@@ -6,17 +6,12 @@ import numpy as np
 
 def to_polars(sol: WindfarmSolution) -> pl.DataFrame:
     out = []
-    for i, ((x, y, z), setpoint, rotor_sol) in enumerate(
-        zip(sol.layout, sol.setpoints, sol.rotors)
-    ):
-        _out = (
-            dict(turbine=i, x=x, y=y, z=z)
-            | asdict(rotor_sol)
-            | {f"setpoint_{j}": s for j, s in enumerate(setpoint)}
-        )
+    for i, ((x, y, z), setpoint, rotor_sol) in enumerate(zip(sol.layout, sol.setpoints, sol.rotors)):
+        _out = dict(turbine=i, x=x, y=y, z=z) | asdict(rotor_sol) | {f"setpoint_{j}": s for j, s in enumerate(setpoint)}
+
         out.append(_out)
 
-    return pl.from_dicts(out)
+    return pl.from_dicts(out).drop("extra")
 
 
 def from_polars(df: pl.DataFrame, windfarm_model: Windfarm) -> WindfarmSolution:
@@ -25,15 +20,8 @@ def from_polars(df: pl.DataFrame, windfarm_model: Windfarm) -> WindfarmSolution:
     partial = dict(layout=[], setpoints=[], rotors=[])
     for _df in df.iter_rows(named=True):
         partial["layout"].append((_df["x"], _df["y"], _df["z"]))
-        partial["setpoints"].append(
-            tuple(v for k, v in _df.items() if k.startswith("setpoint_"))
-        )
-        partial["rotors"].append(
-            {
-                key: _df[key]
-                for key in ["yaw", "Cp", "Ct", "Ctprime", "an", "u4", "v4", "REWS"]
-            }
-        )
+        partial["setpoints"].append(tuple(v for k, v in _df.items() if k.startswith("setpoint_")))
+        partial["rotors"].append({key: _df[key] for key in ["yaw", "Cp", "Ct", "Ctprime", "an", "u4", "v4", "REWS"]})
 
     return windfarm_model.from_dict(partial)
 

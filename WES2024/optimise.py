@@ -94,8 +94,8 @@ class Controller(ABC):
         """
         x = DualVariables(x)
         windfarm_sol = self.solve_for_setpoints(x)
-        Cp = windfarm_sol.Cp().real[0]
-        Cp_grad = windfarm_sol.Cp().dual[0]
+        Cp = windfarm_sol.Cp.real[0]
+        Cp_grad = windfarm_sol.Cp.dual[0]
         return -Cp, -Cp_grad
 
     def constraint_func(self, x) -> list[float]:
@@ -175,4 +175,64 @@ class JointControl(Controller):
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x1, _x2) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
+        return self.windfarm(self.layout, setpoints)
+
+
+# Calculated in separate optimiation
+PITCH_OPT = -0.06273034204397401
+TSR_OPT = 8.085539804970534
+
+
+class NoControlBEM(Controller):
+    def optimise(self, **kwargs) -> WindfarmSolution:
+        setpoints = [(PITCH_OPT, TSR_OPT, 0.0) for _ in range(self.N)]
+        return self.windfarm(self.layout, setpoints)
+
+    def initial_guess(self):
+        ...
+
+    def bounds(self):
+        ...
+
+    def solve_for_setpoints(self, x):
+        ...
+
+
+class ThrustControlBEM(Controller):
+    def initial_guess(self) -> ArrayLike:
+        return [PITCH_OPT for _ in range(self.N)] + [TSR_OPT for _ in range(self.N)]
+
+    def bounds(self) -> list:
+        return [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)] + [(3, 10) for _ in range(self.N)]
+
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        setpoints = list((_x1, _x2, 0.0) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
+        return self.windfarm(self.layout, setpoints)
+
+
+class YawControlBEM(Controller):
+    def initial_guess(self) -> ArrayLike:
+        return [0.0 for _ in range(self.N)]
+
+    def bounds(self) -> list:
+        return [(-np.deg2rad(15), np.deg2rad(15)) for _ in range(self.N)]
+
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        setpoints = list((PITCH_OPT, TSR_OPT, _x3) for _x3 in x)
+        return self.windfarm(self.layout, setpoints)
+
+
+class JointControlBEM(Controller):
+    def initial_guess(self) -> ArrayLike:
+        return [PITCH_OPT for _ in range(self.N)] + [TSR_OPT for _ in range(self.N)] + [0.0 for _ in range(self.N)]
+
+    def bounds(self) -> list:
+        return (
+            [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)]
+            + [(3, 10) for _ in range(self.N)]
+            + [(-np.deg2rad(15), np.deg2rad(15)) for _ in range(self.N)]
+        )
+
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        setpoints = list((_x1, _x2, _x3) for _x1, _x2, _x3 in zip(x[: self.N], x[self.N : 2 * self.N], x[2 * self.N :]))
         return self.windfarm(self.layout, setpoints)
