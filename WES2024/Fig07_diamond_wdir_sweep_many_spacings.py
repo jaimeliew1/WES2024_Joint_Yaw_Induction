@@ -32,14 +32,14 @@ plot_params = {
 }
 
 layouts = {
-    4: Square(4.0, 5),
-    6: Square(6.0, 5),
-    8: Square(8.0, 5),
-    10: Square(10.0, 5),
+    4: Square(4.0, 5).rotate(45),
+    6: Square(6.0, 5).rotate(45),
+    8: Square(8.0, 5).rotate(45),
+    10: Square(10.0, 5).rotate(45),
 }
 wdirs = np.arange(0, 360, 1)
 
-wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]
+# wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]
 # @profile(filename="prof.prof")
 def _generate(x):
     method, wdir, min_dist = x
@@ -75,17 +75,15 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
     [ax.set_ylabel("$C_P$") for ax in axes]
 
     # Plot wind directions of interest at 6D
-    for _wdir in wdirs_of_interest:
-        axes[1].axvline(90 + _wdir, lw=1, ls="--", c="k")
+    # for _wdir in wdirs_of_interest:
+    #     axes[1].axvline(90 + _wdir, lw=1, ls="--", c="k")
 
     axes[0].set_ylim(0.1, 0.6)
 
     axes[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
     axes[0].set_xlim(0, 360)
-    plt.savefig(utils.FIGDIR / "square_Cp_vs_distance.png", dpi=300, bbox_inches="tight")
-
-
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 # def plot_windfarm(df: pl.DataFrame):

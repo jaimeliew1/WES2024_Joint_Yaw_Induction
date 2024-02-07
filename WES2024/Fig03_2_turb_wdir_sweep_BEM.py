@@ -17,7 +17,7 @@ from WES2024 import utils
 FILESTEM = Path(__file__).stem
 
 REGENERATE = False
-PARALLEL = False
+PARALLEL = True
 
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))

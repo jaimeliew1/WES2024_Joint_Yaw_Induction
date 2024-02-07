@@ -3,8 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import polars as pl
 
-from WES2024 import utils
-from WES2024 import Fig07_diamond_wdir_sweep_many_spacings
+from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
 
 FILESTEM = Path(__file__).stem
 
