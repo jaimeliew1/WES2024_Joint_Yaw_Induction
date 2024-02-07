@@ -4,27 +4,21 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from cache import cache_polars
 from foreach import foreach
-from mitwindfarm import Plotting
-from mitwindfarm.Layout import Layout
-from mitwindfarm.windfarm import Windfarm
-from mitwindfarm.Rotor import BEM
-from test_BEM_gradients import DualBEM
 from MITRotor.ReferenceTurbines import IEA15MW
-from optimise import NoControlBEM, JointControlBEM, YawControlBEM, ThrustControlBEM
-from profilehooks import profile
+from mitwindfarm.Layout import Layout
+from mitwindfarm.Rotor import BEM
+from mitwindfarm.windfarm import Windfarm
+from optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
+from test_BEM_gradients import DualBEM
 
-from utilities import to_polars, from_polars
+from WES2024 import utils
 
-# Use Latex Fonts
-plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
+FILESTEM = Path(__file__).stem
 
 REGENERATE = False
 PARALLEL = False
 
-FIGDIR = Path(__file__).parent.parent / "fig"
-FIGDIR.mkdir(exist_ok=True, parents=True)
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 layout = Layout([0, 7], [0.0, 0.0])
@@ -39,15 +33,15 @@ methods = {
 }
 
 
-@profile(filename="prof.prof")
+# @profile(filename="prof.prof")
 def _generate(x):
     method, wdir = x
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
 
-    return to_polars(sol).with_columns(pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir"))
+    return utils.to_polars(sol).with_columns(pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir"))
 
 
-@cache_polars(Path(__file__).parent.parent / "data/plot_01_2_turbine_wind_sweep_BEM.csv")
+@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
 
@@ -89,15 +83,15 @@ def plot(df):
     axes[0].set_ylim(0.4, 0.51)
     axes[0].legend()
 
-    plt.savefig(FIGDIR / "wind_direction_sweep_BEM.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
-def plot_windfarms(df: pl.DataFrame):
-    for (method, wdir), _df in df.group_by(["method", "wdir"]):
-        windfarm_sol = from_polars(_df, windfarm)
-        Plotting.plot_windfarm(windfarm_sol)
-        plt.savefig(FIGDIR / f"{method}_{wdir}.png", dpi=300, bbox_inches="tight")
-        plt.close()
+# def plot_windfarms(df: pl.DataFrame):
+#     for (method, wdir), _df in df.group_by(["method", "wdir"]):
+#         windfarm_sol = utils.from_polars(_df, windfarm)
+#         Plotting.plot_windfarm(windfarm_sol)
+#         plt.savefig(utils.FIGDIR / f"{method}_{wdir}.png", dpi=300, bbox_inches="tight")
+#         plt.close()
 
 
 def main():

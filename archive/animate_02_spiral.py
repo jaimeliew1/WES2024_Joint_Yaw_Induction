@@ -25,7 +25,6 @@ windfarm = Windfarm()
 
 
 def animate(dir_to_animate, out_fn, framerate=10, wildcard="/*.png"):
-
     dir_to_animate = Path(dir_to_animate)
     N_files = len(list(dir_to_animate.iterdir()))
 
@@ -61,12 +60,7 @@ def main(method="JointControl", min_dist=4):
 
     df = df.filter(pl.col("method") == method).filter(pl.col("min_dist") == min_dist)
 
-    params = [
-        (i, _df, wdir)
-        for i, (wdir, _df) in enumerate(
-            df.sort("wdir").group_by("wdir", maintain_order=True)
-        )
-    ]
+    params = [(i, _df, wdir) for i, (wdir, _df) in enumerate(df.sort("wdir").group_by("wdir", maintain_order=True))]
 
     foreach(_plot_single, params, parallel=False)
 

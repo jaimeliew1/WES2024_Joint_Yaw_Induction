@@ -52,7 +52,6 @@ def extract_layout_and_setpoints(partial: pl.DataFrame) -> (Layout, list[tuple])
     x, y, z = [], [], []
     setpoints = []
     for _df in partial.iter_rows(named=True):
-
         x.append(_df["x"])
         y.append(_df["y"])
         z.append(_df["z"])

@@ -19,7 +19,6 @@ from utilities import from_polars, to_polars
 plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
 
 
-
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
 
@@ -194,7 +193,7 @@ def plot_POD(df: pl.DataFrame):
 
 
 def main():
-    df = generate(regenerate=False)
+    df = generate(regenerate=True)
     plot_POD(df)
     plot_setpoints(df)
     plot_windfarm(df)

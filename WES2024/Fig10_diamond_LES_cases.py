@@ -4,22 +4,16 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from cache import cache_polars
 from foreach import foreach
 from mitwindfarm import Plotting
 from mitwindfarm.Layout import Square
 from mitwindfarm.windfarm import Windfarm
 from optimise import JointControl, NoControl, ThrustControl, YawControl
-from utilities import from_polars, to_polars
 
+from WES2024 import utils
 
-# Use Latex Fonts
-plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
+FILESTEM = Path(__file__).stem
 
-pl.Config.set_tbl_rows(100)
-
-FIGDIR = Path(__file__).parent.parent / "fig/LES_cases"
-FIGDIR.mkdir(exist_ok=True, parents=True)
 
 windfarm = Windfarm()
 
@@ -39,7 +33,7 @@ plot_params = {
 }
 
 layout = Square(6.0, 5).rotate(45)
-wdirs_of_interest = [-5.0, -2.5, 0.0, 2.5, 5.0]
+wdirs_of_interest = [-11.0, -5.0, -2.5, 0.0, 2.5, 5.0, 11.0]
 wdirs_sweep = np.arange(-20.0, 20.0, 0.25)
 
 
@@ -55,13 +49,13 @@ wdirs_sweep = np.arange(-20.0, 20.0, 0.25)
 def _generate(x):
     method, wdir = x
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(use_gradients=True)
-    return to_polars(sol).with_columns(
+    return utils.to_polars(sol).with_columns(
         pl.lit(method).alias("method"),
         pl.lit(wdir).alias("wdir"),
     )
 
 
-@cache_polars(Path(__file__).parent.parent / "data/plot_06_LES_LES_cases.csv")
+@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_cases.csv")
 def generate_LES_cases(regenerate=False):
     params = list(product(methods, wdirs_of_interest))
 
@@ -69,7 +63,7 @@ def generate_LES_cases(regenerate=False):
     return df
 
 
-@cache_polars(Path(__file__).parent.parent / "data/plot_06_LES_wdir_sweep.csv")
+@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_sweep.csv")
 def generate_wdir_sweep(regenerate=False):
     params = list(product(methods, wdirs_sweep))
 
@@ -77,7 +71,6 @@ def generate_wdir_sweep(regenerate=False):
     return df
 
 
-@cache_polars(Path(__file__).parent.parent / "data/plot_06_LES.csv")
 def generate(regenerate=False):
     df = pl.concat(
         [
@@ -105,7 +98,7 @@ def plot_windfarm(df: pl.DataFrame):
         fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, figsize=2 * np.array([4, 4]))
 
         for ax, method in zip(axes.ravel(), methods):
-            windfarm_sol = from_polars(_df.filter(pl.col("method") == method), windfarm)
+            windfarm_sol = utils.from_polars(_df.filter(pl.col("method") == method), windfarm)
             Cp_ref = _df.filter(pl.col("method") == "NoControl")["Cp"].mean()
 
             Plotting.plot_windfarm(windfarm_sol, ax=ax)
@@ -115,13 +108,13 @@ def plot_windfarm(df: pl.DataFrame):
                 ax.text(x, y, f"{i+1}")
 
             ax.set_title(rf"{method} (Cp: {100*(windfarm_sol.Cp/Cp_ref - 1):+2.2f}\%)")
-        plt.savefig(FIGDIR / f"LES_case_wdir{wdir:2.2f}.png", dpi=300, bbox_inches="tight")
+        plt.savefig(utils.FIGDIR / f"{FILESTEM}_{wdir:2.2f}.png", dpi=300, bbox_inches="tight")
         plt.close()
 
 
 def plot_wdir_sweep(df: pl.DataFrame):
 
-    plt.figure()
+    plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
     for method, _plot_params in plot_params.items():
@@ -141,12 +134,12 @@ def plot_wdir_sweep(df: pl.DataFrame):
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
     ax.set_xlim(-20, 20)
-    plt.savefig(FIGDIR / "wdir_sweep.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIR / "wdir_sweep.png", dpi=300, bbox_inches="tight")
 
 
 def plot_wdir_sweep_rel(df: pl.DataFrame):
 
-    plt.figure()
+    plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
     for method, _plot_params in plot_params.items():
@@ -174,13 +167,13 @@ def plot_wdir_sweep_rel(df: pl.DataFrame):
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
     ax.set_xlim(-20, 20)
-    plt.savefig(FIGDIR / "wdir_sweep_rel.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIR / "wdir_sweep_rel.png", dpi=300, bbox_inches="tight")
 
 
 def main():
     df = generate(regenerate=False)
-    plot_wdir_sweep(df)
-    plot_wdir_sweep_rel(df)
+    # plot_wdir_sweep(df)
+    # plot_wdir_sweep_rel(df)
     plot_windfarm(df)
 
 
