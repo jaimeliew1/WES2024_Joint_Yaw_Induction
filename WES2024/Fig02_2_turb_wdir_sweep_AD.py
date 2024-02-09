@@ -13,9 +13,11 @@ from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
+REGENERATE = False
+
 windfarm = Windfarm()
-layout = Layout([0, 7], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 0.25)
+layout = Layout([0, 5], [0.0, 0.0])
+wdirs = np.arange(-20, 20, 0.05)
 
 
 methods = {
@@ -51,9 +53,21 @@ def plot(df):
             .agg(pl.col("Cp").mean(), pl.col("yaw").first(), pl.col("Ctprime").first())
         ).sort("wdir")
 
-        axes[0].plot(_df["wdir"], _df["Cp"], label=method)
-        axes[1].plot(_df["wdir"], _df["Ctprime"], label=method)
-        axes[2].plot(_df["wdir"], np.rad2deg(_df["yaw"]), label=method)
+        _wdir = _df["wdir"].to_numpy()
+        _Cp, _Ctprime, _yaw = (
+            np.array(_df["Cp"].to_numpy()),
+            np.array(_df["Ctprime"].to_numpy()),
+            np.array(np.rad2deg(_df["yaw"].to_numpy())),
+        )
+        # Remove wdir=0 case for yaw control to show discontinuity
+        if method == "YawControl":
+            _Cp[np.abs(_wdir) < 1e-3] = np.nan
+            _Ctprime[np.abs(_wdir) < 1e-3] = np.nan
+            _yaw[np.abs(_wdir) < 1e-3] = np.nan
+
+        axes[0].plot(_wdir, _Cp, label=method)
+        axes[1].plot(_wdir, _Ctprime, label=method)
+        axes[2].plot(_wdir, _yaw, label=method)
 
     axes[-1].set_xlabel("wind direction [deg]")
 
@@ -76,7 +90,7 @@ def plot(df):
 
 
 def main():
-    df = generate(regenerate=False)
+    df = generate(regenerate=REGENERATE)
     plot(df)
 
 

@@ -21,8 +21,8 @@ PARALLEL = True
 
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
-layout = Layout([0, 7], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 0.25)
+layout = Layout([0, 6], [0.0, 0.0])
+wdirs = np.arange(-20, 20, 0.05)
 
 
 methods = {
@@ -33,7 +33,6 @@ methods = {
 }
 
 
-# @profile(filename="prof.prof")
 def _generate(x):
     method, wdir = x
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
@@ -66,11 +65,27 @@ def plot(df):
             )
         ).sort("wdir")
 
-        axes[0].plot(_df["wdir"], _df["Cp"], label=method)
-        axes[1].plot(_df["wdir"], np.rad2deg(_df["setpoint_0"]), label=method)
-        axes[2].plot(_df["wdir"], _df["setpoint_1"], label=method)
-        axes[3].plot(_df["wdir"], np.rad2deg(_df["setpoint_2"]), label=method)
-        axes[4].plot(_df["wdir"], _df["Ctprime"], label=method)
+        _wdir = _df["wdir"].to_numpy()
+        _Cp, _pitch, _tsr, _yaw, _Ctprime = (
+            np.array(_df["Cp"].to_numpy()),
+            np.array(np.rad2deg(_df["setpoint_0"].to_numpy())),
+            np.array(_df["setpoint_1"].to_numpy()),
+            np.array(np.rad2deg(_df["setpoint_2"].to_numpy())),
+            np.array(_df["Ctprime"].to_numpy()),
+        )
+        # Remove wdir=0 case for yaw control to show discontinuity
+        if method == "YawControl":
+            _Cp[np.abs(_wdir) < 1e-3] = np.nan
+            _pitch[np.abs(_wdir) < 1e-3] = np.nan
+            _tsr[np.abs(_wdir) < 1e-3] = np.nan
+            _yaw[np.abs(_wdir) < 1e-3] = np.nan
+            _Ctprime[np.abs(_wdir) < 1e-3] = np.nan
+
+        axes[0].plot(_wdir, _Cp, label=method)
+        axes[1].plot(_wdir, _pitch, label=method)
+        axes[2].plot(_wdir, _tsr, label=method)
+        axes[3].plot(_wdir, _yaw, label=method)
+        axes[4].plot(_wdir, _Ctprime, label=method)
 
     axes[-1].set_xlabel("wind direction [deg]")
 
@@ -86,18 +101,9 @@ def plot(df):
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
-# def plot_windfarms(df: pl.DataFrame):
-#     for (method, wdir), _df in df.group_by(["method", "wdir"]):
-#         windfarm_sol = utils.from_polars(_df, windfarm)
-#         Plotting.plot_windfarm(windfarm_sol)
-#         plt.savefig(utils.FIGDIR / f"{method}_{wdir}.png", dpi=300, bbox_inches="tight")
-#         plt.close()
-
-
 def main():
     df = generate(regenerate=REGENERATE)
     plot(df)
-    # plot_windfarms(df)
 
 
 if __name__ == "__main__":

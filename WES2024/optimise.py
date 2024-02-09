@@ -179,8 +179,8 @@ class JointControl(Controller):
 
 
 # Calculated in separate optimiation
-PITCH_OPT = -0.06273034204397401
-TSR_OPT = 8.085539804970534
+PITCH_OPT = -0.01975796119579272
+TSR_OPT = 9.138197665010335
 
 
 class NoControlBEM(Controller):
@@ -215,7 +215,7 @@ class YawControlBEM(Controller):
         return [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(-np.deg2rad(15), np.deg2rad(15)) for _ in range(self.N)]
+        return [(-np.deg2rad(20), np.deg2rad(20)) for _ in range(self.N)]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((PITCH_OPT, TSR_OPT, _x3) for _x3 in x)
