@@ -1,4 +1,5 @@
 from itertools import product
+import random
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -33,8 +34,11 @@ plot_params = {
 
 layouts = {
     4: Square(4.0, 5).rotate(45),
+    5: Square(5.0, 5).rotate(45),
     6: Square(6.0, 5).rotate(45),
+    7: Square(7.0, 5).rotate(45),
     8: Square(8.0, 5).rotate(45),
+    9: Square(9.0, 5).rotate(45),
     10: Square(10.0, 5).rotate(45),
 }
 wdirs = np.arange(0, 360, 1)
@@ -54,6 +58,7 @@ def _generate(x):
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs, layouts))
+    random.shuffle(params)
 
     df = pl.concat(foreach(_generate, params, parallel=True))
     return df

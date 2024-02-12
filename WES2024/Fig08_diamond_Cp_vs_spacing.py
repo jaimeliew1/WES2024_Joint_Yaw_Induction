@@ -14,7 +14,7 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 
 def plot(df: pl.DataFrame):
-    df_farm_Cp = df.pivot(columns="method", index="min_dist", values="Cp", aggregate_function="mean")
+    df_farm_Cp = df.pivot(columns="method", index="min_dist", values="Cp", aggregate_function="mean").sort("min_dist")
     df_farm_Cp = df_farm_Cp.select(
         pl.col("min_dist"),
         pl.exclude("min_dist", "NoControl") / pl.col("NoControl") * 100 - 100,
@@ -34,6 +34,8 @@ def plot(df: pl.DataFrame):
 
     plt.xlabel("Turbine spacing [D]")
     plt.ylabel(r"Power increase [\%]")
+
+    plt.xlim(4, 10)
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
