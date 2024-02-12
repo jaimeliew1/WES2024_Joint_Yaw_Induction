@@ -117,6 +117,11 @@ def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
     cbar = plt.colorbar(CF_Ct, ax=axes[1], aspect=20)
     cbar.set_label(label=r"$C_T~$(-)")
 
+
+    # Add caption letters
+    axes[0].text(0.0, 1.02, 'a)', ha='left',va='bottom', transform=axes[0].transAxes)
+    axes[1].text(0.0, 1.02, 'b)', ha='left',va='bottom', transform=axes[1].transAxes)
+
     axes[0].legend(
         ncol=3,
         bbox_to_anchor=(1.2, 1.1),
