@@ -5,7 +5,10 @@ Diamond wind direction sweep BEM
 This figure shows the optimal BEM setpoints (yaw, pitch, TSR, Ct' ) using four
 different control strategies (None, yaw, thrust, and joint control).
 
-Something is really slow when doing ThrustControlBEM. Look into this.
+Something is really slow when doing ThrustControlBEM. Look into this. Its fine.
+2DOF: 2.2 seconds per optimisation
+2DOF: 90 seconds per optimisation
+3DOF: 200 seconds per optimisation
 
 Key points:
 - ??
@@ -29,7 +32,7 @@ from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = False
+REGENERATE = True
 PARALLEL = True
 
 
@@ -48,7 +51,11 @@ methods = {
 
 def _generate(x):
     method, wdir = x
-    sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
+    sol = methods[method](layout.rotate(wdir), windfarm).optimise(
+        Cp_constraint=None,
+        use_gradients=True,
+        verbose=False,
+    )
 
     return utils.to_polars(sol).with_columns(
         pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")

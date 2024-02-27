@@ -69,7 +69,6 @@ class Controller(ABC):
             print(f"{sol.nfev=}")
             print(f"{sol.njev=}")
             print(sol)
-
         optimized_solution = self.solve_for_setpoints(sol.x)
         return optimized_solution
 
@@ -83,7 +82,7 @@ class Controller(ABC):
             float: Objective function value.
         """
         windfarm_sol = self.solve_for_setpoints(x)
-        return -windfarm_sol.Cp()
+        return -windfarm_sol.Cp
 
     def grad_objective_func(self, x) -> (float, ArrayLike):
         """Calculate the combined objective function and its gradient.
