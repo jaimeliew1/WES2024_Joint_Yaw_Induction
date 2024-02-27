@@ -33,8 +33,19 @@ plot_params = {
 }
 
 layout = Square(6.0, 5).rotate(45)
-wdirs_of_interest = [-11.0, -5.0, -2.5, 0.0, 2.5, 5.0, 11.0]
-wdirs_sweep = np.arange(-20.0, 20.0, 0.25)
+wdirs_of_interest = [
+    # -11.0,
+    # -5.0,
+    -2.5,
+    0.0,
+    2.5,
+    # 5.0,
+    # 11.0,
+    45.0,
+    42.0,
+    48.0,
+]
+wdirs_sweep = np.arange(-20.0, 60, 0.25)
 
 
 #                                  _
@@ -75,7 +86,9 @@ def generate(regenerate=False):
     df = pl.concat(
         [
             generate_LES_cases(regenerate).with_columns(type=pl.lit("cases")),
-            generate_wdir_sweep(regenerate).with_columns(type=pl.lit("sweep"), wdir=pl.col("wdir").cast(float)),
+            generate_wdir_sweep(regenerate).with_columns(
+                type=pl.lit("sweep"), wdir=pl.col("wdir").cast(float)
+            ),
         ]
     )
 
@@ -113,7 +126,6 @@ def plot_windfarm(df: pl.DataFrame):
 
 
 def plot_wdir_sweep(df: pl.DataFrame):
-
     plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
@@ -133,17 +145,15 @@ def plot_wdir_sweep(df: pl.DataFrame):
 
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
-    ax.set_xlim(-20, 20)
-    plt.savefig(utils.FIGDIR / "wdir_sweep.png", dpi=300, bbox_inches="tight")
+    ax.set_xlim(-20, 60)
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep.png", dpi=300, bbox_inches="tight")
 
 
 def plot_wdir_sweep_rel(df: pl.DataFrame):
-
     plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
     for method, _plot_params in plot_params.items():
-
         _df = df.filter(pl.col("type") == "sweep").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ref = (
@@ -166,14 +176,14 @@ def plot_wdir_sweep_rel(df: pl.DataFrame):
 
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
-    ax.set_xlim(-20, 20)
-    plt.savefig(utils.FIGDIR / "wdir_sweep_rel.png", dpi=300, bbox_inches="tight")
+    ax.set_xlim(-20, 60)
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep_rel.png", dpi=300, bbox_inches="tight")
 
 
 def main():
     df = generate(regenerate=False)
-    # plot_wdir_sweep(df)
-    # plot_wdir_sweep_rel(df)
+    plot_wdir_sweep(df)
+    plot_wdir_sweep_rel(df)
     plot_windfarm(df)
 
 

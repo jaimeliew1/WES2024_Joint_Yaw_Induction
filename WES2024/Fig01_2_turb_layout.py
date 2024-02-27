@@ -1,3 +1,9 @@
+"""
+Figure 1:   
+2 turbine layout
+
+This figure qualitatively shows a yaw steering case using the 2 turbine layout.
+"""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -5,8 +11,7 @@ import polars as pl
 from mitwindfarm import Plotting
 from mitwindfarm.windfarm import Windfarm
 
-from WES2024 import utils, Fig02_2_turb_wdir_sweep_AD
-
+from WES2024 import Fig02_2_turb_wdir_sweep_AD, utils
 
 FILESTEM = Path(__file__).stem
 
@@ -26,7 +31,6 @@ def plot(df: pl.DataFrame):
     Plotting.plot_windfarm(windfarm_sol)
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
     plt.close()
-
 
 
 def main():

@@ -1,3 +1,11 @@
+"""
+Figure 6:   
+diamond wind farm layout
+
+This figure qualitatively shows a yaw steering case using the 25 turbine diamond
+layout.
+"""
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -19,7 +27,11 @@ def generate(regenerate=False) -> pl.DataFrame:
 def plot(df: pl.DataFrame):
     windfarm = Windfarm()
 
-    _df = df.filter(pl.col("method") == "JointControl").filter(pl.col("wdir") == 5.0).filter(pl.col("min_dist") == 6.0)
+    _df = (
+        df.filter(pl.col("method") == "JointControl")
+        .filter(pl.col("wdir") == 5.0)
+        .filter(pl.col("min_dist") == 6.0)
+    )
     plt.figure()
 
     windfarm_sol = utils.from_polars(_df, windfarm)

@@ -1,3 +1,14 @@
+"""
+Figure 4:
+2 turbine LES
+
+I am not sure what this figure will do, but it should include results from the
+LES case.
+
+Key points:
+- ??
+
+"""
 from pathlib import Path
 
 import matplotlib.pyplot as plt

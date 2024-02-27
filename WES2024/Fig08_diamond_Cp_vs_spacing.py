@@ -1,3 +1,16 @@
+"""
+Figure 8:   
+Diamond layout - power increase due to control versus turbine spacing
+
+This figure shows how much power is gained by performing optimal wind farm
+control (versus not performing control) versus turbine spacing. Assumes uniform
+wind rose.
+
+Key points:
+- Yaw control outperforms thrust control (known in literature).
+- Joint control outperforms yaw control (novel result).
+- Benefit of control is larger for for close spacings.
+"""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -14,7 +27,9 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 
 def plot(df: pl.DataFrame):
-    df_farm_Cp = df.pivot(columns="method", index="min_dist", values="Cp", aggregate_function="mean").sort("min_dist")
+    df_farm_Cp = df.pivot(
+        columns="method", index="min_dist", values="Cp", aggregate_function="mean"
+    ).sort("min_dist")
     df_farm_Cp = df_farm_Cp.select(
         pl.col("min_dist"),
         pl.exclude("min_dist", "NoControl") / pl.col("NoControl") * 100 - 100,

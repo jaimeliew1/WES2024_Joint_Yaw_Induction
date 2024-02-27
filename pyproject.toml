@@ -22,6 +22,9 @@ mitrotor = { path = "../MITRotor", develop = true }
 unified-momentum-model = { path = "../Unified-Momentum-Model", develop = true }
 ffmpeg-python = "^0.2.0"
 dualitic = { path = "../dualitic", develop = true }
+seaborn = "^0.13.2"
+pandas = "^2.2.1"
+pyarrow = "^15.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pdir2 = "^1.1.0"
@@ -39,7 +42,10 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.ruff]
-line-length = 120
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["E402"]
 
 [tool.black]
-line-length = 120
+line-length = 100

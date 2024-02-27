@@ -1,7 +1,21 @@
+"""
+Figure 9:   
+Diamond setpoint distributions
+
+This figure shows some kind of statistical patterns in the optimal setpoints. (what??)
+
+Key points:
+- ??
+- Some patterns in the optimal setpoints
+- Perhaps lower yaw spread in joint control strategy (but this isn't even the case?)
+- ??
+"""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import polars as pl
+import seaborn as sns
+import numpy as np
 
 from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
 
@@ -16,22 +30,32 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 def plot(df: pl.DataFrame):
     plt.figure()
-    _df = df.filter(pl.col("min_dist") ==6).filter(pl.col("method") == "YawControl")
-    _df2 = df.filter(pl.col("min_dist") ==6).filter(pl.col("method") == "JointControl")
-    print(f"{_df["yaw"].std()=}")
-    print(f"{_df2["yaw"].std()=}")
-    print(f"{_df["yaw"].min()=}")
-    print(f"{_df2["yaw"].min()=}")
-    print(f"{_df["yaw"].max()=}")
-    print(f"{_df2["yaw"].max()=}")
-    # Create a histogram
-    plt.hist(_df["yaw"], bins=30, color='skyblue', edgecolor='black')
-    plt.hist(_df2["yaw"], bins=30, edgecolor='black')
-    # Add labels and title
-    plt.title('Histogram Example')
-    plt.xlabel('Values')
-    plt.ylabel('Frequency')
+    _df = df.with_columns(np.rad2deg(pl.col("yaw"))).filter(
+        pl.col("method").is_in(["YawControl", "JointControl"])
+    )
 
+    # sns.violinplot(
+    #     _df.to_pandas(),
+    #     # x="min_dist",
+    #     y="yaw",
+    #     hue="method",
+    #     split=True,
+    #     # inner=None,
+    #     ax=plt.gca(),
+    # )
+    print(_df.columns)
+    _df = _df.filter(pl.col("method") == "JointControl")  # .filter(pl.col("min_dist").is_in([4]))
+    sns.jointplot(
+        _df.to_pandas(),
+        x="yaw",
+        y="Ctprime",
+        hue="min_dist",
+        kind="scatter",
+        ratio=3,
+        height=4,
+        palette="viridis",
+        s=7,
+    )
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 

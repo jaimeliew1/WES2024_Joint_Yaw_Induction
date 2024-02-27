@@ -1,3 +1,15 @@
+"""
+Figure 2:
+2 turbine wind direction sweep
+
+This figure shows the optimal setpoints (yaw and Ct') using four different
+control strategies (None, yaw, thrust, and joint control).
+
+Key points:
+- Joint control performs better than all other methods.
+- Yaw control is discontinuous.
+- Joint control is smooth.
+"""
 from itertools import product
 from pathlib import Path
 
@@ -32,7 +44,9 @@ def _generate(x):
     method, wdir = x
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
 
-    return utils.to_polars(sol).with_columns(pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir"))
+    return utils.to_polars(sol).with_columns(
+        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
+    )
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")

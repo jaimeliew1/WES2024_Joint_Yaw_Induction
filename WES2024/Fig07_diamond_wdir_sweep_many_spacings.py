@@ -1,3 +1,14 @@
+"""
+Figure 7:   
+Diamond layout wind direction sweep for many layouts
+
+This figure shows the optimal farm power output for the different control
+strategies and for different turbine spacings.
+
+Key points:
+- ?
+"""
+
 from itertools import product
 import random
 from pathlib import Path
@@ -43,6 +54,7 @@ layouts = {
 }
 wdirs = np.arange(0, 360, 1)
 
+
 # wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]
 # @profile(filename="prof.prof")
 def _generate(x):
@@ -70,7 +82,14 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
     fig, axes = plt.subplots(N_dist, 1, sharex=True, sharey=True)
 
     for ax, min_dist in zip(axes, df["min_dist"].unique().sort()):
-        ax.text(0.5, 0.99, f"turbine spacing: {min_dist}D", ha="center", va="top", transform=ax.transAxes)
+        ax.text(
+            0.5,
+            0.99,
+            f"turbine spacing: {min_dist}D",
+            ha="center",
+            va="top",
+            transform=ax.transAxes,
+        )
         for method, _plot_params in plot_params.items():
             _df = df.filter(pl.col("min_dist") == min_dist).filter(pl.col("method") == method)
             to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")

@@ -1,3 +1,20 @@
+"""
+Figure 5:
+2 turbine pitch-TSR surface
+
+This figure shows two contour plots: Cp and CT as a function of pitch and tsr.
+Overlaid are the set point trajectories for different control strategies over
+the wind direction sweep.
+
+Key points:
+- Optimal derating trajectory follows a minimum thrust trajectory
+
+thoughts:
+- The trajectory is pretty short. is this an error?
+- perhaps this should be shown for the multiturbine wind farm case only.
+
+"""
+
 import itertools
 from pathlib import Path
 
@@ -17,8 +34,8 @@ from WES2024.optimise import PITCH_OPT, TSR_OPT
 PARALLEL = True
 REGENERATE = False
 
-XLIM = (-6, 3)
-YLIM = (5, 13)
+XLIM = (-4, 3)
+YLIM = (7, 10)
 
 layout = Layout([0.0], [0.0])
 FILESTEM = Path(__file__).stem
@@ -54,7 +71,6 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 
 def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
-
     # Extract and reshape contour data points.
     df_surface = (
         df_surface.rename(dict(setpoint_0="pitch", setpoint_1="tsr"))
@@ -78,7 +94,9 @@ def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
     Ct[Ct < 0.01] = 0.01
 
     # Extract optimal control points
-    df_opt = df_opt.filter(pl.col("turbine") == 0).rename(dict(setpoint_0="pitch", setpoint_1="tsr"))
+    df_opt = df_opt.filter(pl.col("turbine") == 0).rename(
+        dict(setpoint_0="pitch", setpoint_1="tsr")
+    )
 
     plt.figure(figsize=np.array((8, 2)))
     gs = GridSpec(1, 2, width_ratios=[1, 1], wspace=0.3)
@@ -117,10 +135,9 @@ def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
     cbar = plt.colorbar(CF_Ct, ax=axes[1], aspect=20)
     cbar.set_label(label=r"$C_T~$(-)")
 
-
     # Add caption letters
-    axes[0].text(0.0, 1.02, 'a)', ha='left',va='bottom', transform=axes[0].transAxes)
-    axes[1].text(0.0, 1.02, 'b)', ha='left',va='bottom', transform=axes[1].transAxes)
+    axes[0].text(0.0, 1.02, "a)", ha="left", va="bottom", transform=axes[0].transAxes)
+    axes[1].text(0.0, 1.02, "b)", ha="left", va="bottom", transform=axes[1].transAxes)
 
     axes[0].legend(
         ncol=3,
