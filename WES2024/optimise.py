@@ -59,7 +59,9 @@ class Controller(ABC):
             constraint = None
 
         if use_gradients:
-            sol = minimize(self.grad_objective_func, x0, bounds=bounds, jac=True, constraints=constraint)
+            sol = minimize(
+                self.grad_objective_func, x0, bounds=bounds, jac=True, constraints=constraint
+            )
         else:
             sol = minimize(self.objective_func, x0, bounds=bounds, constraints=constraint)
 
@@ -171,7 +173,9 @@ class JointControl(Controller):
         return [0.2 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 4.0) for _ in range(self.N)] + [tuple(np.deg2rad((-50, 50))) for _ in range(self.N)]
+        return [(0.00001, 4.0) for _ in range(self.N)] + [
+            tuple(np.deg2rad((-50, 50))) for _ in range(self.N)
+        ]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x1, _x2) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
@@ -203,7 +207,9 @@ class ThrustControlBEM(Controller):
         return [PITCH_OPT for _ in range(self.N)] + [TSR_OPT for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)] + [(3, 10) for _ in range(self.N)]
+        return [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)] + [
+            (3, 10) for _ in range(self.N)
+        ]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x1, _x2, 0.0) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
@@ -224,7 +230,11 @@ class YawControlBEM(Controller):
 
 class JointControlBEM(Controller):
     def initial_guess(self) -> ArrayLike:
-        return [PITCH_OPT for _ in range(self.N)] + [TSR_OPT for _ in range(self.N)] + [0.0 for _ in range(self.N)]
+        return (
+            [PITCH_OPT for _ in range(self.N)]
+            + [TSR_OPT for _ in range(self.N)]
+            + [0.0 for _ in range(self.N)]
+        )
 
     def bounds(self) -> list:
         return (
@@ -234,5 +244,8 @@ class JointControlBEM(Controller):
         )
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
-        setpoints = list((_x1, _x2, _x3) for _x1, _x2, _x3 in zip(x[: self.N], x[self.N : 2 * self.N], x[2 * self.N :]))
+        setpoints = list(
+            (_x1, _x2, _x3)
+            for _x1, _x2, _x3 in zip(x[: self.N], x[self.N : 2 * self.N], x[2 * self.N :])
+        )
         return self.windfarm(self.layout, setpoints)
