@@ -24,6 +24,7 @@ from mitwindfarm.windfarm import Windfarm
 from optimise import JointControl, NoControl, ThrustControl, YawControl
 from WES2024 import utils
 
+REGENERATE = True
 FILESTEM = Path(__file__).stem
 
 windfarm = Windfarm()
@@ -52,7 +53,7 @@ layouts = {
     9: Square(9.0, 5).rotate(45),
     10: Square(10.0, 5).rotate(45),
 }
-wdirs = np.arange(0, 360, 1)
+wdirs = np.arange(0.0, 90.0, 0.1)
 
 
 # wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]
@@ -143,7 +144,7 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
 
 
 def main():
-    df = generate(regenerate=False)
+    df = generate(regenerate=REGENERATE)
     # plot_setpoints(df)
     # plot_windfarm(df)
     # plot_farm_performance_vs_distance(df)
