@@ -40,7 +40,7 @@ PARALLEL = True
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 layout = Square(10.0, 5).rotate(45)
-wdirs = np.arange(0.0, 45.0, 0.05)
+wdirs = np.arange(0.0, 90.0, 0.05)
 
 
 methods = {
