@@ -24,7 +24,7 @@ from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = False
+REGENERATE = True
 PARALLEL = True
 
 
@@ -41,9 +41,9 @@ wdirs = np.arange(-90.0, 90.0, 0.05)
 
 
 methods = {
-    "NoControl": NoControlBEM,
+    # "NoControl": NoControlBEM,
     # "YawControl": YawControlBEM,
-    "ThrustControl": ThrustControlBEM,
+    # "ThrustControl": ThrustControlBEM,
     "JointControl": JointControlBEM,
 }
 
@@ -57,7 +57,9 @@ def _generate(x):
     )
 
     return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
+        pl.lit(method).alias("method"),
+        pl.lit(wdir).alias("wdir"),
+        pl.lit(layout_name).alias("layout"),
     )
 
 
@@ -75,7 +77,7 @@ def plot(df: pl.DataFrame):
 
     df = (
         df.rename(dict(setpoint_0="pitch", setpoint_1="tsr")).filter(
-            pl.col("method").is_in(["JointControl"])
+            pl.col("method").is_in(["JointControl"]).filter(pl.col("layout") == "2_turb")
         )
         # .filter(pl.col("method").is_in(["ThrustControl"]))
         # .filter(pl.col("method").is_in(["ThrustControl", "JointControl"]))
