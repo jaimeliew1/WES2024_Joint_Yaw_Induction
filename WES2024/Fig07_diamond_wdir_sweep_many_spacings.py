@@ -53,7 +53,7 @@ layouts = {
     9: Square(9.0, 5).rotate(45),
     10: Square(10.0, 5).rotate(45),
 }
-wdirs = np.arange(0.0, 90.0, 0.1)
+wdirs = np.arange(0.0, 360.0, 0.05)
 
 
 # wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]

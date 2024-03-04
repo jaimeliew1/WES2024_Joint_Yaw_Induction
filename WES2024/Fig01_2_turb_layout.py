@@ -6,6 +6,7 @@ This figure qualitatively shows a yaw steering case using the 2 turbine layout.
 """
 from pathlib import Path
 
+import numpy as np
 import matplotlib.pyplot as plt
 import polars as pl
 from mitwindfarm import Plotting
@@ -24,7 +25,8 @@ def generate(regenerate=False) -> pl.DataFrame:
 def plot(df: pl.DataFrame):
     windfarm = Windfarm()
 
-    _df = df.filter(pl.col("method") == "JointControl").filter(pl.col("wdir") == 5.0)
+    _df = df.filter(pl.col("method") == "JointControl").filter(np.abs(pl.col("wdir") - 5) < 0.01)
+
     plt.figure()
 
     windfarm_sol = utils.from_polars(_df, windfarm)
