@@ -9,6 +9,7 @@ from itertools import product
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import polars as pl
 import seaborn as sns
@@ -17,14 +18,14 @@ from MITRotor.ReferenceTurbines import IEA15MW
 from mitwindfarm.Layout import Layout
 from mitwindfarm.Rotor import BEM
 from mitwindfarm.windfarm import Windfarm
-from optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
+from optimise import JointControlBEM
 from test_BEM_gradients import DualBEM
 
 from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = True
+REGENERATE = False
 PARALLEL = True
 
 
@@ -41,9 +42,6 @@ wdirs = np.arange(-90.0, 90.0, 0.05)
 
 
 methods = {
-    # "NoControl": NoControlBEM,
-    # "YawControl": YawControlBEM,
-    # "ThrustControl": ThrustControlBEM,
     "JointControl": JointControlBEM,
 }
 
@@ -72,53 +70,51 @@ def generate(regenerate=False):
     return df
 
 
-def plot(df: pl.DataFrame):
-    plt.figure()
+def plot(df: pl.DataFrame, layout="4_turb"):
+    fig = plt.figure()
 
     df = (
-        df.rename(dict(setpoint_0="pitch", setpoint_1="tsr")).filter(
-            pl.col("method").is_in(["JointControl"]).filter(pl.col("layout") == "2_turb")
-        )
-        # .filter(pl.col("method").is_in(["ThrustControl"]))
-        # .filter(pl.col("method").is_in(["ThrustControl", "JointControl"]))
+        df.rename(dict(setpoint_0="pitch", setpoint_1="tsr"))
+        .filter(pl.col("layout") == layout)
         .with_columns(
             np.rad2deg(pl.col("yaw")),
             np.rad2deg(pl.col("pitch")),
-        )  # .filter(pl.col("group") == "OLE2")
+            np.rad2deg(np.abs(pl.col("yaw"))).alias("abs_yaw"),
+        )
     )
 
-    graph = sns.jointplot(
+    norm = mpl.colors.Normalize(0, 20)
+    graph = sns.scatterplot(
         df.to_pandas(),
         x="pitch",
         y="tsr",
-        # y="Ctprime",
-        # x="yaw",
-        hue="turbine",
-        ratio=3,
-        height=4,
-        palette="tab10",
-        legend=True,
+        hue="abs_yaw",
+        hue_norm=norm,
+        palette="magma",
+        legend=False,
         s=7,
         edgecolors=None,
-    )
-    sns.move_legend(
-        graph.ax_joint,
-        "lower center",
-        bbox_to_anchor=(0.5, 0.9),
-        ncol=4,
-        frameon=True,
-        fontsize="xx-small",
-        title=None,
+        ax=plt.gca(),
     )
 
-    graph.ax_joint.set_xlabel(r"$\theta_p$ [deg]")
-    graph.ax_joint.set_ylabel(r"$\lambda$ [-]")
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    fig.colorbar(
+        mpl.cm.ScalarMappable(norm=norm, cmap="magma"),
+        ax=plt.gca(),
+        orientation="vertical",
+        label="$|\gamma|$ [deg]",
+    )
+    graph.set_xlabel(r"$\theta_p$ [deg]")
+    graph.set_ylabel(r"$\lambda$ [-]")
+
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}_{layout}.png", dpi=300, bbox_inches="tight")
 
 
 def main():
     df = generate(regenerate=REGENERATE)
-    plot(df)
+    plot(df, layout="2_turb")
+    plot(df, layout="3_turb")
+    plot(df, layout="4_turb")
+    plot(df, layout="5_turb")
 
 
 if __name__ == "__main__":
