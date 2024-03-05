@@ -6,4 +6,4 @@ import polars as pl
 plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
 
 
-pl.Config.set_tbl_rows(100)
+pl.Config.set_tbl_rows(50)

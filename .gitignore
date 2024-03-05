@@ -5,6 +5,7 @@
 data/
 .vscode
 fig*/
+LES_cases
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
