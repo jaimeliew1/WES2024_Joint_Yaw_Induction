@@ -6,12 +6,12 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from mitwindfarm import Plotting
-from mitwindfarm.Layout import Square
 from mitwindfarm.windfarm import Windfarm
 from optimise import JointControl, NoControl, ThrustControl, YawControl
 
-from WES2024 import utils
+from WES2024 import LES_case_definitions, utils
 
+REGENERATE = False
 FILESTEM = Path(__file__).stem
 
 
@@ -19,32 +19,21 @@ windfarm = Windfarm()
 
 
 methods = {
-    "NoControl": NoControl,
-    "YawControl": YawControl,
-    "ThrustControl": ThrustControl,
-    "JointControl": JointControl,
+    "nocontrol": NoControl,
+    "jointcontrol": JointControl,
+    "yawcontrol": YawControl,
+    "thrustcontrol": ThrustControl,
 }
 
 plot_params = {
-    "NoControl": dict(ls="--", c="k", label="No Control"),
-    "ThrustControl": dict(c="tab:blue", label="Thrust Control"),
-    "YawControl": dict(c="tab:orange", label="Yaw Control"),
-    "JointControl": dict(c="tab:green", label="Joint Control"),
+    "nocontrol": dict(ls="--", c="k", label="No Control"),
+    "jointcontrol": dict(c="tab:green", label="Joint Control"),
+    "yawcontrol": dict(c="tab:orange", label="Yaw Control"),
+    "thrustcontrol": dict(c="tab:blue", label="Thrust Control"),
 }
 
-layout = Square(6.0, 5).rotate(45)
-wdirs_of_interest = [
-    # -11.0,
-    # -5.0,
-    -2.5,
-    0.0,
-    2.5,
-    # 5.0,
-    # 11.0,
-    45.0,
-    42.0,
-    48.0,
-]
+layout = LES_case_definitions.base_layout
+
 wdirs_sweep = np.arange(-20.0, 60, 0.25)
 
 
@@ -66,14 +55,6 @@ def _generate(x):
     )
 
 
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_cases.csv")
-def generate_LES_cases(regenerate=False):
-    params = list(product(methods, wdirs_of_interest))
-
-    df = pl.concat(foreach(_generate, params, parallel=True))
-    return df
-
-
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_sweep.csv")
 def generate_wdir_sweep(regenerate=False):
     params = list(product(methods, wdirs_sweep))
@@ -85,8 +66,10 @@ def generate_wdir_sweep(regenerate=False):
 def generate(regenerate=False):
     df = pl.concat(
         [
-            generate_LES_cases(regenerate).with_columns(type=pl.lit("cases")),
-            generate_wdir_sweep(regenerate).with_columns(
+            LES_case_definitions.generate(regenerate=regenerate)
+            .rename({"controller": "method"})
+            .with_columns(type=pl.lit("cases")),
+            generate_wdir_sweep(regenerate=regenerate).with_columns(
                 type=pl.lit("sweep"), wdir=pl.col("wdir").cast(float)
             ),
         ]
@@ -104,7 +87,7 @@ def generate(regenerate=False):
 
 
 def plot_windfarm(df: pl.DataFrame):
-    methods = ["NoControl", "ThrustControl", "YawControl", "JointControl"]
+    methods = ["nocontrol", "thrustcontrol", "yawcontrol", "jointcontrol"]
     df = df.filter(pl.col("type") == "cases")
 
     for wdir, _df in df.group_by("wdir"):
@@ -112,7 +95,7 @@ def plot_windfarm(df: pl.DataFrame):
 
         for ax, method in zip(axes.ravel(), methods):
             windfarm_sol = utils.from_polars(_df.filter(pl.col("method") == method), windfarm)
-            Cp_ref = _df.filter(pl.col("method") == "NoControl")["Cp"].mean()
+            Cp_ref = _df.filter(pl.col("method") == "nocontrol")["Cp"].mean()
 
             Plotting.plot_windfarm(windfarm_sol, ax=ax)
 
@@ -129,10 +112,17 @@ def plot_wdir_sweep(df: pl.DataFrame):
     plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
+    # Plot sweep
     for method, _plot_params in plot_params.items():
         _df = df.filter(pl.col("type") == "sweep").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ax.plot(to_plot["wdir"], to_plot["Cp"], **_plot_params)
+
+    # Plot cases
+    for method, _plot_params in plot_params.items():
+        _df = df.filter(pl.col("type") == "cases").filter(pl.col("method") == method)
+        to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
+        ax.plot(to_plot["wdir"], to_plot["Cp"], ".k")
 
     ax.set_xlabel("wind direction (deg)")
     ax.set_ylabel("$C_P$")
@@ -153,17 +143,31 @@ def plot_wdir_sweep_rel(df: pl.DataFrame):
     plt.figure(figsize=(7, 3))
     ax = plt.gca()
 
+    # plot sweep
     for method, _plot_params in plot_params.items():
         _df = df.filter(pl.col("type") == "sweep").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ref = (
             df.filter(pl.col("type") == "sweep")
-            .filter(pl.col("method") == "NoControl")
+            .filter(pl.col("method") == "nocontrol")
             .group_by("wdir")
             .agg(pl.col("Cp").mean())
             .sort("wdir")
         )
         ax.plot(to_plot["wdir"], 100 * (to_plot["Cp"] / ref["Cp"] - 1), **_plot_params)
+
+    # plot cases
+    for method, _plot_params in plot_params.items():
+        _df = df.filter(pl.col("type") == "cases").filter(pl.col("method") == method)
+        to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
+        ref = (
+            df.filter(pl.col("type") == "cases")
+            .filter(pl.col("method") == "nocontrol")
+            .group_by("wdir")
+            .agg(pl.col("Cp").mean())
+            .sort("wdir")
+        )
+        ax.plot(to_plot["wdir"], 100 * (to_plot["Cp"] / ref["Cp"] - 1), ".k")
 
     ax.set_xlabel("wind direction (deg)")
     ax.set_ylabel(r"$C_P$ increase (\%)")
@@ -181,7 +185,7 @@ def plot_wdir_sweep_rel(df: pl.DataFrame):
 
 
 def main():
-    df = generate(regenerate=False)
+    df = generate(regenerate=REGENERATE)
     plot_wdir_sweep(df)
     plot_wdir_sweep_rel(df)
     plot_windfarm(df)
