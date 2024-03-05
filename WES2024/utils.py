@@ -17,12 +17,138 @@ __all__ = [
     "cache_polars",
 ]
 
+DIAMOND_GROUPS = pl.DataFrame(
+    {
+        "turbine": [
+            0,
+            4,
+            24,
+            20,
+            1,
+            9,
+            23,
+            15,
+            2,
+            14,
+            22,
+            10,
+            5,
+            3,
+            19,
+            21,
+            6,
+            8,
+            18,
+            16,
+            7,
+            13,
+            17,
+            11,
+            12,
+            12,
+            12,
+            12,
+        ],
+        "group": [
+            "A",
+            "A",
+            "A",
+            "A",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "C",
+            "C",
+            "D",
+            "D",
+            "D",
+            "D",
+            "E",
+            "E",
+            "E",
+            "E",
+            "F",
+            "F",
+            "F",
+            "F",
+            "G",
+            "G",
+            "G",
+            "G",
+        ],
+        "face": [
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+        ],
+    }
+)
 
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
 
 CACHEDIR = Path(__file__).parent.parent / "data"
 CACHEDIR.mkdir(exist_ok=True, parents=True)
+
+
+def fill_in_other_quadrants(
+    df: pl.DataFrame, diamond_groups: pl.DataFrame = DIAMOND_GROUPS
+) -> pl.DataFrame:
+    # First generate full wind rose for each turbine group.
+    df_by_group = []
+    for turbine, group, face in diamond_groups.iter_rows():
+        _df = (
+            df.filter(pl.col("turbine") == turbine)
+            .with_columns(pl.col("wdir") + face * 90, pl.lit(group).alias("group"))
+            .select(pl.exclude("turbine", "x", "y", "z"))
+        )
+        df_by_group.append(_df)
+
+    df_by_group = pl.concat(df_by_group)
+
+    # Next, fill out the wind rose for each turbine.
+    df_by_turbine = []
+    seen_turbines = []
+    for turbine, group, face in diamond_groups.iter_rows():
+        if turbine in seen_turbines:
+            continue
+        seen_turbines.append(turbine)
+
+        _df = df_by_group.filter(pl.col("group") == group).with_columns(
+            (pl.col("wdir") + 360.0 - face * 90).mod(360.0), pl.lit(turbine).alias("turbine")
+        )
+        df_by_turbine.append(_df)
+    df_by_turbine = pl.concat(df_by_turbine)
+
+    return df_by_turbine
 
 
 def to_polars(sol: WindfarmSolution) -> pl.DataFrame:

@@ -17,14 +17,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 from foreach import foreach
-from mitwindfarm import Plotting
 from mitwindfarm.Layout import Square
 from mitwindfarm.windfarm import Windfarm
 
 from optimise import JointControl, NoControl, ThrustControl, YawControl
 from WES2024 import utils
 
-REGENERATE = True
+REGENERATE = False
 FILESTEM = Path(__file__).stem
 
 windfarm = Windfarm()
@@ -53,10 +52,9 @@ layouts = {
     9: Square(9.0, 5).rotate(45),
     10: Square(10.0, 5).rotate(45),
 }
-wdirs = np.arange(0.0, 360.0, 0.05)
+wdirs = np.arange(0.0, 90.0, 0.05)
 
 
-# wdirs_of_interest = [0.0, 5.0, 26.565, 42.0, 45.0]
 # @profile(filename="prof.prof")
 def _generate(x):
     method, wdir, min_dist = x
@@ -99,10 +97,6 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
     axes[-1].set_xlabel("wind direction (deg)")
     [ax.set_ylabel("$C_P$") for ax in axes]
 
-    # Plot wind directions of interest at 6D
-    # for _wdir in wdirs_of_interest:
-    #     axes[1].axvline(90 + _wdir, lw=1, ls="--", c="k")
-
     axes[0].set_ylim(0.1, 0.6)
 
     axes[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
@@ -111,43 +105,8 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
-# def plot_windfarm(df: pl.DataFrame):
-#     for min_dist in df["min_dist"].unique():
-#         _df = (
-#             df.filter(pl.col("method") == "JointControl")
-#             .filter(pl.col("min_dist") == min_dist)
-#             .filter(pl.col("wdir") == 0)
-#         )
-#         windfarm_sol = utils.from_polars(_df, windfarm)
-
-#         Plotting.plot_windfarm(windfarm_sol)
-#         plt.savefig(utils.FIGDIR / f"square_windfarm_{min_dist}D.png", dpi=300, bbox_inches="tight")
-#         plt.close()
-
-
-# def plot_setpoints(df: pl.DataFrame):
-#     df = df.filter(pl.col("min_dist") == 4).filter(pl.col("method") == "JointControl")
-
-#     fig, axes = plt.subplots(2, 1, sharex=True)
-
-#     for i, _df in df.group_by("turbine"):
-#         axes[0].plot(_df["wdir"], np.rad2deg(_df["yaw"]), c=plt.cm.gist_ncar(i / 20))
-#         axes[1].plot(_df["wdir"], _df["Ctprime"], c=plt.cm.gist_ncar(i / 20))
-
-#     axes[-1].set_xlabel("wind direction [deg]")
-
-#     axes[0].set_ylabel("yaw setpoint [deg]")
-#     axes[1].set_ylabel("$C_T'$ setpoint")
-
-#     axes[0].set_xlim(0, 360)
-#     plt.savefig(utils.FIGDIR / "square_setpoints.png", dpi=300, bbox_inches="tight")
-
-
 def main():
     df = generate(regenerate=REGENERATE)
-    # plot_setpoints(df)
-    # plot_windfarm(df)
-    # plot_farm_performance_vs_distance(df)
     plot_Cp_vs_distance(df)
 
 
