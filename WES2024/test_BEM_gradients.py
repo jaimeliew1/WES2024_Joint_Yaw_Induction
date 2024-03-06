@@ -7,7 +7,10 @@ from numpy.typing import ArrayLike
 import numpy as np
 from rich import print
 
-from UnifiedMomentumModel.Utilities.FixedPointIteration import FixedPointIterationCompatible, FixedPointIterationResult
+from UnifiedMomentumModel.Utilities.FixedPointIteration import (
+    FixedPointIterationCompatible,
+    FixedPointIterationResult,
+)
 
 PITCH, TSR, YAW = np.deg2rad(-8.5), 10, np.deg2rad(10)
 params = {
@@ -103,6 +106,7 @@ class DualBEM:
     def __init__(self, rotor: RotorDefinition, geometry: BEMGeometry = None):
         self.bem = BEM(rotor, geometry)
         self._niter_primal = None
+        self.geometry = self.bem.geometry
 
     def sample_points(self, yaw: float = 0.0) -> tuple:
         return self.bem.sample_points(yaw)
@@ -111,13 +115,17 @@ class DualBEM:
         # sol = self.bem(undual(pitch), undual(tsr), undual(yaw))
         # self._niter_primal = sol.niter
         # return sol.a(grid="radial"), sol.aprime(grid="radial")
-        return self.bem.initial_guess(undual(pitch), undual(tsr), undual(yaw), undual(U), undual(wdir))
+        return self.bem.initial_guess(
+            undual(pitch), undual(tsr), undual(yaw), undual(U), undual(wdir)
+        )
 
     def residual(self, x, pitch, tsr, yaw, U=1.0, wdir=0.0):
         res = self.bem.residual(x, pitch, tsr, yaw, U, wdir)
         return res
 
-    def post_process(self, result: FixedPointIterationResult, pitch, tsr, yaw, U=1.0, wdir=0.0) -> BEMSolution:
+    def post_process(
+        self, result: FixedPointIterationResult, pitch, tsr, yaw, U=1.0, wdir=0.0
+    ) -> BEMSolution:
         result.niter = (self._niter_primal, result.niter)
         return self.bem.post_process(result, pitch, tsr, yaw, U, wdir)
 

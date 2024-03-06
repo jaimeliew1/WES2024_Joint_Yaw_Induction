@@ -25,7 +25,7 @@ from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = False
+REGENERATE = True
 PARALLEL = True
 
 
@@ -38,7 +38,7 @@ layouts = {
     "4_turb": Layout([TURBINE_SPACING * i for i in range(4)], [0.0, 0.0, 0.0, 0.0]),
     "5_turb": Layout([TURBINE_SPACING * i for i in range(5)], [0.0, 0.0, 0.0, 0.0, 0.0]),
 }
-wdirs = np.arange(-90.0, 90.0, 0.05)
+wdirs = np.arange(-90.0, 90.0, 0.1)
 
 
 methods = {
@@ -101,7 +101,7 @@ def plot(df: pl.DataFrame, layout="4_turb"):
         mpl.cm.ScalarMappable(norm=norm, cmap="magma"),
         ax=plt.gca(),
         orientation="vertical",
-        label="$|\gamma|$ [deg]",
+        label=r"$|\gamma|$ [deg]",
     )
     graph.set_xlabel(r"$\theta_p$ [deg]")
     graph.set_ylabel(r"$\lambda$ [-]")

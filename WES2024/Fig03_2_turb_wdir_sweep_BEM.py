@@ -111,7 +111,7 @@ def plot(df):
     axes[3].set_ylabel(r"$\gamma$ [deg]")
     axes[4].set_ylabel(r"$C_T'$ [deg]")
 
-    axes[0].set_ylim(0.4, 0.51)
+    axes[0].set_ylim(0.3, 0.51)
     axes[0].legend()
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
