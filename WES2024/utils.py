@@ -4,6 +4,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import ArrayLike
+import matplotlib.pyplot as plt
 import polars as pl
 from mitwindfarm.windfarm import Windfarm, WindfarmSolution
 
@@ -270,53 +272,22 @@ def cache_polars(cache_file: str | Path):
     return decorator
 
 
-def hankel_transform(X, s):
-    """
-    stacks the snapshots, X, so that each new snapshot contains the previous
-    s snapshots.
-    args:
-        X (2D array): n by m matrix.
-        s (int): stack size
-    returns:
-        Xout (2D array): n - (k-1) by k*m matrix.
-    """
-    if X.ndim == 1:
-        X = X.reshape(1, -1)
-    if s == 1:
-        return X
-    l, m = X.shape
-    w = m - (s - 1)
-    out = np.zeros([l * s, w])
+def my_polar_plot(
+    angle_rad: ArrayLike,
+    r: ArrayLike,
+    x: float,
+    y: float,
+    r0: float,
+    width: float,
+    ax: plt.Axes,
+    lw: float = 0.5,
+    style: str = None,
+):
+    angle_rad, r = np.array(angle_rad), np.array(r)
+    # Normalise data
+    r = (r - np.mean(r)) / np.max(np.abs(r)) * width
 
-    for i in range(s):
-        row = X[:, m - i - w : m - i]
-        out[i * l : (i + 1) * l, :] = row
-
-    return out
-
-
-def truncatedSVD(X, r):
-    """
-    Computes the truncated singular value decomposition (SVD)
-    args:
-        X (2d array): Matrix to perform SVD on.
-        rank (int or float): rank parameter of the svd. If a positive integer,
-        truncates to the largest r singular values. If a float such that 0 < r < 1,
-        the rank is the number of singular values needed to reach the energy
-        specified in r. If -1, no truncation is performed.
-    """
-
-    U, S, V = np.linalg.svd(X, full_matrices=False)
-    V = V.conj().T
-    if r >= 1:
-        rank = min(r, U.shape[1])
-
-    elif 0 < r < 1:
-        cumulative_energy = np.cumsum(S**2 / np.sum(S**2))
-        rank = np.searchsorted(cumulative_energy, r) + 1
-
-    U_r = U[:, :rank]
-    S_r = S[:rank]
-    V_r = V[:, :rank]
-
-    return U_r, S_r, V_r
+    # plot mini wind rose with custom location, radius, and width.
+    rose_x = (r + 10) * r0 * (-np.cos(angle_rad)) + x
+    rose_y = (r + 10) * r0 * (np.sin(angle_rad)) + y
+    ax.plot(rose_x, rose_y, style, lw=lw)

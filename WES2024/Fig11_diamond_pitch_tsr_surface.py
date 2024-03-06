@@ -43,6 +43,7 @@ layout = Square(6.0, 5).rotate(45)
 wdirs = np.arange(0.0, 90.0, 0.05)
 
 
+
 methods = {
     "NoControl": NoControlBEM,
     "YawControl": YawControlBEM,

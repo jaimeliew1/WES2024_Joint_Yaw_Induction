@@ -31,7 +31,7 @@ PARALLEL = True
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 
-TURBINE_SPACING = 5.0
+TURBINE_SPACING = 6.0
 layouts = {
     "2_turb": Layout([TURBINE_SPACING * i for i in range(2)], [0.0, 0.0]),
     "3_turb": Layout([TURBINE_SPACING * i for i in range(3)], [0.0, 0.0, 0.0]),
@@ -83,7 +83,7 @@ def plot(df: pl.DataFrame, layout="4_turb"):
         )
     )
 
-    norm = mpl.colors.Normalize(0, 20)
+    norm = mpl.colors.Normalize(0, 40)
     graph = sns.scatterplot(
         df.to_pandas(),
         x="pitch",

@@ -84,7 +84,7 @@ class Controller(ABC):
         windfarm_sol = self.solve_for_setpoints(x)
         return -windfarm_sol.Cp
 
-    def grad_objective_func(self, x) -> (float, ArrayLike):
+    def grad_objective_func(self, x) -> tuple[float, ArrayLike]:
         """Calculate the combined objective function and its gradient.
 
         Parameters:
@@ -220,7 +220,7 @@ class YawControlBEM(Controller):
         return [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(-np.deg2rad(40), np.deg2rad(40)) for _ in range(self.N)]
+        return [(-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((PITCH_OPT, TSR_OPT, _x3) for _x3 in x)
@@ -237,9 +237,9 @@ class JointControlBEM(Controller):
 
     def bounds(self) -> list:
         return (
-            [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)]
-            + [(3, 10) for _ in range(self.N)]
-            + [(-np.deg2rad(40), np.deg2rad(40)) for _ in range(self.N)]
+            [(-np.deg2rad(5), np.deg2rad(10)) for _ in range(self.N)]
+            + [(3, 15) for _ in range(self.N)]
+            + [(-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)]
         )
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
