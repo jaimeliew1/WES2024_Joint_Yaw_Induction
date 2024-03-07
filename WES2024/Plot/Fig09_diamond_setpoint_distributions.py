@@ -34,11 +34,11 @@ group_palette = {
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = diamond_AD.generate(regenerate=regenerate)
-    return df
-
-
-def process(df_quarter: pl.DataFrame) -> pl.DataFrame:
+    df_quarter = (
+        diamond_AD.generate(regenerate=regenerate)
+        .filter(pl.col("min_dist") == 6.0)
+        .filter(pl.col("method") == "JointControl")
+    )
     df = utils.fill_in_other_quadrants(df_quarter)
     return df
 
@@ -76,14 +76,8 @@ def plot(df: pl.DataFrame):
 
 
 def main():
-    df = (
-        generate(regenerate=False)
-        .filter(pl.col("min_dist") == 6.0)
-        .filter(pl.col("method") == "JointControl")
-        .filter(pl.col("wdir") < 90.0)
-    )
-    df_proc = process(df)
-    plot(df_proc)
+    df = generate(regenerate=False)
+    plot(df)
 
 
 if __name__ == "__main__":

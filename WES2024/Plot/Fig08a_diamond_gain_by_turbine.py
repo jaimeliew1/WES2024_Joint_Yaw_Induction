@@ -56,7 +56,7 @@ def main():
 
     # select only the first turbine in each group
     turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0)["turbine"]
-    df = df.filter(pl.col("turbine").is_in(turbines_to_keep)).with_columns(pl.col("wdir").round(2))
+    df = df.filter(pl.col("turbine").is_in(turbines_to_keep))
 
     plot(df)
 

@@ -30,7 +30,8 @@ plot_params = {
 
 
 def generate(regenerate=False):
-    df = diamond_AD.generate(regenerate=regenerate)
+    df_quarter = diamond_AD.generate(regenerate=regenerate)
+    df = utils.fill_in_other_quadrants(df_quarter)
     return df
 
 

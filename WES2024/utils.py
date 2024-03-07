@@ -63,6 +63,8 @@ def fill_in_other_quadrants(
         df_by_turbine.append(_df)
     df_by_turbine = pl.concat(df_by_turbine)
 
+    df_by_turbine = df_by_turbine.with_columns(pl.col("wdir").cast(pl.Float64).round(2))
+
     return df_by_turbine
 
 

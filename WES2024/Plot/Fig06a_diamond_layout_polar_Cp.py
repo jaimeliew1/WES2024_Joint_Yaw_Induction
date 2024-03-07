@@ -28,7 +28,8 @@ layout = Square(10.0, 5).rotate(45)
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = diamond_AD.generate(regenerate=regenerate)
+    df_quarter = diamond_AD.generate(regenerate=regenerate)
+    df = utils.fill_in_other_quadrants(df_quarter)
     return df
 
 
