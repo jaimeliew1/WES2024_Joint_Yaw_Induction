@@ -12,63 +12,28 @@ Key points:
 - Yaw control has non-constant thrust. i.e. yaw and thrust are coupled quantities.
 
 """
-from itertools import product
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from foreach import foreach
-from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
-from test_BEM_gradients import DualBEM
 
 from WES2024 import utils
-
-FILESTEM = Path(__file__).stem
+from WES2024.Generate import two_turbine_BEM
 
 REGENERATE = False
-PARALLEL = True
+FILESTEM = Path(__file__).stem
 
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
-layout = Layout([0, 6], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 0.05)
-
-
-methods = {
-    "NoControl": NoControlBEM,
-    "YawControl": YawControlBEM,
-    "ThrustControl": ThrustControlBEM,
-    "JointControl": JointControlBEM,
-}
-
-
-def _generate(x):
-    method, wdir = x
-    sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
-
-    return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
-    )
-
-
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
-    params = list(product(methods, wdirs))
-
-    dfs = foreach(_generate, params, parallel=PARALLEL)
-    df = pl.concat(dfs)
+    df = two_turbine_BEM.generate(regenerate=regenerate)
     return df
 
 
 def plot(df):
     fig, axes = plt.subplots(5, 1, sharex=True)
 
-    for method in methods:
+    for method in df["method"].unique():
         _df = (
             df.filter(pl.col("method") == method)
             .group_by("wdir")
@@ -112,6 +77,8 @@ def plot(df):
     axes[4].set_ylabel(r"$C_T'$ [deg]")
 
     axes[0].set_ylim(0.3, 0.51)
+    axes[3].set_ylim(-30.0, 30.0)
+    axes[4].set_ylim(1.0, 2.2)
     axes[0].legend()
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")

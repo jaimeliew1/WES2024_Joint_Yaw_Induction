@@ -3,12 +3,11 @@ import pickle
 from dataclasses import asdict
 from pathlib import Path
 
-import numpy as np
-from numpy.typing import ArrayLike
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 from mitwindfarm.windfarm import Windfarm, WindfarmSolution
-
+from numpy.typing import ArrayLike
 
 __all__ = [
     "FIGDIR",
@@ -18,101 +17,15 @@ __all__ = [
     "cache_pickle",
     "cache_polars",
 ]
-
+# fmt: off
 DIAMOND_GROUPS = pl.DataFrame(
     {
-        "turbine": [
-            0,
-            4,
-            24,
-            20,
-            1,
-            9,
-            23,
-            15,
-            2,
-            14,
-            22,
-            10,
-            5,
-            3,
-            19,
-            21,
-            6,
-            8,
-            18,
-            16,
-            7,
-            13,
-            17,
-            11,
-            12,
-            12,
-            12,
-            12,
-        ],
-        "group": [
-            "A",
-            "A",
-            "A",
-            "A",
-            "B",
-            "B",
-            "B",
-            "B",
-            "C",
-            "C",
-            "C",
-            "C",
-            "D",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E",
-            "E",
-            "E",
-            "F",
-            "F",
-            "F",
-            "F",
-            "G",
-            "G",
-            "G",
-            "G",
-        ],
-        "face": [
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-            0,
-            1,
-            2,
-            3,
-        ],
+        "turbine": [0, 4, 24, 20, 1, 9, 23, 15, 2, 14, 22, 10, 5, 3, 19, 21, 6, 8, 18, 16, 7, 13, 17, 11, 12, 12, 12, 12],
+        "group": ["A", "A", "A", "A", "B", "B", "B", "B", "C", "C", "C", "C", "D", "D", "D", "D", "E", "E", "E", "E", "F", "F", "F", "F", "G", "G", "G", "G"],
+        "face": [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
     }
 )
+# fmt: on
 
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)

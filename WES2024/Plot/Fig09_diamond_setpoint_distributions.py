@@ -13,12 +13,12 @@ Key points:
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 import seaborn as sns
-import numpy as np
 
-from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
-
+from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
@@ -34,7 +34,7 @@ group_palette = {
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = Fig07_diamond_wdir_sweep_many_spacings.generate(regenerate)
+    df = diamond_AD.generate(regenerate=regenerate)
     return df
 
 

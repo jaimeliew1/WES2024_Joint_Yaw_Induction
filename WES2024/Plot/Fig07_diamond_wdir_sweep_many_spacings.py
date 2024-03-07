@@ -9,32 +9,17 @@ Key points:
 - ?
 """
 
-from itertools import product
-import random
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import polars as pl
-from foreach import foreach
-from mitwindfarm.Layout import Square
-from mitwindfarm.windfarm import Windfarm
+from WES2024.Generate import diamond_AD
 
-from optimise import JointControl, NoControl, ThrustControl, YawControl
 from WES2024 import utils
 
-REGENERATE = False
 FILESTEM = Path(__file__).stem
+REGENERATE = False
 
-windfarm = Windfarm()
-
-
-methods = {
-    "NoControl": NoControl,
-    "YawControl": YawControl,
-    "ThrustControl": ThrustControl,
-    "JointControl": JointControl,
-}
 
 plot_params = {
     "NoControl": dict(ls="--", c="k", label="No Control"),
@@ -43,35 +28,9 @@ plot_params = {
     "JointControl": dict(c="tab:green", label="Joint Control"),
 }
 
-layouts = {
-    4: Square(4.0, 5).rotate(45),
-    5: Square(5.0, 5).rotate(45),
-    6: Square(6.0, 5).rotate(45),
-    7: Square(7.0, 5).rotate(45),
-    8: Square(8.0, 5).rotate(45),
-    9: Square(9.0, 5).rotate(45),
-    10: Square(10.0, 5).rotate(45),
-}
-wdirs = np.arange(0.0, 90.0, 0.05)
 
-
-# @profile(filename="prof.prof")
-def _generate(x):
-    method, wdir, min_dist = x
-    sol = methods[method](layouts[min_dist].rotate(wdir), windfarm).optimise(use_gradients=True)
-    return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"),
-        pl.lit(wdir).alias("wdir"),
-        pl.lit(min_dist).alias("min_dist"),
-    )
-
-
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
-    params = list(product(methods, wdirs, layouts))
-    random.shuffle(params)
-
-    df = pl.concat(foreach(_generate, params, parallel=True))
+    df = diamond_AD.generate(regenerate=regenerate)
     return df
 
 

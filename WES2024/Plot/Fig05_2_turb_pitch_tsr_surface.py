@@ -15,58 +15,28 @@ thoughts:
 
 """
 
-import itertools
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from foreach import foreach
 from matplotlib.gridspec import GridSpec
-from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
 
-from WES2024 import Fig03_2_turb_wdir_sweep_BEM, utils
+from WES2024 import utils
+from WES2024.Generate import pitch_tsr_surface, two_turbine_BEM
 from WES2024.optimise import PITCH_OPT, TSR_OPT
 
-PARALLEL = True
 REGENERATE = False
 
 XLIM = (-4, 3)
 YLIM = (7, 10)
 
-layout = Layout([0.0], [0.0])
 FILESTEM = Path(__file__).stem
-
-pitches = np.linspace(-6, 6, 150)
-tsrs = np.linspace(5, 15, 150)
-yaws = [0.0]
-
-windfarm = Windfarm(rotor_model=BEM(IEA15MW()))
-
-
-def _generate(x) -> pl.DataFrame:
-    pitch, tsr, yaw = x
-    setpoints = [(np.deg2rad(pitch), tsr, np.deg2rad(yaw))]
-    sol = windfarm(layout, setpoints)
-    df = utils.to_polars(sol)
-    return df
-
-
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_pitch_tsr_surface.csv")
-def generate_pitch_tsr_surface(regenerate=False) -> pl.DataFrame:
-    params = list(itertools.product(pitches, tsrs, yaws))
-
-    df_list = foreach(_generate, params, parallel=PARALLEL)
-
-    return pl.concat(df_list)
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df_surface = generate_pitch_tsr_surface(regenerate)
-    df_opt = Fig03_2_turb_wdir_sweep_BEM.generate(regenerate)
+    df_surface = pitch_tsr_surface.generate(regenerate=regenerate)
+    df_opt = two_turbine_BEM.generate(regenerate=regenerate)
     return df_surface, df_opt
 
 

@@ -18,7 +18,8 @@ import polars as pl
 import numpy as np
 from mitwindfarm.Layout import Square
 
-from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
+from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 
 FILESTEM = Path(__file__).stem
@@ -27,7 +28,7 @@ layout = Square(10.0, 5).rotate(45)
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = Fig07_diamond_wdir_sweep_many_spacings.generate(regenerate)
+    df = diamond_AD.generate(regenerate=regenerate)
     return df
 
 

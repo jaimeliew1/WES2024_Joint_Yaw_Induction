@@ -16,13 +16,21 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import polars as pl
 
-from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
+from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
+plot_params = {
+    "NoControl": dict(ls="--", c="k", label="No Control"),
+    "ThrustControl": dict(c="tab:blue", label="Thrust Control"),
+    "YawControl": dict(c="tab:orange", label="Yaw Control"),
+    "JointControl": dict(c="tab:green", label="Joint Control"),
+}
+
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = Fig07_diamond_wdir_sweep_many_spacings.generate(regenerate)
+    df = diamond_AD.generate(regenerate=regenerate)
     return df
 
 
@@ -40,7 +48,7 @@ def plot(df: pl.DataFrame):
     methods.remove("min_dist")
 
     plt.figure()
-    for method, _plot_params in Fig07_diamond_wdir_sweep_many_spacings.plot_params.items():
+    for method, _plot_params in plot_params.items():
         if method == "NoControl":
             continue
         plt.plot(df_farm_Cp["min_dist"], df_farm_Cp[method], **_plot_params)

@@ -3,22 +3,21 @@ Figure 12b: mini wind roses.
 
 Key points: - ??
 
-DOES THE BEM CODE GIVE THE SAME SET POINTS IF U = 0.5 or U = 1??????????????
-CHECK ON MONDAY!!! I think this is okay. tsr is normalised by free wind speed,
-and so is thrust. so things will change if wind speed changes.
+
 """
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm import Plotting
 from MITRotor.ReferenceTurbines import IEA15MW
+from mitwindfarm import Plotting
 from mitwindfarm.Rotor import BEM
 from mitwindfarm.windfarm import Windfarm
-from test_BEM_gradients import DualBEM
+from WES2024.BEM_gradients import DualBEM
 
-from WES2024 import Fig11_diamond_pitch_tsr_surface, utils
+from WES2024 import utils
+from WES2024.Generate import diamond_BEM
 
 FILESTEM = Path(__file__).stem
 
@@ -29,11 +28,10 @@ windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 
 
 def generate(regenerate=False):
-    return Fig11_diamond_pitch_tsr_surface.generate(regenerate=regenerate)
+    return diamond_BEM.generate(regenerate=regenerate)
 
 
 def plot(df: pl.DataFrame):
-    print(df.columns)
     plt.figure()
     ax = plt.gca()
 
@@ -49,9 +47,9 @@ def plot(df: pl.DataFrame):
 
     df = utils.fill_in_other_quadrants(df_quarter)
     _df_to_plot = df_quarter.filter(pl.col("wdir") == 0.0)
-    print(_df_to_plot)
+
     windfarm_sol = utils.from_polars(_df_to_plot, windfarm)
-    Plotting.plot_windfarm(windfarm_sol, ax=ax, pad=10.0, res=1000)
+    Plotting.plot_windfarm(windfarm_sol, ax=ax, pad=10.0, res=1500)
 
     for i, (x, y, _) in enumerate(windfarm_sol.layout):
         _df = (
@@ -61,20 +59,11 @@ def plot(df: pl.DataFrame):
             .sort("wdir")
         )
 
-        R = 0.5 * 0.75
-
-        rose_x = (_df["pitch"] + 10) * R * (-np.cos(_df["wdir"])) + x
-        rose_y = (_df["pitch"] + 10) * R * (np.sin(_df["wdir"])) + y
-        ax.plot(rose_x, rose_y, "r-", lw=0.5)
-
-        rose_x = (_df["tsr"] + 0) * R * (-np.cos(_df["wdir"])) + x
-        rose_y = (_df["tsr"] + 0) * R * (np.sin(_df["wdir"])) + y
-        ax.plot(rose_x, rose_y, "g-", lw=0.5)
-
-        R = 0.15 * 0.5
-        rose_x = (_df["yaw"] + 50) * R * (-np.cos(_df["wdir"])) + x
-        rose_y = (_df["yaw"] + 50) * R * (np.sin(_df["wdir"])) + y
-        ax.plot(rose_x, rose_y, "b-", lw=0.5)
+        utils.my_polar_plot(
+            _df["wdir"], _df["pitch"], x=x, y=y, r0=0.2, width=5, ax=ax, style="r-"
+        )
+        utils.my_polar_plot(_df["wdir"], _df["tsr"], x=x, y=y, r0=0.2, width=5, ax=ax, style="g-")
+        utils.my_polar_plot(_df["wdir"], _df["yaw"], x=x, y=y, r0=0.2, width=5, ax=ax, style="b-")
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=1000, bbox_inches="tight")
 

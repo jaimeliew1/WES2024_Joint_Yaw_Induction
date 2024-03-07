@@ -6,19 +6,20 @@ This figure qualitatively shows a yaw steering case using the 2 turbine layout.
 """
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 from mitwindfarm import Plotting
 from mitwindfarm.windfarm import Windfarm
 
-from WES2024 import Fig02_2_turb_wdir_sweep_AD, utils
+from WES2024 import utils
+from WES2024.Generate import two_turbine_AD
 
 FILESTEM = Path(__file__).stem
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = Fig02_2_turb_wdir_sweep_AD.generate(regenerate)
+    df = two_turbine_AD.generate(regenerate=regenerate)
     return df
 
 

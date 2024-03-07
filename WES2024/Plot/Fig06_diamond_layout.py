@@ -13,14 +13,14 @@ import polars as pl
 from mitwindfarm import Plotting
 from mitwindfarm.windfarm import Windfarm
 
-from WES2024 import utils, Fig07_diamond_wdir_sweep_many_spacings
-
+from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
 
-def generate(regenerate=False) -> pl.DataFrame:
-    df = Fig07_diamond_wdir_sweep_many_spacings.generate(regenerate)
+def generate(regenerate=False):
+    df = diamond_AD.generate(regenerate=regenerate)
     return df
 
 

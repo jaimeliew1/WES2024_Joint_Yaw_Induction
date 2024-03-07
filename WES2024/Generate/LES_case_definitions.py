@@ -5,11 +5,12 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-import utils
 from foreach import foreach
 from mitwindfarm.Layout import Square
 from mitwindfarm.windfarm import Windfarm
-from optimise import JointControl, NoControl, ThrustControl, YawControl
+
+from WES2024 import utils
+from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
 
 __all__ = [
     "base_layout",
@@ -19,7 +20,7 @@ __all__ = [
 
 REGENERATE = False
 
-OUTPUT_DIR = Path("LES_cases")
+OUTPUT_DIR = Path(__file__).parent.parent.parent / "LES_cases"
 OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
 FILESTEM = Path(__file__).stem
@@ -29,14 +30,7 @@ base_layout = Square(6.0, 5).rotate(45)
 windfarm = Windfarm()
 
 
-wdirs = [
-    0.0,
-    -2.5,
-    2.5,
-    45.0,
-    42.0,
-    48.0,
-]
+wdirs = [0.0, -2.5, 2.5, 45.0, 42.0, 48.0]
 
 controllers = {
     "nocontrol": NoControl,
@@ -52,9 +46,9 @@ class TurbineDefinition:
     Data class representing the definition of a wind turbine.
 
     Attributes:
-    - x (float): X-coordinate of the turbine.
-    - y (float): Y-coordinate of the turbine.
-    - z (float): Z-coordinate (height) of the turbine.
+    - x (float): X-coordinate of the turbine in rotor diamters.
+    - y (float): Y-coordinate of the turbine in rotor diamters.
+    - z (float): Z-coordinate (height) of the turbine in rotor diamters.
     - yaw (float): Yaw angle of the turbine in degrees (positive is anti-clockwise).
     - ctp (float): Local thrust coefficient of the turbine.
     """
@@ -94,7 +88,7 @@ def _generate(x):
     )
 
 
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}_cases.csv")
+@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(controllers.keys(), wdirs))
 
@@ -130,6 +124,12 @@ def main():
         sim_dict = asdict(simulation)
         with open(OUTPUT_DIR / f"{simulation.casename}.json", "w") as f:
             json.dump(sim_dict, f, indent=4)
+
+    # Overview dataframe
+    df_overview = pl.from_dicts(
+        [dict(casename=x.casename, wdir=x.wdir, controller=x.controller) for x in simulations]
+    ).sort("wdir")
+    df_overview.write_csv(OUTPUT_DIR / "overview.csv")
 
 
 if __name__ == "__main__":

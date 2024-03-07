@@ -6,20 +6,21 @@ Key points: - ??
 DOES THE BEM CODE GIVE THE SAME SET POINTS IF U = 0.5 or U = 1??????????????
 CHECK ON MONDAY!!! 
 I NEED TO NORMALISE BASED ON U0 (REWS at the turbine location, but without the
-turbine), NOT U_\inf!!
+turbine), NOT U_inf!!
 """
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm import Plotting
 from MITRotor.ReferenceTurbines import IEA15MW
+from mitwindfarm import Plotting
 from mitwindfarm.Rotor import BEM
 from mitwindfarm.windfarm import Windfarm
-from test_BEM_gradients import DualBEM
+from WES2024.BEM_gradients import DualBEM
 
-from WES2024 import Fig07_diamond_wdir_sweep_many_spacings, utils
+from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
@@ -30,7 +31,7 @@ windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 
 
 def generate(regenerate=False):
-    return Fig07_diamond_wdir_sweep_many_spacings.generate(regenerate=regenerate)
+    return diamond_AD.generate(regenerate=regenerate)
 
 
 def plot(df_quarter: pl.DataFrame):
@@ -48,7 +49,6 @@ def plot(df_quarter: pl.DataFrame):
     df = utils.fill_in_other_quadrants(df_quarter)
 
     _df_to_plot = df_quarter.filter(pl.col("wdir") == 0.0)
-    print(_df_to_plot)
     windfarm_sol = utils.from_polars(_df_to_plot, windfarm)
     Plotting.plot_windfarm(windfarm_sol, ax=ax, pad=10.0, res=1000)
 

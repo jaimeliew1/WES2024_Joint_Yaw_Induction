@@ -16,7 +16,8 @@ import seaborn as sns
 import numpy as np
 import polars as pl
 
-from WES2024 import Fig11_diamond_pitch_tsr_surface, utils
+from WES2024 import utils
+from WES2024.Generate import diamond_BEM
 
 FILESTEM = Path(__file__).stem
 
@@ -35,7 +36,7 @@ group_palette = {
 
 
 def generate(regenerate=False):
-    return Fig11_diamond_pitch_tsr_surface.generate(regenerate=regenerate)
+    return diamond_BEM.generate(regenerate=regenerate)
 
 
 def plot(df: pl.DataFrame):

@@ -10,57 +10,29 @@ Key points:
 - Yaw control is discontinuous.
 - Joint control is smooth.
 """
-from itertools import product
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from foreach import foreach
-from mitwindfarm.Layout import Layout
-from mitwindfarm.windfarm import Windfarm
-from optimise import JointControl, NoControl, ThrustControl, YawControl
 
 from WES2024 import utils
+from WES2024.Generate import two_turbine_AD
 
 FILESTEM = Path(__file__).stem
 
 REGENERATE = False
 
-windfarm = Windfarm()
-layout = Layout([0, 5], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 0.05)
 
-
-methods = {
-    "NoControl": NoControl,
-    "YawControl": YawControl,
-    "ThrustControl": ThrustControl,
-    "JointControl": JointControl,
-}
-
-
-def _generate(x):
-    method, wdir = x
-    sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
-
-    return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
-    )
-
-
-@utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
-    params = list(product(methods, wdirs))
-
-    df = pl.concat(foreach(_generate, params, parallel=True))
+    df = two_turbine_AD.generate(regenerate=regenerate)
     return df
 
 
-def plot(df):
+def plot(df: pl.DataFrame):
     fig, axes = plt.subplots(3, 1, sharex=True)
 
-    for method in methods:
+    for method in df["method"].unique():
         _df = (
             df.filter(pl.col("method") == method)
             .group_by("wdir")
@@ -90,17 +62,11 @@ def plot(df):
     axes[2].set_ylabel(r"$\gamma$ [deg]")
 
     axes[0].set_ylim(0.3, 0.60)
+    axes[1].set_ylim(1.0, 2.2)
+    axes[2].set_ylim(-30.0, 30.0)
     axes[0].legend()
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
-
-
-# def plot_windfarms(df: pl.DataFrame):
-#     for (method, wdir), _df in df.group_by(["method", "wdir"]):
-#         windfarm_sol = utils.from_polars(_df, windfarm)
-#         Plotting.plot_windfarm(windfarm_sol)
-#         plt.savefig(utils.FIGDIR / f"{method}_{wdir}.png", dpi=300, bbox_inches="tight")
-#         plt.close()
 
 
 def main():

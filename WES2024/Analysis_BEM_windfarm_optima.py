@@ -19,13 +19,13 @@ from mitwindfarm.Layout import Layout
 from mitwindfarm.Rotor import BEM
 from mitwindfarm.windfarm import Windfarm
 from optimise import JointControlBEM
-from test_BEM_gradients import DualBEM
+from WES2024.BEM_gradients import DualBEM
 
 from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = True
+REGENERATE = False
 PARALLEL = True
 
 
@@ -70,18 +70,19 @@ def generate(regenerate=False):
     return df
 
 
-def plot(df: pl.DataFrame, layout="4_turb"):
+def plot(df: pl.DataFrame, layout: str):
     fig = plt.figure()
 
     df = (
         df.rename(dict(setpoint_0="pitch", setpoint_1="tsr"))
-        .filter(pl.col("layout") == layout)
         .with_columns(
             np.rad2deg(pl.col("yaw")),
             np.rad2deg(pl.col("pitch")),
             np.rad2deg(np.abs(pl.col("yaw"))).alias("abs_yaw"),
         )
     )
+    if layout is not None:
+        df = df.filter(pl.col("layout") == layout)
 
     norm = mpl.colors.Normalize(0, 40)
     graph = sns.scatterplot(
@@ -115,6 +116,7 @@ def main():
     plot(df, layout="3_turb")
     plot(df, layout="4_turb")
     plot(df, layout="5_turb")
+    plot(df, layout=None)
 
 
 if __name__ == "__main__":
