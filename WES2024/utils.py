@@ -42,7 +42,9 @@ def fill_in_other_quadrants(
     for turbine, group, face in diamond_groups.iter_rows():
         _df = (
             df.filter(pl.col("turbine") == turbine)
-            .with_columns(pl.col("wdir") + face * 90, pl.lit(group).alias("group"))
+            .with_columns(
+                pl.col("wdir") + face * 90, pl.lit(group).alias("group")
+            )
             .select(pl.exclude("turbine", "x", "y", "z"))
         )
         df_by_group.append(_df)
