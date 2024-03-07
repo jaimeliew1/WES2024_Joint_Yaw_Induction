@@ -41,7 +41,9 @@ class JointControl(Controller):
         return [2.0 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.0, 2.0) for _ in range(self.N)] + [tuple(np.deg2rad((-50, 50))) for _ in range(self.N)]
+        return [(0.0, 2.0) for _ in range(self.N)] + [
+            tuple(np.deg2rad((-50, 50))) for _ in range(self.N)
+        ]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x1, _x2) for _x1, _x2 in zip(x[: self.N], x[self.N :]))
