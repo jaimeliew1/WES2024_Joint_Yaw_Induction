@@ -16,9 +16,9 @@ __all__ = ["generate"]
 FILESTEM = Path(__file__).stem
 
 layout = Layout(np.array([0.0]), np.array([0.0]))
-pitches = np.linspace(-6, 6, 150)
+pitches = np.linspace(-15, 15, 150)
 tsrs = np.linspace(5, 15, 150)
-yaws = [0.0]
+yaws = [0.0, 45.0]
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW()))
 
@@ -41,5 +41,5 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=True)
     print(df)

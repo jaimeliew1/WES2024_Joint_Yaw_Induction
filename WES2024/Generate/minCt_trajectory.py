@@ -19,7 +19,7 @@ REGENERATE = True
 
 FILESTEM = Path(__file__).stem
 
-YAWS = np.arange(0.0, 50.1, 20.0)
+YAWS = [0.0, 20.0, 40.0, 45.0]
 
 rotor = IEA15MW()
 bem = BEM(rotor=rotor)
@@ -167,7 +167,7 @@ def derate_spline(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 20) -> BS
 
 def _generate(x):
     yaw = x
-    return generate_derate_strat(bem, np.deg2rad(yaw)).with_columns(yaw=yaw)
+    return generate_derate_strat(bem, np.deg2rad(yaw), N_Cp=20).with_columns(yaw=yaw)
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
