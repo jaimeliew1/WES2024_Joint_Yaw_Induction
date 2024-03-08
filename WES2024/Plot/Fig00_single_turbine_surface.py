@@ -83,16 +83,25 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
         ax.sharex(axes[0, 0])
         ax.sharey(axes[0, 0])
 
+    # Remove tick labels on interior axes
     axes[0, 0].tick_params(labelbottom=False)
     axes[0, 1].tick_params(labelbottom=False)
 
     axes[0, 1].tick_params(labelleft=False)
     axes[1, 1].tick_params(labelleft=False)
 
+    # Set axes limits
     axes[0, 0].set_xlim(*XLIM)
     axes[0, 0].set_ylim(*YLIM)
+
+    # filter data to fit axis limits
     df_surface = df_surface.filter(pl.col("tsr") <= YLIM[1] * 1.01)
 
+    # Axis labels
+    [ax.set_xlabel(r"Pitch, $\theta_p~$(deg) ") for ax in axes[1, :2]]
+    [ax.set_ylabel(r"Tip Speed Ratio, $\lambda~$(-)") for ax in axes[:, 0]]
+
+    # Plot surfaces
     levels = np.arange(0, 0.60, 0.05)
     CF_Cp = plot_surface(
         df_surface.filter(yaw=0.0),
