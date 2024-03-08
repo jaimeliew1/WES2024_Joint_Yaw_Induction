@@ -18,7 +18,7 @@ FILESTEM = Path(__file__).stem
 layout = Layout(np.array([0.0]), np.array([0.0]))
 pitches = np.linspace(-15, 15, 150)
 tsrs = np.linspace(5, 15, 150)
-yaws = [0.0, 45.0]
+yaws = [-45.0, -30.0, -15.0, -5.0, 0.0, 5.0, 15.0, 30.0, 45.0]
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW()))
 
