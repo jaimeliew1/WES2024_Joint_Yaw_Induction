@@ -63,7 +63,7 @@ def plot(df: pl.DataFrame):
     for group, ax in zip(df["group"].unique().sort(), axes.ravel()):
         _df = df.filter(pl.col("group") == group).sort("wdir")
         sns.lineplot(
-            _df.to_pandas(),
+            _df,
             x="yaw",
             y="Ctprime",
             hue="type",
