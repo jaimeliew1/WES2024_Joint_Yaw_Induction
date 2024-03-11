@@ -203,6 +203,14 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             zorder=10,
         )
 
+    # Plot where the global optimal goes
+    dat = df_trajectory.group_by("yaw", maintain_order=True).agg(
+        pl.col("pitch").where(pl.col("Cp") == pl.col("Cp").max()).first(),
+        pl.col("tsr").where(pl.col("Cp") == pl.col("Cp").max()).first(),
+    )
+    for ax in axes[:, 1]:
+        ax.plot(dat["pitch"], dat["tsr"], "tab:orange", lw=1, ls="--")
+
     # Legend, including reordering so lines are at bottom
     axes[0, 0].legend(
         title=r"$C_{P,max}$",

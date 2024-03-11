@@ -19,7 +19,7 @@ REGENERATE = True
 
 FILESTEM = Path(__file__).stem
 
-YAWS = [0.0, 20.0, 40.0, 45.0]
+YAWS = np.arange(0.0, 45.1, 2.5)
 
 rotor = IEA15MW()
 bem = BEM(rotor=rotor)

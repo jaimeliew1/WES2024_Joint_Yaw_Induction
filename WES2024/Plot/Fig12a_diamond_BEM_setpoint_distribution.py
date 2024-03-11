@@ -11,41 +11,22 @@ Key points:
 """
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-
-import seaborn as sns
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Rotor import BEM
-import MITRotor
-from mitwindfarm.windfarm import Windfarm
-from WES2024.Generate import diamond_BEM, minCt_trajectory, pitch_tsr_surface
-from WES2024.BEM_gradients import DualBEM
+import seaborn as sns
 
-from WES2024 import  utils
+from WES2024 import utils
+from WES2024.Generate import diamond_BEM, minCt_trajectory, pitch_tsr_surface
+from WES2024.Plot.Fig00_single_turbine_surface import plot_surface
 
 FILESTEM = Path(__file__).stem
 
 REGENERATE = False
 
-XLIM = (-3, 6)
-YLIM = (5, 10)
-# YAWS = np.arange(0.0, 50.1, 20.0)
-# windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
-
-
-# @utils.cache_polars(utils.CACHEDIR / "min_Ct_trajectory.csv")
-# def generate_min_Ct_trajectory(regenerate=False) -> pl.DataFrame:
-#     rotor = MITRotor.ReferenceTurbines.IEA10MW()
-#     bem = MITRotor.BEM.BEM(rotor=rotor)
-#     out = []
-#     for yaw in YAWS:
-#         out.append(utils.generate_derate_strat(bem, np.deg2rad(yaw)).with_columns(yaw=yaw))
-#     out = pl.concat(out)
-
-#     return out
+XLIM = (-4, 6)
+YLIM = (6, 11)
 
 
 def generate(regenerate=False) -> tuple[pl.DataFrame, ...]:
@@ -56,10 +37,33 @@ def generate(regenerate=False) -> tuple[pl.DataFrame, ...]:
     return df_diamond, df_surface, df_trajectory
 
 
+def overlay_setpoint_scatter(df: pl.DataFrame, ax: plt.Axes, norm, cmap=None) -> any:
+
+    graph = sns.scatterplot(
+        df,
+        x="pitch",
+        y="tsr",
+        hue="abs_yaw",
+        hue_norm=norm,
+        palette=cmap,
+        legend=False,
+        s=3,
+        edgecolors=None,
+        ax=ax,
+    )
+
+    return graph
+
+
 def plot(df: pl.DataFrame, df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
-    fig = plt.figure()
-    ax = plt.gca()
-    norm = mpl.colors.Normalize(0, 50)
+    scatter_cmap = plt.cm.Greys_r  # sns.light_palette("seagreen", as_cmap=True)
+    fig, _axes = plt.subplots(1, 5, width_ratios=[1, 0.1, 0.2, 1, 0.1], figsize=np.array((8, 3)))
+    plt.subplots_adjust(wspace=0.1)
+
+    cbar_axes = _axes[1], _axes[4]
+    axes = _axes[0], _axes[3]
+    _axes[2].set_axis_off()
+    norm = mpl.colors.Normalize(0, 60)
 
     df = df.rename(dict(setpoint_0="pitch", setpoint_1="tsr")).with_columns(
         np.rad2deg(pl.col("yaw")),
@@ -72,70 +76,62 @@ def plot(df: pl.DataFrame, df_surface: pl.DataFrame, df_trajectory: pl.DataFrame
         df_surface.rename(dict(setpoint_0="pitch", setpoint_1="tsr"))
         .filter(pl.col("pitch").degrees().is_between(XLIM[0] - 0.1, XLIM[1] + 0.1))
         .filter(pl.col("tsr").is_between(YLIM[0] - 0.1, YLIM[1] + 0.1))
+        .filter(pl.col("yaw") == 0)
+        .with_columns(pl.col("pitch").degrees())
     )
 
-    df_piv_Cp = df_surface.filter(pl.col("yaw") == 0).pivot(
-        index="tsr", columns="pitch", values="Cp", aggregate_function=None
-    )
-    df_piv_Ct = df_surface.filter(pl.col("yaw") == 0).pivot(
-        index="tsr", columns="pitch", values="Ct", aggregate_function=None
-    )
-    tsr = df_piv_Cp["tsr"].to_numpy()
-    pitch = np.rad2deg(np.array(df_piv_Cp.columns[1:], dtype=float))
-
-    Cp = df_piv_Cp.to_numpy()[:, 1:]
-    Cp[Cp < 0.01] = 0.01
-    Cp[np.isnan(Cp)] = 0.02
-    Ct = df_piv_Ct.to_numpy()[:, 1:]
-    Ct[np.isnan(Ct)] = 0.02
-    Ct[Ct < 0.01] = 0.01
-
-    ## Plot surfaces
     levels = np.arange(0, 0.60, 0.05)
-    CF_Cp = ax.contourf(pitch, tsr, Cp, levels=levels, cmap="viridis")
-    CS = ax.contour(pitch, tsr, Cp, levels=levels, colors="k", linewidths=0.8)
-    ax.clabel(CS, inline=True, fontsize=10)
+    CF_Cp = plot_surface(df_surface, "pitch", "tsr", "Cp", ax=axes[0], levels=levels)
+    levels = np.arange(0, 2, 0.1)
+    CF_Ct = plot_surface(df_surface, "pitch", "tsr", "Ct", ax=axes[1], levels=levels, cmap="plasma")
 
     # Plot minimum thrust trajectories
-    for yaw, _df in df_trajectory.group_by("yaw", maintain_order=True):
-        plt.plot(
+    for yaw, _df in df_trajectory.filter(pl.col("yaw").is_in([0, 20, 40])).group_by(
+        "yaw", maintain_order=True
+    ):
+        axes[0].plot(
             np.rad2deg(_df["pitch"]),
             _df["tsr"],
             "-",
             lw=1.5,
-            c=plt.cm.magma(norm(yaw)),
+            c=scatter_cmap(norm(yaw)),
+            label=r"$\gamma=" + f"{yaw}" + r"^o$",
+        )
+        axes[1].plot(
+            np.rad2deg(_df["pitch"]),
+            _df["tsr"],
+            "-",
+            lw=1.5,
+            c=scatter_cmap(norm(yaw)),
             label=r"$\gamma=" + f"{yaw}" + r"^o$",
         )
 
     # Scatter set points
+    overlay_setpoint_scatter(df, axes[0], norm, cmap=scatter_cmap)
+    overlay_setpoint_scatter(df, axes[1], norm, cmap=scatter_cmap)
 
-    graph = sns.scatterplot(
-        df.to_pandas(),
-        x="pitch",
-        y="tsr",
-        hue="abs_yaw",
-        hue_norm=norm,
-        palette="magma",
-        legend=False,
-        s=3,
-        edgecolors=None,
-        ax=plt.gca(),
+    cbar = plt.colorbar(CF_Cp, cax=cbar_axes[0])
+    cbar.ax.set_title(r"$C_P~$(-)")
+    cbar = plt.colorbar(CF_Ct, cax=cbar_axes[1])
+    cbar.ax.set_title(r"$C_T~$(-)")
+
+    axes[1].tick_params(labelleft=False)
+    axes[1].set_ylabel(None)
+
+    axes[0].set_xlabel(r"$\theta_p$ (deg)")
+    axes[1].set_xlabel(r"$\theta_p$ (deg)")
+    axes[0].set_ylabel(r"$\lambda$ (-)")
+    axes[0].set_xlim(*XLIM)
+    axes[0].set_ylim(*YLIM)
+
+    axes[1].set_xlim(*XLIM)
+    axes[1].set_ylim(*YLIM)
+
+    axes[0].legend(
+        title="Minimum thrust trajectory", loc="lower left", ncol=3, bbox_to_anchor=(0.0, 1.08)
     )
-    fig.colorbar(
-        mpl.cm.ScalarMappable(norm=norm, cmap="magma"),
-        ax=plt.gca(),
-        orientation="vertical",
-        label=r"$|\gamma|$ [deg]",
-    )
-    graph.set_xlabel(r"$\theta_p$ [deg]")
-    graph.set_ylabel(r"$\lambda$ [-]")
 
-    ax.set_xlim(*XLIM)
-    ax.set_ylim(*YLIM)
-
-    ax.legend(title="Minimum thrust\ntrajectory")
-
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")
 
 
 def main():
