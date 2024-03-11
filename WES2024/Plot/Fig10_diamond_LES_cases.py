@@ -2,6 +2,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import polars as pl
+import numpy as np
 
 from WES2024 import utils
 from WES2024.Generate import LES_case_definitions, diamond_AD
@@ -45,9 +46,7 @@ def generate(regenerate=False):
     return df
 
 
-def plot_wdir_sweep(df: pl.DataFrame):
-    plt.figure(figsize=(7, 3))
-    ax = plt.gca()
+def plot_wdir_sweep_abs(df: pl.DataFrame, ax: plt.Axes):
 
     # Plot sweep
     for method, _plot_params in plot_params.items():
@@ -61,24 +60,16 @@ def plot_wdir_sweep(df: pl.DataFrame):
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ax.plot(to_plot["wdir"], to_plot["Cp"], ".k")
 
-    ax.set_xlabel("wind direction (deg)")
-    ax.set_ylabel("$C_P$")
-
     # Plot wind directions of interest at 6D
     for _wdir in df.filter(pl.col("type") == "cases")["wdir"].unique():
         ax.axvline(_wdir, lw=1, ls="--", c="k")
 
     ax.set_ylim(0.1, 0.6)
 
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
-
     ax.set_xlim(-20, 60)
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep.png", dpi=300, bbox_inches="tight")
 
 
-def plot_wdir_sweep_rel(df: pl.DataFrame):
-    plt.figure(figsize=(7, 3))
-    ax = plt.gca()
+def plot_wdir_sweep_rel(df: pl.DataFrame, ax: plt.Axes):
 
     # plot sweep
     for method, _plot_params in plot_params.items():
@@ -106,23 +97,32 @@ def plot_wdir_sweep_rel(df: pl.DataFrame):
         )
         ax.plot(to_plot["wdir"], 100 * (to_plot["Cp"] / ref["Cp"] - 1), ".k")
 
-    ax.set_xlabel("wind direction (deg)")
-    ax.set_ylabel(r"$C_P$ increase (\%)")
-
     # Plot wind directions of interest at 6D
     for _wdir in df.filter(pl.col("type") == "cases")["wdir"].unique():
         ax.axvline(_wdir, lw=1, ls="--", c="k")
 
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
-
     ax.set_xlim(-20, 60)
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep_rel.png", dpi=300, bbox_inches="tight")
+
+
+def plot_wdir_sweep(df: pl.DataFrame):
+    fig, axes = plt.subplots(2, 1, sharex=True, figsize=np.array([8, 4]))
+    plot_wdir_sweep_abs(df, axes[0])
+    plot_wdir_sweep_rel(df, axes[1])
+
+    # Legend
+    axes[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
+
+    # axes labels
+    axes[1].set_xlabel("wind direction (deg)")
+    axes[0].set_ylabel(r"$C_{P, \mathrm{farm}}$")
+    axes[1].set_ylabel(r"$C_{P, \mathrm{farm}}$ increase (\%)")
+
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep.png", dpi=300, bbox_inches="tight")
 
 
 def main():
     df = generate(regenerate=REGENERATE)
     plot_wdir_sweep(df)
-    plot_wdir_sweep_rel(df)
 
 
 if __name__ == "__main__":
