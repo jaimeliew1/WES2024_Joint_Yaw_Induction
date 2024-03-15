@@ -19,84 +19,81 @@ import polars as pl
 import seaborn as sns
 
 from WES2024 import utils
-from WES2024.Generate import diamond_AD
+from WES2024.Generate import diamond_AD_sensitivity
+from rich import print
 
 FILESTEM = Path(__file__).stem
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = diamond_AD.generate(regenerate=regenerate)
+    df = diamond_AD_sensitivity.generate(regenerate=regenerate)
     return df.filter(pl.col("min_dist") == 6.0)
 
 
-def plot(df_full: pl.DataFrame, df: pl.DataFrame):
-    df_agg = df.group_by("group", "method").agg(pl.col("Cp").mean())
-    df_ref = df_agg.filter(pl.col("method") == "NoControl")
-
-    df_agg = (
-        df_agg.join(df_ref, on="group")
-        .select("group", "method", (100 * (pl.col("Cp") / pl.col("Cp_right") - 1)).alias("Cp"))
-        .filter(pl.col("method") != "NoControl")
-        .sort("group")
-    )
-    df_farm_agg = df_full.group_by("method").agg(pl.col("Cp").mean())
-    Cp_farm_ref = df_farm_agg.filter(pl.col("method") == "NoControl")["Cp"][0]
-    df_farm_agg = df_farm_agg.with_columns(
-        (100 * (pl.col("Cp") / Cp_farm_ref - 1)).alias("Cp"), pl.lit("farm").alias("group")
-    )
-    print(df_farm_agg)
+def plot(df: pl.DataFrame):
 
     fig, axes = plt.subplots(1, 2, width_ratios=[1, 1 / 8], figsize=0.8 * np.array([10, 4]))
     plt.subplots_adjust(wspace=0.3)
+    df_agg = df.group_by("group", "method").agg(pl.col("dCpdwdir").abs().max()).sort("group")
+    print(df_agg)
 
     sns.barplot(
         df_agg,
         x="group",
-        y="Cp",
+        y="dCpdwdir",
         hue="method",
-        hue_order=["ThrustControl", "YawControl", "JointControl"],
+        hue_order=["NoControl", "ThrustControl", "YawControl", "JointControl"],
         ax=axes[0],
-        legend=True,
     )
+    df_agg_farm = (
+        df.group_by("method", "wdir")
+        .mean()
+        .group_by("method")
+        .agg(pl.col("dCpdwdir").abs().max())
+        .with_columns(pl.lit("Farm").alias("group"))
+    )
+    print(df_agg_farm)
 
     sns.barplot(
-        df_farm_agg,
+        df_agg_farm,
         x="group",
-        y="Cp",
+        y="dCpdwdir",
         hue="method",
-        hue_order=["ThrustControl", "YawControl", "JointControl"],
+        hue_order=["NoControl", "ThrustControl", "YawControl", "JointControl"],
         ax=axes[1],
         legend=False,
     )
-
-    axes[0].set_ylabel(r"$C_P/C_{P,\mathrm{ref}}$")
-    axes[1].set_ylabel(r"$C_{P,\mathrm{farm}}/C_{P,\mathrm{farm,ref}}$")
+    axes[0].set_ylabel(
+        r"$\max\left(\left|\frac{\partial C_P}{\partial \alpha}\right|\right) $(deg$^{-1}$)"
+    )
+    axes[1].set_ylabel(
+        r"$\max\left(\left|\frac{\partial C_{P,\mathrm{farm}}}{\partial \alpha}\right|\right) $(deg$^{-1}$)"
+    )
 
     sns.move_legend(
         axes[0],
         "lower center",
         bbox_to_anchor=(0.5, 1.02),
         ncol=4,
+        # frameon=False,
+        # fontsize="xx-small",
         title=None,
     )
-
+    # axes[0].legend(loc='lower center', bbox_to_anchor=(0.5, 1.01))
     # Set same y lim on both axes
     axes[1].set_ylim(*axes[0].get_ylim())
     axes[1].set_xlabel("")
 
     axes[0].set_xlabel("Turbine")
+
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 def main():
     df_quarter = generate(regenerate=False)
-    df_full = utils.fill_in_other_quadrants(df_quarter)
+    df = utils.fill_in_other_quadrants(df_quarter)
 
-    # select only the first turbine in each group
-    turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0)["turbine"]
-    df = df_full.filter(pl.col("turbine").is_in(turbines_to_keep))
-
-    plot(df_full, df)
+    plot(df)
 
 
 if __name__ == "__main__":
