@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-from foreach import foreach
+import foreach
 from mitwindfarm.Layout import Layout
 from mitwindfarm.windfarm import Windfarm
 

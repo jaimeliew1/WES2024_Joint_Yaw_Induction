@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import polars as pl
-from foreach import foreach
+import foreach
 from mitwindfarm.windfarm import Windfarm
 from MITRotor.ReferenceTurbines import IEA15MW
 from mitwindfarm.Rotor import BEM
@@ -40,7 +40,7 @@ def _generate(x) -> pl.DataFrame:
 def generate(regenerate=False):
     df = two_turbine_BEM.generate()
     params = [_df for _, _df in df.group_by("method", "wdir")]
-    df = pl.concat(foreach(_generate, params, parallel=False))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
     return df
 
 

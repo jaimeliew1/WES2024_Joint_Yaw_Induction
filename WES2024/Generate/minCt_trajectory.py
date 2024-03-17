@@ -3,7 +3,7 @@ from pathlib import Path
 import MITRotor
 import numpy as np
 import polars as pl
-from foreach import foreach
+import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
 from MITRotor.BEM import BEM, BEMSolution
 
