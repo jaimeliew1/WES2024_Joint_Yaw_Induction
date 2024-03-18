@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import MITRotor
 import numpy as np
 import polars as pl
 import foreach
@@ -9,7 +8,6 @@ from MITRotor.BEM import BEM, BEMSolution
 
 from scipy.interpolate import BSpline, make_interp_spline
 from scipy.optimize import minimize, minimize_scalar, root_scalar
-from tqdm import tqdm
 
 from WES2024 import utils
 
@@ -19,7 +17,7 @@ REGENERATE = True
 
 FILESTEM = Path(__file__).stem
 
-YAWS = np.arange(0.0, 45.1, 2.5)
+YAWS = np.arange(0.0, 50.1, 2.5)
 
 rotor = IEA15MW()
 bem = BEM(rotor=rotor)
@@ -128,7 +126,7 @@ def generate_derate_strat(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 2
     Cps = np.linspace(0.35 * Cp_opt, Cp_opt - 0.01, N_Cp)
 
     trajectory = []
-    for Cp in tqdm(Cps):
+    for Cp in Cps:
         sol = Ctprime_minimising_Cp_setpoint(Cp, bem, sol_opt, N_theta=N_theta)
         trajectory.append((sol.pitch, sol.tsr, Cp, sol.Ctprime()))
 
