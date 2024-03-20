@@ -27,44 +27,52 @@ from WES2024.Generate import two_turbine_AD, two_turbine_BEM
 REGENERATE = False
 FILESTEM = Path(__file__).stem
 
+INCLUDE_K_OMEGA = False
+
 plot_params = {
     ("NoControl", "AD"): dict(
         label=f"{utils.controller_labels["NoControl"]} (AD)",
         c="0.0",
-    ),
-    ("ThrustControl", "AD"): dict(
-        label=f"{utils.controller_labels["ThrustControl"]} (AD)",
-        c=plt.cm.tab20(0 / 20),
-    ),
-    ("YawControl", "AD"): dict(
-        label=f"{utils.controller_labels["YawControl"]} (AD)",
-        c=plt.cm.tab20(2 / 20),
-    ),
-    ("JointControl", "AD"): dict(
-        label=f"{utils.controller_labels["JointControl"]} (AD)",
-        c=plt.cm.tab20(4 / 20),
     ),
     ("NoControl", "BEM"): dict(
         label=f"{utils.controller_labels["NoControl"]} (BEM)",
         ls="--",
         c="0.6",
     ),
+    ("ThrustControl", "AD"): dict(
+        label=f"{utils.controller_labels["ThrustControl"]} (AD)",
+        c=plt.cm.tab20(0 / 20),
+    ),
     ("ThrustControl", "BEM"): dict(
         label=f"{utils.controller_labels["ThrustControl"]} (BEM)",
         ls="--",
         c=plt.cm.tab20((0 + 1) / 20),
+    ),
+    ("YawControl", "AD"): dict(
+        label=f"{utils.controller_labels["YawControl"]} (AD)",
+        c=plt.cm.tab20(2 / 20),
     ),
     ("YawControl", "BEM"): dict(
         label=f"{utils.controller_labels["YawControl"]} (BEM)",
         ls="--",
         c=plt.cm.tab20((2 + 1) / 20),
     ),
+    ("JointControl", "AD"): dict(
+        label=f"{utils.controller_labels["JointControl"]} (AD)",
+        c=plt.cm.tab20(4 / 20),
+    ),
     ("JointControl", "BEM"): dict(
         label=f"{utils.controller_labels["JointControl"]} (BEM)",
         ls="--",
         c=plt.cm.tab20((4 + 1) / 20),
     ),
+    ("YawKOmegaControl", "BEM"): dict(
+        label=f"{utils.controller_labels["YawKOmegaControl"]} (BEM)",
+        ls=":",
+        c=plt.cm.tab20((6 + 1) / 20),
+    ),
 }
+
 
 axis_params = {
     "Cp_AD": dict(
@@ -127,10 +135,24 @@ def generate(regenerate=False):
     # Concatenate AD and BEM data. remove yaw control data points for wdir=0 to
     # highlight discontinuity.
     df = pl.concat([df_AD, df_BEM], how="diagonal_relaxed").with_columns(
-        pl.when(pl.col("method") == "YawControl", pl.col("yaw").abs() < 1e-2)
+        pl.when(
+            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
+        )
         .then(np.nan)
         .otherwise(pl.col("yaw"))
-        .alias("yaw")
+        .alias("yaw"),
+        pl.when(
+            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
+        )
+        .then(np.nan)
+        .otherwise(pl.col("tsr"))
+        .alias("tsr"),
+        pl.when(
+            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
+        )
+        .then(np.nan)
+        .otherwise(pl.col("Cp_BEM"))
+        .alias("Cp_BEM"),
     )
     return df
 
@@ -141,8 +163,12 @@ def plot(df):
 
     keys = ["Cp_AD", "Cp_BEM", "Ctprime", "yaw", "pitch", "tsr"]
     methods = ["NoControl", "ThrustControl", "YawControl", "JointControl"]
+    if INCLUDE_K_OMEGA:
+        methods += ["YawKOmegaControl"]
     sim_types = ["AD", "BEM"]
     for (ax, key), method, sim_type in product(zip(axes.ravel(), keys), methods, sim_types):
+        if (method, sim_type) == ("YawKOmegaControl", "AD"):
+            continue
         _df = (
             df.filter(pl.col("method") == method)
             .filter(pl.col("type") == sim_type)

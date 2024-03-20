@@ -1,5 +1,6 @@
 from itertools import product
 from pathlib import Path
+from functools import partial
 
 import numpy as np
 import polars as pl
@@ -11,7 +12,13 @@ from mitwindfarm.windfarm import Windfarm
 from WES2024.BEM_gradients import DualBEM
 
 from WES2024 import utils
-from WES2024.optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
+from WES2024.optimise import (
+    JointControlBEM,
+    NoControlBEM,
+    ThrustControlBEM,
+    YawControlBEM,
+    YawControlKOmegaBEM,
+)
 
 __all__ = ["generate"]
 
@@ -23,9 +30,11 @@ PARALLEL = True
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
+# wdirs = [0.0, 1.0, 2.0, 3.0]
 
 
 methods = {
+    "YawKOmegaControl": YawControlKOmegaBEM,
     "NoControl": NoControlBEM,
     "YawControl": YawControlBEM,
     "ThrustControl": ThrustControlBEM,

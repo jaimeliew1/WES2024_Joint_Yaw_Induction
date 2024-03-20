@@ -31,10 +31,11 @@ class Controller(ABC):
         """
         pass
 
-    def __init__(self, layout, windfarm):
+    def __init__(self, layout, windfarm, Komega_constraint=False):
         self.layout = layout
         self.windfarm = windfarm
         self.N = len(layout)
+        self.Komega_constraint = Komega_constraint
 
     def optimise(self, verbose=False, use_gradients=True, Cp_constraint=None) -> WindfarmSolution:
         """Optimize the wind farm layout.
@@ -55,6 +56,12 @@ class Controller(ABC):
             constraint = dict(type="ineq", fun=self.constraint_func)
             if use_gradients:
                 constraint["jac"] = self.constraint_jac_func
+        else:
+            constraint = None
+        if self.Komega_constraint:
+            constraint = dict(type="eq", fun=self.K_omega_constraint_func)
+            if use_gradients:
+                constraint["jac"] = self.K_omega_constraint_jac_func
         else:
             constraint = None
 
@@ -181,9 +188,10 @@ class JointControl(Controller):
         return self.windfarm(self.layout, setpoints)
 
 
-# Calculated in separate optimiation
-PITCH_OPT = -0.01975796119579272
+# Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
+PITCH_OPT = -0.018804860075115795
 TSR_OPT = 9.138197665010335
+CP_OPT = 0.5065639542511471
 
 
 class NoControlBEM(Controller):
@@ -225,6 +233,50 @@ class YawControlBEM(Controller):
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((PITCH_OPT, TSR_OPT, _x3) for _x3 in x)
         return self.windfarm(self.layout, setpoints)
+
+
+class YawControlKOmegaBEM(Controller):
+    def __init__(self, *args, Komega_constraint=True, **kwargs):
+        super().__init__(*args, Komega_constraint=Komega_constraint, **kwargs)
+
+    def initial_guess(self) -> ArrayLike:
+        return [TSR_OPT for _ in range(self.N)] + [0.0 for _ in range(self.N)]
+
+    def bounds(self) -> list:
+        return [(1, 10) for _ in range(self.N)] + [
+            (-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)
+        ]
+
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        setpoints = list((PITCH_OPT, _x2, _x3) for _x2, _x3 in zip(x[: self.N], x[self.N :]))
+        return self.windfarm(self.layout, setpoints)
+
+    def K_omega_constraint_func(self, x) -> list[float]:
+        """Calculate the constraint function on all turbines.
+
+        Parameters:
+            x: Input variables.
+
+        Returns:
+            List[float]: List of constraint values.
+        """
+        x = DualVariables(x)
+        sol = self.solve_for_setpoints(x)
+        constraints_dual = [
+            rotor.Cp / rotor.extra.tsr**3 - CP_OPT / TSR_OPT**3 for rotor in sol.rotors
+        ]
+
+        constraints = [x.real[0] for x in constraints_dual]
+        self._Komega_grad = [x.dual[0] for x in constraints_dual]
+        
+        return constraints
+
+    def K_omega_constraint_jac_func(self, x) -> ArrayLike:
+        """
+        Returns jacobian of constraint function. retrieved from cached call of
+        constraint_func.
+        """
+        return self._Komega_grad
 
 
 class JointControlBEM(Controller):
