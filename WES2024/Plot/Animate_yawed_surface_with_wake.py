@@ -267,7 +267,7 @@ def _func(x):
 
 def main(fps: int):
     df_surface, df_traj = generate(regenerate=False)
-    t_max = 5
+    t_max = 10
     dt = 1 / fps
     t = np.arange(0, t_max, dt)
     tstart1, tend1 = 1, 4
@@ -275,14 +275,13 @@ def main(fps: int):
     yaws = (
         45
         * smoothstep((t - tstart1) / (tend1 - tstart1))
-        # * (1 - smoothstep((t - tstart2) / (tend2 - tstart2)))
+        * (1 - smoothstep((t - tstart2) / (tend2 - tstart2)))
     )
 
     params = list(enumerate(zip(yaws, repeat(df_surface), repeat(df_traj))))
     foreach(_func, params, context="spawn", parallel=True, processes=16)
 
     animate(TEMPDIR, utils.FIGDIR / "pitch_tsr_animation.mp4", framerate=fps)
-    animate(TEMPDIR, utils.FIGDIR / "pitch_tsr_animation.gif", framerate=fps)
 
 
 if __name__ == "__main__":
