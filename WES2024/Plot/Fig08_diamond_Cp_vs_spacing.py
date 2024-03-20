@@ -21,13 +21,6 @@ from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
-plot_params = {
-    "NoControl": dict(ls="--", c="k", label="No Control"),
-    "ThrustControl": dict(c="tab:blue", label="Thrust Control"),
-    "YawControl": dict(c="tab:orange", label="Yaw Control"),
-    "JointControl": dict(c="tab:green", label="Joint Control"),
-}
-
 
 def generate(regenerate=False) -> pl.DataFrame:
     df = diamond_AD.generate(regenerate=regenerate)
@@ -48,7 +41,7 @@ def plot(df: pl.DataFrame):
     methods.remove("min_dist")
 
     plt.figure()
-    for method, _plot_params in plot_params.items():
+    for method, _plot_params in utils.line_params.items():
         if method == "NoControl":
             continue
         plt.plot(df_farm_Cp["min_dist"], df_farm_Cp[method], **_plot_params)

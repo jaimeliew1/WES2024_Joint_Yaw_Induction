@@ -117,8 +117,8 @@ def plot_sensitivity_vs_wdir(df: pl.DataFrame):
 
     for method, _df in out.group_by("method"):
         _df = _df.sort("wdir")
-        axes[0].plot(_df["wdir"], _df["Cp"])
-        axes[1].plot(_df["wdir"], _df["sensitivity"])
+        axes[0].plot(_df["wdir"], _df["Cp"], c=utils.controller_colors[method])
+        axes[1].plot(_df["wdir"], _df["sensitivity"], c=utils.controller_colors[method])
         wdir_max_sensitivity = _df.filter(sensitivity=pl.col("sensitivity").max())["wdir"][0]
         axes[0].axvline(wdir_max_sensitivity, c="k", ls="--", lw=1)
         axes[1].axvline(wdir_max_sensitivity, c="k", ls="--", lw=1)

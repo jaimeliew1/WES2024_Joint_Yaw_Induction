@@ -16,7 +16,36 @@ __all__ = [
     "from_polars",
     "cache_pickle",
     "cache_polars",
+    "controller_colors",
+    "controller_labels",
 ]
+
+controller_colors = {
+    "NoControl": "k",
+    "ThrustControl": "tab:blue",
+    "YawControl": "tab:orange",
+    "JointControl": "tab:green",
+}
+
+
+controller_labels = {
+    "NoControl": "No Control",
+    "ThrustControl": "Thrust Control",
+    "YawControl": "Yaw Control",
+    "JointControl": "Joint Control",
+}
+
+line_params = {
+    "NoControl": dict(label=controller_labels["NoControl"], c=controller_colors["NoControl"], ls="--"),
+    "ThrustControl": dict(
+        label=controller_labels["ThrustControl"], c=controller_colors["ThrustControl"]
+    ),
+    "YawControl": dict(label=controller_labels["YawControl"], c=controller_colors["YawControl"]),
+    "JointControl": dict(
+        label=controller_labels["JointControl"], c=controller_colors["JointControl"]
+    ),
+}
+
 # fmt: off
 DIAMOND_GROUPS = pl.DataFrame(
     {
@@ -42,9 +71,7 @@ def fill_in_other_quadrants(
     for turbine, group, face in diamond_groups.iter_rows():
         _df = (
             df.filter(pl.col("turbine") == turbine)
-            .with_columns(
-                pl.col("wdir") + face * 90, pl.lit(group).alias("group")
-            )
+            .with_columns(pl.col("wdir") + face * 90, pl.lit(group).alias("group"))
             .select(pl.exclude("turbine", "x", "y", "z"))
         )
         df_by_group.append(_df)

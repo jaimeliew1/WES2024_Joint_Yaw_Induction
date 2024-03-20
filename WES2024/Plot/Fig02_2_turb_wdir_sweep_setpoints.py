@@ -29,40 +29,40 @@ FILESTEM = Path(__file__).stem
 
 plot_params = {
     ("NoControl", "AD"): dict(
-        label="NoControl (AD)",
-        c=plt.cm.tab20(0 / 20),
+        label=f"{utils.controller_labels["NoControl"]} (AD)",
+        c="0.0",
     ),
     ("ThrustControl", "AD"): dict(
-        label="ThrustControl (AD)",
-        c=plt.cm.tab20(2 / 20),
+        label=f"{utils.controller_labels["ThrustControl"]} (AD)",
+        c=plt.cm.tab20(0 / 20),
     ),
     ("YawControl", "AD"): dict(
-        label="YawControl (AD)",
-        c=plt.cm.tab20(4 / 20),
+        label=f"{utils.controller_labels["YawControl"]} (AD)",
+        c=plt.cm.tab20(2 / 20),
     ),
     ("JointControl", "AD"): dict(
-        label="JointControl (AD)",
-        c=plt.cm.tab20(6 / 20),
+        label=f"{utils.controller_labels["JointControl"]} (AD)",
+        c=plt.cm.tab20(4 / 20),
     ),
     ("NoControl", "BEM"): dict(
+        label=f"{utils.controller_labels["NoControl"]} (BEM)",
         ls="--",
-        label="NoControl (BEM)",
-        c=plt.cm.tab20((0 + 1) / 20),
+        c="0.6",
     ),
     ("ThrustControl", "BEM"): dict(
+        label=f"{utils.controller_labels["ThrustControl"]} (BEM)",
         ls="--",
-        label="ThrustControl (BEM)",
-        c=plt.cm.tab20((2 + 1) / 20),
+        c=plt.cm.tab20((0 + 1) / 20),
     ),
     ("YawControl", "BEM"): dict(
+        label=f"{utils.controller_labels["YawControl"]} (BEM)",
         ls="--",
-        label="YawControl (BEM)",
-        c=plt.cm.tab20((4 + 1) / 20),
+        c=plt.cm.tab20((2 + 1) / 20),
     ),
     ("JointControl", "BEM"): dict(
+        label=f"{utils.controller_labels["JointControl"]} (BEM)",
         ls="--",
-        label="JointControl (BEM)",
-        c=plt.cm.tab20((6 + 1) / 20),
+        c=plt.cm.tab20((4 + 1) / 20),
     ),
 }
 
@@ -85,12 +85,12 @@ axis_params = {
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
         title="d) Optimal yaw angle",
-        ylim=None,
+        ylim=(-30, 30),
     ),
     "pitch": dict(
         ylabel=r"$\theta_p$ (deg)",
         title="e) Optimal blade pitch",
-        ylim=None,
+        ylim=(-1.5, 2.0),
     ),
     "tsr": dict(
         ylabel=r"$\lambda$",

@@ -36,15 +36,23 @@ def plot(df_full: pl.DataFrame):
     for (group, _df), ax in zip(df.sort("group").group_by("group", maintain_order=True), axes):
         for method, __df in _df.sort("method").group_by("method", maintain_order=True):
             __df = __df.sort("wdir")
-            ax.plot(__df["wdir"], __df["dCpdwdir"], label=method)
+            ax.plot(
+                __df["wdir"],
+                __df["dCpdwdir"],
+                label=utils.controller_labels[method],
+                c=utils.controller_colors[method],
+            )
             print(group, method, __df["dCpdwdir"].max())
-
 
     for method, _df in df_full.sort("method").group_by("method", maintain_order=True):
 
-            _df = _df.group_by("wdir").agg(pl.col("dCpdwdir").mean()).sort("wdir")
-            breakpoint()
-            axes[-1].plot(_df["wdir"], _df["dCpdwdir"], label=method)
+        _df = _df.group_by("wdir").agg(pl.col("dCpdwdir").mean()).sort("wdir")
+        axes[-1].plot(
+            _df["wdir"],
+            _df["dCpdwdir"],
+            label=utils.controller_labels[method],
+            c=utils.controller_colors[method],
+        )
 
     plt.xlim(0, 360)
     axes[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)

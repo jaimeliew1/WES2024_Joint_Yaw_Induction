@@ -43,6 +43,7 @@ def plot(df: pl.DataFrame):
         y="dCpdwdir",
         hue="method",
         hue_order=["NoControl", "ThrustControl", "YawControl", "JointControl"],
+        palette=utils.controller_colors,
         ax=axes[0],
     )
     df_agg_farm = (
@@ -60,6 +61,7 @@ def plot(df: pl.DataFrame):
         y="dCpdwdir",
         hue="method",
         hue_order=["NoControl", "ThrustControl", "YawControl", "JointControl"],
+        palette=utils.controller_colors,
         ax=axes[1],
         legend=False,
     )

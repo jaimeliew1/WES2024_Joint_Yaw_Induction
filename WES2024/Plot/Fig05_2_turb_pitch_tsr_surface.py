@@ -96,7 +96,7 @@ def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
     for method in ["ThrustControl", "JointControl"]:
         _df = df_opt.filter(pl.col("method") == method).sort("wdir")
         for ax in axes:
-            ax.plot(np.rad2deg(_df["pitch"]), _df["tsr"], label=method)
+            ax.plot(np.rad2deg(_df["pitch"]), _df["tsr"], **utils.line_params[method])
 
     # Add colorbar
     cbar = plt.colorbar(CF_Cp, ax=axes[0], aspect=20)

@@ -47,7 +47,7 @@ def plot_windfarm(sol: WindfarmSolution, ax=None, pad=1, frame=True, axis=False,
     xlim = (np.min(sol.layout.x) - pad, np.max(sol.layout.x) + 5)
     ylim = (np.min(sol.layout.y) - pad, np.max(sol.layout.y) + pad)
 
-    _x, _y = np.linspace(*xlim, 600), np.linspace(*ylim, 600)
+    _x, _y = np.linspace(*xlim, 1000), np.linspace(*ylim, 1000)
     xmesh, ymesh, x0, y0 = rotated_meshgrid(_x, _y, angle_rad)
     wsp = sol.windfield.wsp(xmesh, ymesh, np.zeros_like(xmesh))
     ax.imshow(wsp, extent=[*xlim, *ylim], vmin=-0.1, vmax=2.1, origin="lower", cmap="RdYlBu_r")
@@ -69,6 +69,11 @@ def plot_windfarm(sol: WindfarmSolution, ax=None, pad=1, frame=True, axis=False,
         # color_denom = 0.65
         color = "k"  # plt.cm.plasma(rotor.Cp / color_denom)
         ax.plot(points[0, :], points[1, :], lw=2, c=color)
+    
+    # centerline of 2 turbines
+    # plt.axhline(points[1, :].mean(), ls="--", c="k", lw=1)
+
+
     ax.set(frame_on=frame)
     if axis is False:
         ax.set(xticks=[], yticks=[])
@@ -82,7 +87,8 @@ def plot(df: pl.DataFrame):
     plt.figure()
     windfarm_sol = utils.from_polars(_df, windfarm)
     plot_windfarm(windfarm_sol, plt.gca(), angle=wdir, pad=2)
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+
+    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=1000, bbox_inches="tight")
     plt.close()
 
 

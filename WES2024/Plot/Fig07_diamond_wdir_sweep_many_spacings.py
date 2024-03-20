@@ -21,14 +21,6 @@ FILESTEM = Path(__file__).stem
 REGENERATE = False
 
 
-plot_params = {
-    "NoControl": dict(ls="--", c="k", label="No Control"),
-    "ThrustControl": dict(c="tab:blue", label="Thrust Control"),
-    "YawControl": dict(c="tab:orange", label="Yaw Control"),
-    "JointControl": dict(c="tab:green", label="Joint Control"),
-}
-
-
 def generate(regenerate=False):
     df_quarter = diamond_AD.generate(regenerate=regenerate)
     df = utils.fill_in_other_quadrants(df_quarter)
@@ -49,10 +41,10 @@ def plot_Cp_vs_distance(df: pl.DataFrame):
             va="top",
             transform=ax.transAxes,
         )
-        for method, _plot_params in plot_params.items():
+        for method, _plot_params in utils.line_params.items():
             _df = df.filter(pl.col("min_dist") == min_dist).filter(pl.col("method") == method)
             to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
-            ax.plot(to_plot["wdir"], to_plot["Cp"], **plot_params[method])
+            ax.plot(to_plot["wdir"], to_plot["Cp"], **_plot_params)
 
     axes[-1].set_xlabel("wind direction (deg)")
     [ax.set_ylabel("$C_P$") for ax in axes]

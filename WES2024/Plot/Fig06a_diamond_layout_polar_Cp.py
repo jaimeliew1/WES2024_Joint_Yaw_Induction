@@ -33,14 +33,6 @@ def generate(regenerate=False) -> pl.DataFrame:
     return df
 
 
-styles = {
-    "NoControl": dict(c="k", ls="--", lw=1, label="NoControl"),
-    "ThrustControl": dict(c="tab:blue", lw=1, label="ThrustControl"),
-    "YawControl": dict(c="tab:orange", lw=1, label="YawControl"),
-    "JointControl": dict(c="tab:red", lw=1, label="JointControl"),
-}
-
-
 def plot(df: pl.DataFrame):
     _df = (
         df.filter(pl.col("min_dist") == 7)
@@ -65,8 +57,8 @@ def plot(df: pl.DataFrame):
     wdirs = np.deg2rad(_df["wdir"])
     for method in ["NoControl", "ThrustControl", "YawControl", "JointControl"]:
         for sector in [0, 1, 2, 3]:
-            axp.plot(sector * np.pi / 2 + wdirs, _df[method], **styles[method])
-            styles[method]["label"] = None
+            axp.plot(sector * np.pi / 2 + wdirs, _df[method], **utils.line_params[method])
+            utils.line_params[method]["label"] = None
 
     xs, ys = layout.x, layout.y
     xs -= xs.mean()

@@ -18,13 +18,6 @@ method_name_map = {
     "thrustcontrol": "ThrustControl",
 }
 
-plot_params = {
-    "NoControl": dict(ls="--", c="k", label="No Control"),
-    "JointControl": dict(c="tab:green", label="Joint Control"),
-    "YawControl": dict(c="tab:orange", label="Yaw Control"),
-    "ThrustControl": dict(c="tab:blue", label="Thrust Control"),
-}
-
 
 def generate(regenerate=False):
     df_LES = (
@@ -47,15 +40,14 @@ def generate(regenerate=False):
 
 
 def plot_wdir_sweep_abs(df: pl.DataFrame, ax: plt.Axes):
-
     # Plot sweep
-    for method, _plot_params in plot_params.items():
+    for method, _plot_params in utils.line_params.items():
         _df = df.filter(pl.col("type") == "sweep").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ax.plot(to_plot["wdir"], to_plot["Cp"], **_plot_params)
 
     # Plot cases
-    for method, _plot_params in plot_params.items():
+    for method, _plot_params in utils.line_params.items():
         _df = df.filter(pl.col("type") == "cases").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ax.plot(to_plot["wdir"], to_plot["Cp"], ".k")
@@ -70,9 +62,8 @@ def plot_wdir_sweep_abs(df: pl.DataFrame, ax: plt.Axes):
 
 
 def plot_wdir_sweep_rel(df: pl.DataFrame, ax: plt.Axes):
-
     # plot sweep
-    for method, _plot_params in plot_params.items():
+    for method, _plot_params in utils.line_params.items():
         _df = df.filter(pl.col("type") == "sweep").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ref = (
@@ -85,7 +76,7 @@ def plot_wdir_sweep_rel(df: pl.DataFrame, ax: plt.Axes):
         ax.plot(to_plot["wdir"], 100 * (to_plot["Cp"] / ref["Cp"] - 1), **_plot_params)
 
     # plot cases
-    for method, _plot_params in plot_params.items():
+    for method, _plot_params in utils.line_params.items():
         _df = df.filter(pl.col("type") == "cases").filter(pl.col("method") == method)
         to_plot = _df.group_by("wdir").agg(pl.col("Cp").mean()).sort("wdir")
         ref = (
