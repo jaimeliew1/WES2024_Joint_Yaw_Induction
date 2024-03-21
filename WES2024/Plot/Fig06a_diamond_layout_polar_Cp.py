@@ -24,7 +24,11 @@ from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 
+
+# Diamond layout, translated to have a zero centroid
 layout = Square(10.0, 5).rotate(45)
+layout.x -= layout.x.mean()
+layout.y -= layout.y.mean()
 
 
 def generate(regenerate=False) -> pl.DataFrame:
@@ -33,15 +37,14 @@ def generate(regenerate=False) -> pl.DataFrame:
     return df
 
 
-def plot(df: pl.DataFrame):
+def plot_layout_and_powerrose(
+    df: pl.DataFrame, fig: plt.Figure, axp: plt.Axes
+) -> tuple[plt.Axes, ...]:
     _df = (
         df.filter(pl.col("min_dist") == 7)
         .pivot(index="wdir", columns="method", values="Cp", aggregate_function="mean")
         .sort("wdir")
     )
-
-    fig = plt.figure(figsize=1.5 * np.array([2, 2]))
-    axp = fig.add_subplot(frame_on=True, polar=True)
     ax = fig.add_axes(axp.get_position().bounds, frameon=False)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -56,13 +59,10 @@ def plot(df: pl.DataFrame):
 
     wdirs = np.deg2rad(_df["wdir"])
     for method in ["NoControl", "ThrustControl", "YawControl", "JointControl"]:
-        for sector in [0, 1, 2, 3]:
-            axp.plot(sector * np.pi / 2 + wdirs, _df[method], **utils.line_params[method])
-            utils.line_params[method]["label"] = None
+        axp.plot(np.pi / 2 + wdirs, _df[method], **utils.line_params[method])
 
     xs, ys = layout.x, layout.y
-    xs -= xs.mean()
-    ys -= ys.mean()
+
     ax.plot(
         xs,
         ys,
@@ -73,9 +73,25 @@ def plot(df: pl.DataFrame):
         markeredgewidth=1,
         zorder=300,
     )
-    ax.set_xlim(xs.min() * 2, xs.max() * 2)
-    ax.set_ylim(ys.min() * 2, ys.max() * 2)
 
+    # add radial grid lines
+    theta = np.linspace(0, np.pi * 2, 200)
+    axp.plot(theta, np.zeros_like(theta), lw=0.7, ls="--", c="0.7")
+    axp.plot(theta, 16 / 27 * np.ones_like(theta), lw=0.7, ls="--", c="0.7")
+    axp.text(np.pi / 2 + 0.05, 0, r"$0$", c="0.7", fontsize=5, va="bottom")
+    axp.text(np.pi / 2 + 0.05, 0.6, r"$0.6$", c="0.7", fontsize=5, va="bottom")
+
+    ax.set_xlim(xs.min() * 2.2, xs.max() * 2.2)
+    ax.set_ylim(ys.min() * 2.2, ys.max() * 2.2)
+
+    return axp, ax
+
+
+def plot(df: pl.DataFrame):
+    fig = plt.figure(figsize=1.5 * np.array([2, 2]))
+    axp = fig.add_subplot(frame_on=True, polar=True)
+
+    axp, ax = plot_layout_and_powerrose(df, fig, axp)
     axp.legend(ncol=2, loc="lower center", fontsize="xx-small", bbox_to_anchor=(0.5, 1.10))
 
     plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
