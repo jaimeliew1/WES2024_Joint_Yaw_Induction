@@ -37,7 +37,7 @@ def _generate(x) -> pl.DataFrame:
 def generate(regenerate=False):
     df = diamond_BEM.generate()
     df_opt_list = [_df for _, _df in df.group_by("method", "wdir")]
-    wdir_offsets = np.arange(-15.0, 15.1, 1.0)
+    wdir_offsets = np.arange(-12.0, 12.1, 1.0)
     params = list(product(df_opt_list, wdir_offsets))
 
     df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
