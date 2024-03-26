@@ -36,7 +36,6 @@ def _generate(x) -> pl.DataFrame:
         }
 
     out = dict(turbine=turbine, method=method, wdir=wdir, std=std) | averaged
-    print(out)
 
     out = pl.from_dict(out)
     return out
