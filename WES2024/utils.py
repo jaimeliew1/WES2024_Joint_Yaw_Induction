@@ -24,6 +24,7 @@ controller_colors = {
     "NoControl": "k",
     "ThrustControl": "tab:blue",
     "YawControl": "tab:orange",
+    "YawKOmegaControl": "tab:pink",
     "JointControl": "tab:green",
 }
 
@@ -32,15 +33,21 @@ controller_labels = {
     "NoControl": "No Control",
     "ThrustControl": "Thrust Control",
     "YawControl": "Yaw Control",
+    "YawKOmegaControl": r"Yaw Control ($K\Omega$)",
     "JointControl": "Joint Control",
 }
 
 line_params = {
-    "NoControl": dict(label=controller_labels["NoControl"], c=controller_colors["NoControl"], ls="--"),
+    "NoControl": dict(
+        label=controller_labels["NoControl"], c=controller_colors["NoControl"], ls="--"
+    ),
     "ThrustControl": dict(
         label=controller_labels["ThrustControl"], c=controller_colors["ThrustControl"]
     ),
     "YawControl": dict(label=controller_labels["YawControl"], c=controller_colors["YawControl"]),
+    "YawKOmegaControl": dict(
+        label=controller_labels["YawKOmegaControl"], c=controller_colors["YawKOmegaControl"]
+    ),
     "JointControl": dict(
         label=controller_labels["JointControl"], c=controller_colors["JointControl"]
     ),
@@ -224,14 +231,22 @@ def my_polar_plot(
     r0: float,
     width: float,
     ax: plt.Axes,
-    lw: float = 0.5,
-    style: str = None,
+    vmin=None,
+    vmax=None,
+    **kwargs,
 ):
     angle_rad, r = np.array(angle_rad), np.array(r)
     # Normalise data
-    r = (r - np.mean(r)) / np.max(np.abs(r)) * width
+    if vmin is None:
+        vmin = min(r)
+    if vmax is None:
+        vmax = max(r)
+
+    midpoint = (vmax + vmin) / 2
+    data_range = (vmax - vmin) / 2
+    r = (r - midpoint) / data_range * width
 
     # plot mini wind rose with custom location, radius, and width.
     rose_x = (r + 10) * r0 * (-np.cos(angle_rad)) + x
     rose_y = (r + 10) * r0 * (np.sin(angle_rad)) + y
-    ax.plot(rose_x, rose_y, style, lw=lw)
+    ax.plot(rose_x, rose_y, **kwargs)

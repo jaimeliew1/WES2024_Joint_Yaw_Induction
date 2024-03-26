@@ -74,7 +74,7 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
         _df = df.filter(turbine=turb_no, method="JointControl").sort("wdir")
 
         utils.my_polar_plot(
-            np.deg2rad(_df["wdir"]), _df[channel], x=x, y=y, r0=0.3, width=5, style="-k", ax=ax
+            np.deg2rad(_df["wdir"]), _df[channel], x=x, y=y, r0=0.3, width=5, ax=ax, c="tab:red", lw=0.5,
         )
 
 
