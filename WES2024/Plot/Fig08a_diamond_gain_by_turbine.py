@@ -19,14 +19,16 @@ import polars as pl
 import seaborn as sns
 
 from WES2024 import utils
-from WES2024.Generate import diamond_AD
+from WES2024.Generate import diamond_AD, diamond_BEM
 
 FILESTEM = Path(__file__).stem
 
 
 def generate(regenerate=False) -> pl.DataFrame:
-    df = diamond_AD.generate(regenerate=regenerate)
-    return df.filter(pl.col("min_dist") == 6.0)
+    # df = diamond_AD.generate(regenerate=regenerate)
+    # return df.filter(pl.col("min_dist") == 6.0)
+    df = diamond_BEM.generate(regenerate=regenerate)
+    return df
 
 
 def aggregate_turbine(df_full: pl.DataFrame) -> tuple[pl.DataFrame, ...]:
