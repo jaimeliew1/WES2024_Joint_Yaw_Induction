@@ -23,9 +23,9 @@ from WES2024.Generate import diamond_BEM
 
 FILESTEM = Path(__file__).stem
 # Diamond layout, translated to have a zero centroid
-layout = Square(10.0, 5).rotate(45)
-layout.x -= layout.x.mean()
-layout.y -= layout.y.mean()
+LAYOUT = Square(10.0, 5).rotate(45)
+LAYOUT.x -= LAYOUT.x.mean()
+LAYOUT.y -= LAYOUT.y.mean()
 
 # minibox
 box_xy = (-32, -5)
@@ -54,10 +54,22 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 
 def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
-    # Plot wind farm layout
+    """
+    Plot the wind farm layout and mini power/setpoint roses over selected turbines.
+
+    Args:
+        df (pl.DataFrame): A DataFrame containing wind direction, method, turbine, and channel data.
+        channel (str): The column name in `df` representing the channel to plot (e.g., "Cp", "Ct", etc.).
+        ax (plt.Axes): The axes object to plot on.
+
+    This function plots the layout of the wind farm on the given `ax` axes.
+    Additionally, it plots mini power/setpoint roses for a subset of turbines
+    specified by `turbines_to_keep`, showing the values of the specified
+    `channel` for each turbine at different wind directions.
+    """
     ax.plot(
-        layout.x,
-        layout.y,
+        LAYOUT.x,
+        LAYOUT.y,
         "o",
         ms=3,
         markerfacecolor="None",
@@ -70,20 +82,48 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
     ax.set_aspect("equal", adjustable="box")
 
     for turb_no in turbines_to_keep:
-        x, y = layout.x[turb_no], layout.y[turb_no]
+        x, y = LAYOUT.x[turb_no], LAYOUT.y[turb_no]
         _df = df.filter(turbine=turb_no, method="JointControl").sort("wdir")
 
+        # Plot mini wind rose with a given radius, width, and other line parameters.
         utils.my_polar_plot(
-            np.deg2rad(_df["wdir"]), _df[channel], x=x, y=y, r0=0.3, width=5, ax=ax, c="tab:red", lw=0.5,
+            np.deg2rad(_df["wdir"]),
+            _df[channel],
+            x=x,
+            y=y,
+            r0=0.3,
+            width=5,
+            ax=ax,
+            c="tab:red",
+            lw=0.5,
         )
 
 
 def plot_layout_and_powerrose(
     df: pl.DataFrame, fig: plt.Figure, axp: plt.Axes
-) -> tuple[plt.Axes, ...]:
+) -> tuple[plt.Axes, plt.Axes]:
+    """
+    Create a plot with a power/setpoint rose over wind farm layout.
+
+    Args:
+        df (pl.DataFrame): A DataFrame containing wind direction (wdir), method, and power coefficient (Cp) data.
+        fig (plt.Figure): The figure object to create the plot in.
+        axp (plt.Axes): The axes object to create the power rose in.
+
+    Returns:
+        tuple[plt.Axes, plt.Axes]: A tuple containing the polar and cartesian axes.
+
+    This function creates a plot with a power/wind rose for different control
+    methods at different wind directions, and a layout plot showing the
+    positions of the wind turbines in the farm. The power/setpoint rose is
+    plotted on a polar axis (axp), while layout is plotted on an overlapping
+    cartesian axes (ax).
+    """
     _df = df.pivot(index="wdir", columns="method", values="Cp", aggregate_function="mean").sort(
         "wdir"
     )
+
+    # Overlay a cartesian axes on the existing polar axis.
     ax = fig.add_axes(axp.get_position().bounds, frameon=False)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -96,11 +136,12 @@ def plot_layout_and_powerrose(
     axp.set_ylim(-0.7, 0.7)
     axp.grid(linestyle=":")
 
+    # Plot the large power rose over the wind farm
     wdirs = np.deg2rad(_df["wdir"])
     for method in ["NoControl", "ThrustControl", "YawControl", "JointControl"]:
         axp.plot(np.pi / 2 + wdirs, _df[method], lw=1, **utils.line_params[method])
 
-    xs, ys = layout.x, layout.y
+    xs, ys = LAYOUT.x, LAYOUT.y
 
     ax.plot(
         xs,
