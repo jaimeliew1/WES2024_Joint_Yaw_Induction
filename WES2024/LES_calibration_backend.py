@@ -18,8 +18,8 @@ from tqdm import tqdm
 
 from WES2024.Generate import LES_case_definitions
 
-LES_FN = Path("data/mean_power_wdir-2.5.csv")
-row_indices = [
+LES_FN = Path("data/mean_power_wdir-2.5_5hr.csv")
+ROW_INDICES = [
     [24],
     [23, 19],
     [22, 18, 14],
@@ -104,7 +104,7 @@ def generate_individual_cal() -> WindfarmSolution:
     # first (n-1)row to nth row
     for row_num in tqdm([1, 2, 3, 4]):
         upstream, downstream = [], []
-        for row in row_indices:
+        for row in ROW_INDICES:
             if len(row) < row_num + 1:
                 continue
             upstream.append(row[row_num - 1])
@@ -142,8 +142,8 @@ def calibrate_kw_model(
     Cp_ref: list[int], x0: tuple[float, float, float]
 ) -> tuple[float, float, float]:
     """
-    Callibrate the wake of the upstream turbines (upstream) based on the Cp
-    (Cp_downstream) of the downstream turbines (downstream).
+    Calibrate a polynomial mapping between TI at the rotor and wake spreading
+    wake by minimizing the square error of Cp.
     """
 
     def func(x):
@@ -161,9 +161,55 @@ def calibrate_kw_model(
     return opt_sol.x
 
 
-def generate_model_cal() -> WindfarmSolution:
+def normalize_by_upstream(
+    Cp_list: list[float], row_indices: list[list[int]] = ROW_INDICES
+) -> list[float]:
+    """
+    Return the normalized power output of each turbine normalized by the most
+    upstream turbine. uses row indicies provided to determine upstream and
+    downstream turbines.
+    """
+    P_norm = np.zeros_like(Cp_list)
+
+    for row in row_indices:
+        for idx in row:
+            P_norm[idx] = Cp_list[idx] / Cp_list[row[0]]
+
+    return P_norm
+
+
+def calibrate_kw_model_normalized(
+    Cp_ref: list[int], x0: tuple[float, float, float]
+) -> tuple[float, float, float]:
+    """
+    Calibrate a polynomial mapping between TI at the rotor and wake spreading
+    wake by minimizing the square error of Cp NORMALIZED by the upstream turbines.
+    """
+
+    p_norm_ref = normalize_by_upstream(Cp_ref, row_indices=ROW_INDICES)
+
+    def func(x):
+        a, b, c = x
+        sol = run_model(a, b, c)
+        Cp_model = np.array([x.Cp for x in sol.rotors])
+        p_norm = normalize_by_upstream(Cp_model, ROW_INDICES)
+
+        cost = np.sum((p_norm - p_norm_ref) ** 2)
+        return cost
+
+    opt_sol = minimize(func, x0, bounds=[(0, 10), (0, 5), (-1, 1)])
+
+    # print(opt_sol)
+
+    return opt_sol.x
+
+
+def generate_model_cal(upstream_normalisation=False) -> WindfarmSolution:
     df_LES = pl.read_csv(LES_FN)
-    a_cal, b_cal, c_cal = calibrate_kw_model(df_LES["Cp"].to_numpy(), (0, 1, 0))
+    if upstream_normalisation:
+        a_cal, b_cal, c_cal = calibrate_kw_model_normalized(df_LES["Cp"].to_numpy(), (0, 1, 0))
+    else:
+        a_cal, b_cal, c_cal = calibrate_kw_model(df_LES["Cp"].to_numpy(), (0, 1, 0))
     sol = run_model(a_cal, b_cal, c_cal)
 
     return sol

@@ -12,6 +12,7 @@ from WES2024.LES_calibration_backend import (
     generate_individual_cal,
     generate_model_cal,
     run_model,
+    normalize_by_upstream,
     LAYOUT,
 )
 from WES2024 import utils
@@ -19,7 +20,7 @@ from WES2024 import utils
 REGENERATE = True
 
 FILESTEM = Path(__file__).stem
-LES_FN = Path("data/mean_power_wdir-2.5.csv")
+LES_FN = Path("data/mean_power_wdir-2.5_5hr.csv")
 
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
@@ -28,12 +29,21 @@ FIGDIR.mkdir(exist_ok=True, parents=True)
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False) -> pl.DataFrame:
     df_LES = pl.read_csv(LES_FN).with_columns(method=pl.lit("LES"), TI=np.nan, kw=np.nan)
+    df_LES = df_LES.select(
+        "turbine_id",
+        "Cp",
+        pl.Series(normalize_by_upstream(df_LES["Cp"].to_numpy())).alias("P_norm"),
+        "method",
+        "TI",
+        "kw",
+    )
 
     sol = generate_individual_cal()
     df_indiv = pl.DataFrame(
         dict(
             turbine_id=np.arange(0, 25),
             Cp=[x.Cp for x in sol.rotors],
+            P_norm=normalize_by_upstream(np.array([x.Cp for x in sol.rotors])),
             method="individual_cal",
             TI=[x.TI for x in sol.rotors],
             kw=[x.kw for x in sol.wakes],
@@ -45,7 +55,20 @@ def generate(regenerate=False) -> pl.DataFrame:
         dict(
             turbine_id=np.arange(0, 25),
             Cp=[x.Cp for x in sol.rotors],
+            P_norm=normalize_by_upstream(np.array([x.Cp for x in sol.rotors])),
             method="model_cal",
+            TI=[x.TI for x in sol.rotors],
+            kw=[x.kw for x in sol.wakes],
+        )
+    )
+
+    sol = generate_model_cal(upstream_normalisation=True)
+    df_model_norm = pl.DataFrame(
+        dict(
+            turbine_id=np.arange(0, 25),
+            Cp=[x.Cp for x in sol.rotors],
+            P_norm=normalize_by_upstream(np.array([x.Cp for x in sol.rotors])),
+            method="model_cal_upstream_norm",
             TI=[x.TI for x in sol.rotors],
             kw=[x.kw for x in sol.wakes],
         )
@@ -56,12 +79,13 @@ def generate(regenerate=False) -> pl.DataFrame:
         dict(
             turbine_id=np.arange(0, 25),
             Cp=[x.Cp for x in sol.rotors],
+            P_norm=normalize_by_upstream(np.array([x.Cp for x in sol.rotors])),
             method="uncalibrated",
             TI=[x.TI for x in sol.rotors],
             kw=[x.kw for x in sol.wakes],
         )
     )
-    df = pl.concat([df_LES, df_indiv, df_model, df_uncal])
+    df = pl.concat([df_LES, df_indiv, df_model, df_model_norm, df_uncal])
     return df
     # breakpoint()
 
@@ -101,11 +125,14 @@ def plot(df: pl.DataFrame):
         diff = (_df["Cp"].sum() - df.filter(method="LES")["Cp"].sum()) / df.filter(method="LES")[
             "Cp"
         ].sum()
+        diff_norm = (_df["P_norm"].sum() - df.filter(method="LES")["P_norm"].sum()) / df.filter(
+            method="LES"
+        )["P_norm"].sum()
         plot_text_on_layout(
             LAYOUT,
-            _df["Cp"].to_numpy(),
-            utils.FIGDIR / f"{FILESTEM}_Cp_{method}.png",
-            rf"Cp ({method}) (farm C_P error: {diff*100:2.2f}\%)",
+            _df["P_norm"].to_numpy(),
+            utils.FIGDIR / f"{FILESTEM}_P_norm_{method}.png",
+            rf"Cp ({method}) (farm C_P error: {diff*100:2.2f}\%), (normalized C_P error:  {diff_norm*100:2.2f}\%)",
         )
 
     plt.figure()
@@ -116,7 +143,6 @@ def plot(df: pl.DataFrame):
     plt.title(f"{method}")
     plt.legend()
     plt.savefig(utils.FIGDIR / f"{FILESTEM}_kw_vs_TI.png", dpi=500, bbox_inches="tight")
-
 
 
 if __name__ == "__main__":
