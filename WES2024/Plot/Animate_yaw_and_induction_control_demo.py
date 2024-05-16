@@ -8,6 +8,7 @@ import numpy as np
 from mitwindfarm.Layout import Layout
 from mitwindfarm.windfarm import Windfarm, WindfarmSolution
 from rich import print
+from PIL import Image
 
 from WES2024 import utils
 
@@ -85,7 +86,7 @@ def _plot_turbine_wake(
     ax.text(
         0.5,
         0.01,
-        "Farm power: " + f"{100*(sol.Cp/P_farm_ref - 1):2.1f}\%",
+        "Farm power: " + f"{100*(sol.Cp/P_farm_ref - 1):+2.1f}\%",
         va="bottom",
         ha="center",
         transform=ax.transAxes,
@@ -130,12 +131,37 @@ def plot_single(x: tuple[int, float]):
     )
 
     plt.savefig(
-        TEMPDIR / f"yaw_and_induction_control_demo_{index:03}.png", dpi=300, bbox_inches="tight"
+        TEMPDIR / f"yaw_and_induction_control_demo_{index:03}.png",
+        dpi=300,
+        bbox_inches="tight",
+        pad_inches=0.11,
     )
     plt.close()
 
+    resize_to_even_dimensions(
+        TEMPDIR / f"yaw_and_induction_control_demo_{index:03}.png",
+        TEMPDIR / f"yaw_and_induction_control_demo_{index:03}.png",
+    )
 
-def animate(dir_to_animate: Path, out_fn: Path, framerate: int = 20, wildcard: str = "/*.png"):
+
+def resize_to_even_dimensions(image_path, output_path):
+    # Open an image file
+    with Image.open(image_path) as img:
+        # Get current dimensions
+        width, height = img.size
+
+        # Calculate new dimensions to be even
+        new_width = width if width % 2 == 0 else width - 1
+        new_height = height if height % 2 == 0 else height - 1
+
+        # Resize the image
+        resized_img = img.resize((new_width, new_height))
+
+        # Save the resized image
+        resized_img.save(output_path)
+
+
+def animate_mp4(dir_to_animate: Path, out_fn: Path, framerate: int = 20, wildcard: str = "/*.png"):
     dir_to_animate = Path(dir_to_animate)
     N_files = len(list(dir_to_animate.iterdir()))
 
@@ -146,10 +172,12 @@ def animate(dir_to_animate: Path, out_fn: Path, framerate: int = 20, wildcard: s
             dir_to_animate.as_posix() + wildcard,
             pattern_type="glob",
             framerate=framerate,
+        )
+        .output(
+            out_fn.as_posix(),
             pix_fmt="yuv420p",
         )
-        .output(out_fn.as_posix())
-        .run(overwrite_output=True, quiet=True)
+        .run(overwrite_output=True, quiet=False)
     )
 
 
@@ -162,11 +190,11 @@ def smoothstep(x):
 
 
 def main(fps: int):
-    t_max = 10
+    t_max = 8
     dt = 1 / fps
     t = np.arange(0, t_max, dt)
-    tstart1, tend1 = 1, 4
-    tstart2, tend2 = 6, 9
+    tstart1, tend1 = 0, 3
+    tstart2, tend2 = 5, 8
     weight = smoothstep((t - tstart1) / (tend1 - tstart1)) * (
         1 - smoothstep((t - tstart2) / (tend2 - tstart2))
     )
@@ -174,7 +202,7 @@ def main(fps: int):
     params = list(enumerate(weight))
     foreach(plot_single, params, context="spawn", parallel=True, processes=16)
 
-    animate(TEMPDIR, utils.FIGDIR / "yaw_and_induction_control_demo.mp4", framerate=fps)
+    animate_mp4(TEMPDIR, utils.FIGDIR / "yaw_and_induction_control_demo.mp4", framerate=fps)
 
 
 if __name__ == "__main__":
