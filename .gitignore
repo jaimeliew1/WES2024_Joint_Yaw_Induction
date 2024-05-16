@@ -5,7 +5,8 @@
 data/
 .vscode
 fig*/
-TEMP/
+TEMP*/
+To_animate/
 LES_cases
 
 ### Python ###
