@@ -12,9 +12,9 @@ Key points:
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import polars as pl
+import seaborn as sns
 
 from WES2024 import utils
 from WES2024.Generate import diamond_BEM

@@ -1,17 +1,15 @@
 from pathlib import Path
 
 import polars as pl
-import foreach
-from mitwindfarm.windfarm import Windfarm
+from dualitic import DualNumber
+from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Rotor import BEM
+from mitwindfarm import BEM, Windfarm
+from rich import print
 
 from WES2024 import utils
-from WES2024.Generate import two_turbine_BEM
 from WES2024.BEM_gradients import DualBEM
-from dualitic import DualNumber
-
-from rich import print
+from WES2024.Generate import two_turbine_BEM
 
 __all__ = ["generate"]
 

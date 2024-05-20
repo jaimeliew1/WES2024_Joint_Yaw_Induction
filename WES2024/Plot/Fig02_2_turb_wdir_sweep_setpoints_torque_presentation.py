@@ -14,13 +14,13 @@ Key points:
 - Yaw control has non-constant thrust. i.e. yaw and thrust are coupled quantities.
 
 """
-from pathlib import Path
 from itertools import product
+from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import numpy as np
 import polars as pl
+from matplotlib.lines import Line2D
 
 from WES2024 import utils
 from WES2024.Generate import two_turbine_AD, two_turbine_BEM

@@ -3,17 +3,15 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from scipy.optimize import minimize
 import polars as pl
-import foreach
+from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from WES2024.BEM_gradients import DualBEM
+from mitwindfarm import BEM, Layout, Windfarm
+from rich import print
+from scipy.optimize import minimize
 
 from WES2024 import utils
-from rich import print
+from WES2024.BEM_gradients import DualBEM
 
 FILESTEM = Path(__file__).stem
 

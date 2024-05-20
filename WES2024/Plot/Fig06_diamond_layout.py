@@ -10,8 +10,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import polars as pl
-from mitwindfarm import Plotting
-from mitwindfarm.windfarm import Windfarm
+from mitwindfarm import Plotting, Windfarm
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD

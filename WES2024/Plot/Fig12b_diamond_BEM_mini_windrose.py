@@ -11,12 +11,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm import Plotting
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from WES2024.BEM_gradients import DualBEM
+from mitwindfarm import BEM, Plotting, Windfarm
 
 from WES2024 import utils
+from WES2024.BEM_gradients import DualBEM
 from WES2024.Generate import diamond_BEM
 
 FILESTEM = Path(__file__).stem
@@ -59,9 +57,7 @@ def plot(df: pl.DataFrame):
             .sort("wdir")
         )
 
-        utils.my_polar_plot(
-            _df["wdir"], _df["pitch"], x=x, y=y, r0=0.2, width=5, ax=ax, style="r-"
-        )
+        utils.my_polar_plot(_df["wdir"], _df["pitch"], x=x, y=y, r0=0.2, width=5, ax=ax, style="r-")
         utils.my_polar_plot(_df["wdir"], _df["tsr"], x=x, y=y, r0=0.2, width=5, ax=ax, style="g-")
         utils.my_polar_plot(_df["wdir"], _df["yaw"], x=x, y=y, r0=0.2, width=5, ax=ax, style="b-")
 

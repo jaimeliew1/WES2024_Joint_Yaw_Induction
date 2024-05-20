@@ -14,13 +14,12 @@ Key points:
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import polars as pl
 import numpy as np
-from mitwindfarm.Layout import Square
+import polars as pl
+from mitwindfarm import Square
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD
-
 
 FILESTEM = Path(__file__).stem
 

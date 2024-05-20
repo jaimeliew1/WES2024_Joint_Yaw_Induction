@@ -11,12 +11,12 @@ Key points:
 - ??
 """
 from pathlib import Path
-from matplotlib.patches import Rectangle
 
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm.Layout import Square
+from matplotlib.patches import Rectangle
+from mitwindfarm import Square
 
 from WES2024 import utils
 from WES2024.Generate import diamond_BEM

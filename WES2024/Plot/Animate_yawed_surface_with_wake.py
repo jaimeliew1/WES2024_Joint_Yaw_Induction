@@ -6,8 +6,7 @@ import foreach
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm.Layout import Layout
-from mitwindfarm.windfarm import Windfarm
+from mitwindfarm import Layout, Windfarm
 
 from WES2024 import utils
 from WES2024.Generate import minCt_trajectory, pitch_tsr_surface
@@ -134,7 +133,6 @@ def _plot_turbine_wake(ax, yaw: float):
 def plot_single(
     df: pl.DataFrame, df_traj: pl.DataFrame, df_traj_all: pl.DataFrame, yaw: float, index: int
 ):
-
     # Set up axes
     fig, axes = plt.subplot_mosaic(
         [["wake", "Cp_contour"], ["wake", "Ct_contour"]],

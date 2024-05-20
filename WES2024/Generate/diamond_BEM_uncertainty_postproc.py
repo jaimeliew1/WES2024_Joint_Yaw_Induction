@@ -1,17 +1,14 @@
 from itertools import product
 from pathlib import Path
 
-import polars as pl
-from scipy.stats import norm
 import numpy as np
-import foreach
-
+import polars as pl
+from foreach import foreach
+from rich import print
+from scipy.stats import norm
 
 from WES2024 import utils
 from WES2024.Generate import diamond_BEM_uncertainty
-
-
-from rich import print
 
 __all__ = ["generate"]
 

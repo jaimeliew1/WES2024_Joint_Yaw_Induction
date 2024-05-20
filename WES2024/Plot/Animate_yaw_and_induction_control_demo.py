@@ -2,13 +2,12 @@ from pathlib import Path
 from typing import Callable
 
 import ffmpeg
-from foreach import foreach
 import matplotlib.pyplot as plt
 import numpy as np
-from mitwindfarm.Layout import Layout
-from mitwindfarm.windfarm import Windfarm, WindfarmSolution
-from rich import print
+from foreach import foreach
+from mitwindfarm import Layout, Windfarm, WindfarmSolution
 from PIL import Image
+from rich import print
 
 from WES2024 import utils
 

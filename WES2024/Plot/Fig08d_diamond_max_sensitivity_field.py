@@ -9,12 +9,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm.windfarm import Windfarm, WindfarmSolution
+from dualitic import DualNumber
+from mitwindfarm import Windfarm, WindfarmSolution
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD_sensitivity
-from dualitic import DualNumber
-
 
 FILESTEM = Path(__file__).stem
 

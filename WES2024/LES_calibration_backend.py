@@ -1,17 +1,17 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 from mitwindfarm import (
     GaussianWake,
+    Layout,
     RotorSolution,
     WakeModel,
     Windfarm,
     WindfarmSolution,
 )
-from mitwindfarm.Layout import Layout
 from rich import print
 from scipy.optimize import minimize
 from tqdm import tqdm

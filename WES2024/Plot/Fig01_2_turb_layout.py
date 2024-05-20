@@ -9,8 +9,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from mitwindfarm import Plotting
-from mitwindfarm.windfarm import Windfarm, WindfarmSolution
+from mitwindfarm import Plotting, Windfarm, WindfarmSolution
 
 from WES2024 import utils
 from WES2024.Generate import two_turbine_AD

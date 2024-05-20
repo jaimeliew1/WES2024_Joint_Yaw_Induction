@@ -30,38 +30,38 @@ FILESTEM = Path(__file__).stem
 
 plot_params = {
     ("NoControl", "AD"): dict(
-        label=f"{utils.controller_labels["NoControl"]} (AD)",
+        label=f"{utils.controller_labels['NoControl']} (AD)",
         c="0.0",
     ),
     ("NoControl", "BEM"): dict(
-        label=f"{utils.controller_labels["NoControl"]} (BEM)",
+        label=f"{utils.controller_labels['NoControl']} (BEM)",
         ls="--",
         c="0.6",
     ),
     ("ThrustControl", "AD"): dict(
-        label=f"{utils.controller_labels["ThrustControl"]} (AD)",
+        label=f"{utils.controller_labels['ThrustControl']} (AD)",
         c=plt.cm.tab20(0 / 20),
     ),
     ("ThrustControl", "BEM"): dict(
-        label=f"{utils.controller_labels["ThrustControl"]} (BEM)",
+        label=f"{utils.controller_labels['ThrustControl']} (BEM)",
         ls="--",
         c=plt.cm.tab20((0 + 1) / 20),
     ),
     ("YawControl", "AD"): dict(
-        label=f"{utils.controller_labels["YawControl"]} (AD)",
+        label=f"{utils.controller_labels['YawControl']} (AD)",
         c=plt.cm.tab20(2 / 20),
     ),
     ("YawControl", "BEM"): dict(
-        label=f"{utils.controller_labels["YawControl"]} (BEM)",
+        label=f"{utils.controller_labels['YawControl']} (BEM)",
         ls="--",
         c=plt.cm.tab20((2 + 1) / 20),
     ),
     ("JointControl", "AD"): dict(
-        label=f"{utils.controller_labels["JointControl"]} (AD)",
+        label=f"{utils.controller_labels['JointControl']} (AD)",
         c=plt.cm.tab20(4 / 20),
     ),
     ("JointControl", "BEM"): dict(
-        label=f"{utils.controller_labels["JointControl"]} (BEM)",
+        label=f"{utils.controller_labels['JointControl']} (BEM)",
         ls="--",
         c=plt.cm.tab20((4 + 1) / 20),
     ),

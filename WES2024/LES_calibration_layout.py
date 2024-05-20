@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from mitwindfarm.Layout import Layout
+from mitwindfarm import Layout
 
 from WES2024.Generate import LES_case_definitions
 

@@ -11,10 +11,10 @@ Key points:
 """
 from pathlib import Path
 
-import numpy as np
-from scipy.stats import norm
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
+from scipy.stats import norm
 
 from WES2024 import utils
 from WES2024.Generate import diamond_BEM_uncertainty

@@ -21,9 +21,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-from WES2024.Generate import diamond_BEM
 
 from WES2024 import utils
+from WES2024.Generate import diamond_BEM
 
 FILESTEM = Path(__file__).stem
 

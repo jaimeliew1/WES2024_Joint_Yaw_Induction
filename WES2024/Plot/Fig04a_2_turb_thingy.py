@@ -11,13 +11,12 @@ Key points:
 """
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 
 from WES2024 import utils
 from WES2024.Generate import JFM_layout_gridsearch_BEM
-
 
 FILESTEM = Path(__file__).stem
 

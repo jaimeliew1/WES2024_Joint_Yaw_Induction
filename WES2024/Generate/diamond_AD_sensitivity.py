@@ -1,14 +1,13 @@
 from pathlib import Path
 
 import polars as pl
-import foreach
+from dualitic import DualNumber
+from foreach import foreach
 from mitwindfarm.windfarm import Windfarm
+from rich import print
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD
-from dualitic import DualNumber
-
-from rich import print
 
 __all__ = ["generate"]
 

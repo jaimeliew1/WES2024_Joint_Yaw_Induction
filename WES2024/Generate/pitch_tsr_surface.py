@@ -3,11 +3,9 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-import foreach
+from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
+from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024 import utils
 

@@ -3,14 +3,12 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-import foreach
+from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Square
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from WES2024.BEM_gradients import DualBEM
+from mitwindfarm import BEM, Square, Windfarm
 
 from WES2024 import utils
+from WES2024.BEM_gradients import DualBEM
 from WES2024.optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
 
 __all__ = ["generate"]

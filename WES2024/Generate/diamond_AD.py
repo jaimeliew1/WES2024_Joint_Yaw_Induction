@@ -3,9 +3,8 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-import foreach
-from mitwindfarm.Layout import Square
-from mitwindfarm.windfarm import Windfarm
+from foreach import foreach
+from mitwindfarm import Square, Windfarm
 
 from WES2024 import utils
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl

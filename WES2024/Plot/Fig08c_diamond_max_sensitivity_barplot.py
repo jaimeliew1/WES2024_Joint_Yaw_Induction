@@ -13,14 +13,14 @@ Key points:
 """
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 import seaborn as sns
+from rich import print
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD_sensitivity
-from rich import print
 
 FILESTEM = Path(__file__).stem
 

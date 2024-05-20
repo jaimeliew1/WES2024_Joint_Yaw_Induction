@@ -8,20 +8,18 @@ Key points:
 from itertools import product
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
+from mitwindfarm import BEM, Layout, Windfarm
 from optimise import JointControlBEM
-from WES2024.BEM_gradients import DualBEM
 
 from WES2024 import utils
+from WES2024.BEM_gradients import DualBEM
 
 FILESTEM = Path(__file__).stem
 

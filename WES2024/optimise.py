@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from mitwindfarm.windfarm import WindfarmSolution
+from mitwindfarm import WindfarmSolution
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize
 from dualitic import DualVariables

@@ -1,7 +1,6 @@
 from typing import Callable, Any
-from MITRotor.BEM import BEM, BEMSolution
-from MITRotor.Geometry import BEMGeometry
-from MITRotor.ReferenceTurbines import IEA15MW, RotorDefinition
+from MITRotor import BEM, BEMSolution, BEMGeometry, IEA15MW, RotorDefinition
+
 from dualitic import DualNumber, DualVariables
 from numpy.typing import ArrayLike
 import numpy as np

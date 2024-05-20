@@ -2,10 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-import foreach
+from foreach import foreach
+from MITRotor.BEMSolver import BEM, BEMSolution
 from MITRotor.ReferenceTurbines import IEA15MW
-from MITRotor.BEM import BEM, BEMSolution
-
 from scipy.interpolate import BSpline, make_interp_spline
 from scipy.optimize import minimize, minimize_scalar, root_scalar
 

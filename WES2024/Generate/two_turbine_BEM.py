@@ -1,17 +1,15 @@
+from functools import partial
 from itertools import product
 from pathlib import Path
-from functools import partial
 
 import numpy as np
 import polars as pl
-import foreach
-from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from WES2024.BEM_gradients import DualBEM
+from foreach import foreach
+from MITRotor import IEA15MW
+from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024 import utils
+from WES2024.BEM_gradients import DualBEM
 from WES2024.optimise import (
     JointControlBEM,
     NoControlBEM,
@@ -61,5 +59,5 @@ def generate(regenerate=False):
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=True)
     print(df)

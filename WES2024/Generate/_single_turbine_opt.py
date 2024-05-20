@@ -2,9 +2,7 @@ from pathlib import Path
 
 import numpy as np
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm.Layout import Layout
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
+from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024.BEM_gradients import DualBEM
 from WES2024.optimise import JointControlBEM

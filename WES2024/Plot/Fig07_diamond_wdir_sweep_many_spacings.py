@@ -13,9 +13,9 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import polars as pl
-from WES2024.Generate import diamond_AD
 
 from WES2024 import utils
+from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
 REGENERATE = False

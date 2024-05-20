@@ -14,12 +14,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm import Plotting
-from mitwindfarm.Rotor import BEM
-from mitwindfarm.windfarm import Windfarm
-from WES2024.BEM_gradients import DualBEM
+from mitwindfarm import BEM, Plotting, Windfarm
 
 from WES2024 import utils
+from WES2024.BEM_gradients import DualBEM
 from WES2024.Generate import diamond_AD
 
 FILESTEM = Path(__file__).stem
