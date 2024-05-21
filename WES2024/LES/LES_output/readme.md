@@ -1,0 +1,1 @@
+The `csv` files in this folder contain the average power output for each turbine at a given wind direction with no windfarm control (`NoControl`) as simulated in PadeOps LES. These are used to calibrate the wake model for the controlled cases using the sane wind direction.
