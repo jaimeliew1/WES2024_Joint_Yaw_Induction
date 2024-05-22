@@ -249,6 +249,21 @@ def func(x) -> pl.DataFrame:
     return pl.concat(out)
 
 
+def make_sim_case(sol: WindfarmSolution, wdir: float, controller: str) -> dict:
+
+    xmin, ymin = sol.layout.x.min(), sol.layout.y.min()
+    casename = f"diamond_wdir{wdir}_{controller}"
+
+    turbines = []
+    for i, ((x, y, z), rotor) in enumerate(zip(sol.layout, sol.rotors)):
+        _turbine = TurbineDefinition(
+            f"turbine_{i}", x - xmin, y - ymin, z, np.rad2deg(rotor.yaw), rotor.Ctprime
+        )
+        turbines.append(_turbine)
+
+    return asdict(SimulationDefinition(casename, wdir, controller, turbines))
+
+
 def make_sim_cases(df: pl.DataFrame) -> list[SimulationDefinition]:
     out = []
     for (wdir, controller), _df in df.group_by("wdir", "controller"):
@@ -280,7 +295,7 @@ if __name__ == "__main__":
 
     if len(dfs) == 0:
         sys.exit()
-        
+
     df = pl.concat(dfs)
 
     # Save as SimulationDefinition
