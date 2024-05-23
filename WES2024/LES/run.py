@@ -2,8 +2,9 @@ import re
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
-import sys
 
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 from mitwindfarm import (
@@ -32,7 +33,16 @@ LES_FN_REGEX = re.compile("(\w+)_wdir(-?\d+.\d+)_(\w+).csv")
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
 
 TIAMB = 0.053  # Determined from LES.
-ROW_INDICES = [
+
+CONTROLLERS = {
+    "nocontrol": NoControl,
+    "yawcontrol": YawControl,
+    "thrustcontrol": ThrustControl,
+    "jointcontrol": JointControl,
+}
+
+
+_DIAMOND_ROW_INDICES = [
     [24],
     [23, 19],
     [22, 18, 14],
@@ -43,6 +53,15 @@ ROW_INDICES = [
     [5, 1],
     [0],
 ]
+
+_SQUARE_ROW_INDICES = None
+
+ROW_INDICES = {
+    -2.5: _DIAMOND_ROW_INDICES,
+    0.0: _DIAMOND_ROW_INDICES,
+    42.0: _SQUARE_ROW_INDICES,
+    45.0: _SQUARE_ROW_INDICES,
+}
 
 
 def extract_fn_params(fn: str) -> dict:
@@ -138,6 +157,10 @@ class CalibrationCase:
         sol = windfarm(self.layout, setpoints)
 
         return sol
+
+    def set_calibration(self, a: float, b: float, c: float):
+        self._setpoints = (a, b, c)
+        self.calibrated = True
 
     def calibrate(
         self, Cp_ref: list[float], x0: tuple[float, float, float] = (0.0, 1.0, 0.0)
@@ -264,47 +287,146 @@ def make_sim_case(sol: WindfarmSolution, wdir: float, controller: str) -> dict:
     return asdict(SimulationDefinition(casename, wdir, controller, turbines))
 
 
-def make_sim_cases(df: pl.DataFrame) -> list[SimulationDefinition]:
-    out = []
-    for (wdir, controller), _df in df.group_by("wdir", "controller"):
-        casename = f"diamond_wdir{wdir}_{controller}"
-        turbines = [
-            TurbineDefinition(f"turbine_{i}", *x)
-            for i, x in enumerate(
-                _df.select(
-                    pl.col("x") - pl.col("x").min(),
-                    pl.col("y") - pl.col("y").min(),
-                    "z",
-                    np.rad2deg(pl.col("yaw")).round(6),
-                    "setpoint_0",
-                ).rows()
-            )
-        ]
-        out.append(SimulationDefinition(casename, wdir, controller, turbines))
-    return out
+def plot_text_on_layout(layout: Layout, vals: list, fn: Path, title=None):
+    plt.figure()
+    plt.axis("equal")
+
+    cmap = plt.cm.viridis
+    norm = colors.Normalize(vmin=np.min(vals), vmax=np.max(vals))
+    for idx, (x, y, val) in enumerate(zip(layout.x, layout.y, vals)):
+        plt.plot(x, y, ".", ms=10, c=cmap(norm(val)))
+        plt.text(x, y, f"{val:2.3f}")
+
+    if title:
+        plt.title(title)
+
+    plt.savefig(fn, dpi=500, bbox_inches="tight")
+    plt.close()
 
 
-if __name__ == "__main__":
-    # Load LES data which has not yet been calibrated.
-    LES_fns = retrieve_LES_output_files(LES_output_dir, LES_input_dir, overwrite=False)
+def calibrate_wake_model(wdir: float, LES_fn: Path | str, calibration_fn: Path | str) -> None:
+    """
+    Calibrate wake spreading rate as a function of added wake turbulence based
+    on LES results (LES_fn). Saves results as a text file (calibration_fn).
 
-    # Calibrate loaded LES cases.
-    dfs = []
-    for fn in LES_fns:
-        dfs.append(func(fn))
+    inputs: LES results filepath (LES_fn)
+    outputs: Wake calibration file (calibration_fn)
+    """
+    df = pl.read_csv(LES_fn)
 
-    if len(dfs) == 0:
-        sys.exit()
+    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    calibration = calibration.calibrate(df["Cp"].to_numpy())
+    output = ",".join(str(x) for x in calibration.setpoints())
 
-    df = pl.concat(dfs)
+    # Make directory if it does not exist.
+    Path(calibration_fn).parent.mkdir(exist_ok=True, parents=True)
 
-    # Save as SimulationDefinition
-    cases = make_sim_cases(df)
+    # Write calibration values to file.
+    with open(calibration_fn, "w") as f:
+        f.write(output)
 
-    # Save setpoints as JSON.
-    for simulation in cases:
-        sim_dict = asdict(simulation)
-        with open(LES_input_dir / f"{simulation.casename}.json", "w") as f:
-            json.dump(sim_dict, f, indent=4)
 
-    print("Done.")
+def no_control_setpoints(wdir: float, setpoint_fn: Path | str) -> None:
+    """
+    Saves the turbine locations and set points to a JSON file (setpoint_fn) for
+    use in an LES simulation.
+
+    inputs: wind direction (wdir)
+    outputs: setpoint JSON file (setpoint_fn)
+    """
+    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    sol = calibration.run_model(1, 1, 1)
+    sim_dict = make_sim_case(sol, wdir, "nocontrol")
+
+    with open(setpoint_fn, "w") as f:
+        json.dump(sim_dict, f, indent=4)
+
+
+def find_optimal_setpoints(
+    wdir: float, controller_id: str, calibration_fn: Path | str, setpoint_fn: str | Path
+) -> None:
+    """
+    Calculates the optimal control set points for a given wind direction and
+    wake calibration.
+
+    inputs: wind direction (wdir), Wake calibration file (calibration_fn)
+    outputs: setpoint JSON file (setpoint_fn)
+    """
+    with open(calibration_fn, "r") as f:
+
+        out = f.read()
+        a, b, c = [float(x) for x in out.split(",")]
+
+    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    calibration.set_calibration(a, b, c)
+
+    windfarm = calibration.calibrated_windfarm()
+    controller = CONTROLLERS[controller_id]
+
+    sol = controller(calibration.layout, windfarm).optimise(use_gradients=False)
+
+    sim_dict = make_sim_case(sol, wdir, controller_id)
+    with open(setpoint_fn, "w") as f:
+        json.dump(sim_dict, f, indent=4)
+
+
+def combine_results(LES_dir: list[Path], out_fn: Path | str) -> None:
+    """
+    Combines all the simulation output files including LES and MITWindfarm sim results.
+    inputs: Path to results (???)
+    outputs: Aggregated results dataframe as CSV file (out_fn)
+    """
+    raise NotImplementedError
+
+
+def run_MITWindfarm(
+    wdir: float,
+    controller: str,
+    calibration_fn: Path | str,
+    setpoint_fn: str | Path,
+    res_fn: str | Path,
+) -> None:
+    # Make output directory if it does not exist.
+    with open(calibration_fn, "r") as f:
+        out = f.read()
+        a, b, c = [float(x) for x in out.split(",")]
+
+    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    calibration.set_calibration(a, b, c)
+    windfarm = calibration.calibrated_windfarm()
+
+    with open(setpoint_fn, "r") as f:
+        _setpoints = json.load(f)
+
+    yaws = np.deg2rad([turbine["yaw"] for turbine in _setpoints["turbines"]])
+    ctprimes = [turbine["ctp"] for turbine in _setpoints["turbines"]]
+    setpoints = list(zip(ctprimes, yaws))
+
+    sol = windfarm(calibration.layout, setpoints)
+    print(wdir, controller, sol.Cp)
+    _df = utils.to_polars(sol).with_columns(
+        pl.lit(controller).alias("controller"),
+        pl.lit(wdir).alias("wdir"),
+        pl.lit("MITWindfarm").alias("simulator"),
+    )
+
+    Path(res_fn).parent.mkdir(exist_ok=True, parents=True)
+    _df.write_csv(res_fn)
+
+
+def plot_layout_single(res_fn: Path | str, fig_fn: Path | str) -> None:
+    df = pl.read_csv(res_fn)
+
+    x, y, z = [], [], []
+    for _df in df.iter_rows(named=True):
+        x.append(_df["x"])
+        y.append(_df["y"])
+        z.append(_df["z"])
+    layout = Layout(x, y, z)
+
+    plot_text_on_layout(
+        layout,
+        df["Cp"].to_numpy(),
+        fig_fn,
+        f"{df['Cp'].mean():.3f}",
+    )

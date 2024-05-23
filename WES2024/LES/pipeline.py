@@ -1,9 +1,9 @@
 from itertools import product
 from pathlib import Path
-import json
+
 import luigi
 import run as backend
-import polars as pl
+
 
 WDIRS = [-2.5, 0.0, 42.0, 45.0]
 CONTROLLERS = ["nocontrol", "yawcontrol", "thrustcontrol", "jointcontrol"]
@@ -14,24 +14,13 @@ DATA_DIR = Path(__file__).parent
 class Calibration(luigi.Task):
     wdir = luigi.FloatParameter()
 
-    def requires(self):
+    def requires(self) -> luigi.Task:
         return LES(self.wdir, "nocontrol")
 
     def run(self):
-        df = pl.read_csv(self.requires().output().path)
+        backend.calibrate_wake_model(self.wdir, self.requires().output().path, self.output().path)
 
-        calibration = backend.CalibrationCase(self.wdir, backend.TIAMB, backend.ROW_INDICES)
-        calibration = calibration.calibrate(df["Cp"].to_numpy())
-        output = ",".join(str(x) for x in calibration.setpoints())
-
-        # Make directory if it does not exist.
-        Path(self.output().path).parent.mkdir(exist_ok=True, parents=True)
-
-        # Write calibration values to file.
-        with open(self.output().path, "w") as f:
-            f.write(output)
-
-    def output(self):
+    def output(self) -> luigi.LocalTarget:
         return luigi.LocalTarget(DATA_DIR / f"calibration/calibration_wdir{self.wdir}.csv")
 
 
@@ -39,13 +28,9 @@ class ZeroSetpoints(luigi.Task):
     wdir = luigi.FloatParameter()
 
     def run(self):
-        calibration = backend.CalibrationCase(self.wdir, backend.TIAMB, backend.ROW_INDICES)
-        sol = calibration.run_model(1, 1, 1)
-        sim_dict = backend.make_sim_case(sol, self.wdir, "nocontrol")
-        with open(self.output().path, "w") as f:
-            json.dump(sim_dict, f, indent=4)
+        backend.no_control_setpoints(self.wdir, self.output().path)
 
-    def output(self):
+    def output(self) -> luigi.LocalTarget:
         return luigi.LocalTarget(DATA_DIR / f"LES_input/diamond_wdir{self.wdir}_nocontrol.json")
 
 
@@ -54,21 +39,16 @@ class Setpoints(luigi.Task):
     controller = luigi.Parameter()
 
     def requires(self):
-        if self.controller != "nocontrol":
+        if self.controller == "nocontrol":
             raise ValueError(
                 "Can't call Setpoints with nocontrol controller. Use ZeroSetpoints instead."
             )
         return Calibration(self.wdir)
 
     def run(self):
-        # TO DO
-        ...
-
-        # sim_dict = backend.make_sim_case(sol, self.wdir, self.controller)
-        # with open(
-        #     DATA_DIR / f"LES_input/diamond_wdir{self.wdir}_{self.controller}.json", "w"
-        # ) as f:
-        #     json.dump(sim_dict, f, indent=4)
+        backend.find_optimal_setpoints(
+            self.wdir, self.controller, self.requires().output().path, self.output().path
+        )
 
     def output(self):
         return luigi.LocalTarget(
@@ -101,18 +81,73 @@ class LES(luigi.Task):
         return luigi.LocalTarget(DATA_DIR / f"LES_output/LES_wdir{self.wdir}_{self.controller}.csv")
 
 
+class MITWindfarm(luigi.Task):
+    wdir = luigi.FloatParameter()
+    controller = luigi.Parameter()
+
+    def requires(self):
+        if self.controller == "nocontrol":
+            return [Calibration(self.wdir), ZeroSetpoints(self.wdir)]
+        else:
+            return [Calibration(self.wdir), Setpoints(self.wdir, self.controller)]
+
+    def run(self):
+        backend.run_MITWindfarm(
+            self.wdir,
+            self.controller,
+            self.requires()[0].output().path,
+            self.requires()[1].output().path,
+            self.output().path,
+        )
+
+    def output(self):
+        return luigi.LocalTarget(
+            DATA_DIR / f"LES_output/MITWindfarm_wdir{self.wdir}_{self.controller}.csv"
+        )
+
+
 class Combine(luigi.Task):
     def requires(self):
         params = product(WDIRS, CONTROLLERS)
 
-        return [LES(wdir, cont) for wdir, cont in params]
+        return [MITWindfarm(wdir, cont) for wdir, cont in params] + [
+            LES(wdir, cont) for wdir, cont in params
+        ]
 
     def run(self):
-        ...
+        backend.combine_results([x.output().path for x in self.requires()], self.output().path)
 
     def output(self):
         return luigi.LocalTarget("combined_output.csv")
 
 
+class PlotSingle(luigi.Task):
+    wdir = luigi.FloatParameter()
+    controller = luigi.Parameter()
+
+    def requires(self):
+
+        return MITWindfarm(self.wdir, self.controller)
+
+    def run(self):
+        backend.plot_layout_single(self.requires().output().path, self.output().path)
+
+    def output(self):
+        return luigi.LocalTarget(DATA_DIR / f"fig/layout_wdir{self.wdir}_{self.controller}.png")
+
+
+class Plot(luigi.Task):
+    def requires(self):
+        params = product(WDIRS, CONTROLLERS)
+
+        return [PlotSingle(wdir, cont) for wdir, cont in params]
+
+    def run(self):
+        pass
+
+    def output(self):
+        return None
+
+
 if __name__ == "__main__":
-    luigi.build([Combine()], local_scheduler=False)
+    luigi.build([Combine(), Plot()], local_scheduler=False)
