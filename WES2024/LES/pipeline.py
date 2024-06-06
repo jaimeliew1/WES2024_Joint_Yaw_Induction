@@ -1,3 +1,17 @@
+"""
+How to run (when `local_scheduler=False`)
+^^^^^^^^^^
+
+Run the `luigid` command to initialize the scheduler server.
+
+Access the scheduler dashboard at `http://localhost:8082/` in a web browser.
+
+Run this script (`python WES2024/LES/pipeline.py`)
+
+Refresh the dashboard page.
+
+"""
+
 from itertools import product
 from pathlib import Path
 
