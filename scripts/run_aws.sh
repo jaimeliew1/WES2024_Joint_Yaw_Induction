@@ -1,3 +1,9 @@
+poetry run ipython test_LUT_Ctprime.py &> log_test_LUT_Ctprime.txt
+poetry run ipython test_LUT_Ct.py &> log_test_LUT_Ct.txt
+
+aws s3 cp log_test_LUT_Ctprime.txt s3://jamalamaa
+aws s3 cp log_test_LUT_Ct.txt s3://jamalamaa
+
 poetry run ipython WES2024/Generate/_single_turbine_opt.py &> log__single_turbine_opt.txt
 poetry run ipython WES2024/Generate/pitch_tsr_surface.py &> log_pitch_tsr_surface.txt
 poetry run ipython WES2024/Generate/two_turbine_AD.py &> log_two_turbine_AD.txt
