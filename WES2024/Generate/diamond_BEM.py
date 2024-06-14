@@ -1,3 +1,6 @@
+# dualitic is imported first to ensure correct monkey patching.
+import dualitic
+
 from itertools import product
 from pathlib import Path
 
@@ -16,11 +19,10 @@ __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
-REGENERATE = True
 PARALLEL = True
+REGENERATE = True
 
 
-# windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
 )
