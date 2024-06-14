@@ -11,7 +11,7 @@
 # poetry run ipython WES2024/Generate/two_turbine_BEM.py &> log_two_turbine_BEM.txt
 # poetry run ipython WES2024/Generate/two_turbine_BEM_sensitivity.py &> log_two_turbine_BEM_sensitivity.txt
 # poetry run ipython WES2024/Generate/minCt_trajectory.py &> log_minCt_trajectory.txt
-poetry run ipython WES2024/Generate/diamond_AD.py &> log_diamond_AD.txt
+# poetry run ipython WES2024/Generate/diamond_AD.py &> log_diamond_AD.txt
 poetry run ipython WES2024/Generate/diamond_BEM.py &> log_diamond_BEM.txt
 poetry run ipython WES2024/Generate/diamond_BEM_uncertainty.py &> log_diamond_BEM_uncertainty.txt
 poetry run ipython WES2024/Generate/diamond_BEM_uncertainty_postproc.py &> log_diamond_BEM_uncertainty_postproc.txt

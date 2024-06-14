@@ -89,6 +89,40 @@ def dualfixedpointiteration(
 
     return decorator
 
+def dualadaptivefixedpointiteration(
+    max_iter: int = 100, tolerance: float = 1e-6, relaxations: list[float] = [0.0]
+) -> FixedPointIterationCompatible:
+    def decorator(cls: FixedPointIterationCompatible) -> Callable:
+            def call(self, *args, **kwargs):
+                if hasattr(self, "pre_process"):
+                    self.pre_process(*args, **kwargs)
+                callback = self.callback if hasattr(self, "callback") else None
+
+                for relaxation in relaxations:
+                    x0 = self.initial_guess(*args, **kwargs)
+                    result = _dualfixedpointiteration(
+                        self.residual,
+                        x0,
+                        args=args,
+                        kwargs=kwargs,
+                        eps=tolerance,
+                        maxiter=max_iter,
+                        relax=relaxation,
+                        callback=callback,
+                    )
+                    if result.converged:
+                        break
+
+                if hasattr(self, "post_process"):
+                    return self.post_process(result, *args, **kwargs)
+                else:
+                    return result
+
+            setattr(cls, "__call__", call)
+            return cls
+
+    return decorator
+
 
 def undual(x):
     """
@@ -100,7 +134,7 @@ def undual(x):
     return x
 
 
-@dualfixedpointiteration()
+@dualadaptivefixedpointiteration(max_iter=500, relaxations=[0.25, 0.5, 0.96])
 class DualBEM:
     def __init__(self, rotor: RotorDefinition, geometry: BEMGeometry = None, momentum_model=None):
         self.bem = BEM(rotor, geometry, momentum_model=momentum_model)

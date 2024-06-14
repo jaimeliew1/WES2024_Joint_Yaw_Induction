@@ -221,7 +221,7 @@ class ThrustControlBEM(Controller):
         return [PITCH_OPT for _ in range(self.N)] + [TSR_OPT for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(-np.deg2rad(15), np.deg2rad(5)) for _ in range(self.N)] + [
+        return [(-np.deg2rad(10), np.deg2rad(10)) for _ in range(self.N)] + [
             (3, 10) for _ in range(self.N)
         ]
 
@@ -296,7 +296,7 @@ class JointControlBEM(Controller):
 
     def bounds(self) -> list:
         return (
-            [(-np.deg2rad(5), np.deg2rad(10)) for _ in range(self.N)]
+            [(-np.deg2rad(10), np.deg2rad(10)) for _ in range(self.N)]
             + [(3, 10) for _ in range(self.N)]
             + [(-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)]
         )
