@@ -102,8 +102,8 @@ def undual(x):
 
 @dualfixedpointiteration()
 class DualBEM:
-    def __init__(self, rotor: RotorDefinition, geometry: BEMGeometry = None):
-        self.bem = BEM(rotor, geometry)
+    def __init__(self, rotor: RotorDefinition, geometry: BEMGeometry = None, momentum_model=None):
+        self.bem = BEM(rotor, geometry, momentum_model=momentum_model)
         self._niter_primal = None
         self.geometry = self.bem.geometry
 

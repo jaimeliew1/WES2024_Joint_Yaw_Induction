@@ -1,3 +1,6 @@
+# dualitic is imported first to ensure correct monkey patching.
+import dualitic
+
 from itertools import product
 from pathlib import Path
 
@@ -7,14 +10,15 @@ from foreach import foreach
 from mitwindfarm import Layout, Windfarm
 
 from WES2024 import utils
+from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
+REGENERATE = True
 
-
-windfarm = Windfarm()
+windfarm = Windfarm(rotor_model=UnifiedLUTAD())
 layout = Layout([0, 5], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
 
@@ -40,10 +44,10 @@ def _generate(x):
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
 
-    df = pl.concat(foreach(_generate, params, parallel=True))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
     return df
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=REGENERATE)
     print(df)

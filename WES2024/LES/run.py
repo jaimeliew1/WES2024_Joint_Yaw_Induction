@@ -21,6 +21,7 @@ from rich import print
 
 from WES2024 import utils
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
+from WES2024.CustomRotors import UnifiedLUTAD
 
 LES_output_dir = Path(__file__).parent / "LES_output"
 LES_input_dir = Path(__file__).parent / "LES_input"
@@ -151,7 +152,7 @@ class CalibrationCase:
         for a given set of wake model parameters, (a, b, c).
         """
         wakemodel = VariableKwGaussianWakeModel(a, b, c)
-        windfarm = Windfarm(wake_model=wakemodel, TIamb=self.TIamb)
+        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
 
         setpoints = len(self.layout) * [(2.0, 0.0)]
         sol = windfarm(self.layout, setpoints)
@@ -199,7 +200,7 @@ class CalibrationCase:
     def calibrated_windfarm(self) -> Windfarm:
         a, b, c = self.setpoints()
         wakemodel = VariableKwGaussianWakeModel(a, b, c)
-        windfarm = Windfarm(wake_model=wakemodel, TIamb=self.TIamb)
+        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
 
         return windfarm
 

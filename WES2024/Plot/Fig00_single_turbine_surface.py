@@ -18,10 +18,10 @@ FIGDIR.mkdir(exist_ok=True, parents=True)
 
 PITCHES = np.deg2rad(np.arange(-15, 15.001, 0.5))
 TSRS = np.arange(5, 12.001, 0.125)
-YAW2 = 45  # deg
+YAW2 = 50  # deg
 
 XLIM = (-15, 15)
-YLIM = (5, 11.5)
+YLIM = (5, 10.5)
 
 
 def generate(regenerate=False):

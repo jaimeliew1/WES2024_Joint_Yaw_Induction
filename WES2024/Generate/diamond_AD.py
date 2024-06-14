@@ -7,13 +7,15 @@ from foreach import foreach
 from mitwindfarm import Square, Windfarm
 
 from WES2024 import utils
+from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
 
 # __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
-windfarm = Windfarm()
+# windfarm = Windfarm()
+windfarm = Windfarm(rotor_model=UnifiedLUTAD())
 
 
 methods = {
@@ -50,7 +52,7 @@ def _generate(x):
 def generate(regenerate=False):
     params = list(product(methods, wdirs, layouts))
 
-    df = pl.concat(foreach(_generate, params, parallel=True))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
     return df
 
 

@@ -1,3 +1,11 @@
+"""
+NOTE: This script currently does not run (gradient issues)with wake added
+turbulence. You may need to replace the line:
+
+TI_out = np.sqrt(TI_base**2 + np.max(WATIs, axis=0) ** 2)
+
+With TI_out = np.zeros_like(wsp_out) to get it to work for now.
+"""
 from pathlib import Path
 
 import polars as pl
@@ -9,14 +17,19 @@ from rich import print
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 from WES2024.Generate import diamond_BEM
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
+PARALLEL = True
+REGENERATE = True
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
+windfarm = Windfarm(
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+)
 
 
 def _generate(x) -> pl.DataFrame:
@@ -38,10 +51,10 @@ def _generate(x) -> pl.DataFrame:
 def generate(regenerate=False):
     df = diamond_BEM.generate()
     params = [_df for _, _df in df.group_by("method", "wdir")]
-    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=PARALLEL))
     return df
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=REGENERATE)
     print(df)

@@ -10,6 +10,7 @@ from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 from WES2024.optimise import (
     JointControlBEM,
     NoControlBEM,
@@ -25,7 +26,9 @@ FILESTEM = Path(__file__).stem
 PARALLEL = True
 
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
+windfarm = Windfarm(
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+)
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
 # wdirs = [0.0, 1.0, 2.0, 3.0]
@@ -53,7 +56,7 @@ def _generate(x):
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
 
-    dfs = foreach(_generate, params, parallel=PARALLEL)
+    dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL)
     df = pl.concat(dfs)
     return df
 

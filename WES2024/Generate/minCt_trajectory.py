@@ -9,6 +9,7 @@ from scipy.interpolate import BSpline, make_interp_spline
 from scipy.optimize import minimize, minimize_scalar, root_scalar
 
 from WES2024 import utils
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 
 __all__ = ["generate"]
 
@@ -19,7 +20,7 @@ FILESTEM = Path(__file__).stem
 YAWS = np.arange(0.0, 50.1, 2.5)
 
 rotor = IEA15MW()
-bem = BEM(rotor=rotor)
+bem = BEM(rotor=rotor, momentum_model=BEMUnifiedMomentumLUT())
 
 
 def find_optimal_setpoint(bem: BEM, yaw: float = 0) -> BEMSolution:
@@ -170,7 +171,7 @@ def _generate(x):
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False) -> pl.DataFrame:
 
-    out = foreach(_generate, YAWS, parallel=True)
+    out = foreach(_generate, YAWS, context="spawn", parallel=True)
     out = pl.concat(out)
 
     return out

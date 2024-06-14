@@ -2,7 +2,7 @@ from itertools import repeat
 from pathlib import Path
 
 import ffmpeg
-import foreach
+from foreach import foreach
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -241,9 +241,11 @@ def animate(dir_to_animate: Path, out_fn: Path, framerate: int = 20, wildcard: s
             dir_to_animate.as_posix() + wildcard,
             pattern_type="glob",
             framerate=framerate,
+        )
+        .output(
+            out_fn.as_posix(),
             pix_fmt="yuv420p",
         )
-        .output(out_fn.as_posix())
         .run(overwrite_output=True, quiet=True)
     )
 
@@ -265,13 +267,13 @@ def _func(x):
 
 def main(fps: int):
     df_surface, df_traj = generate(regenerate=False)
-    t_max = 10
+    t_max = 8
     dt = 1 / fps
     t = np.arange(0, t_max, dt)
-    tstart1, tend1 = 1, 4
-    tstart2, tend2 = 6, 9
+    tstart1, tend1 = 0, 4
+    tstart2, tend2 = 6, 8
     yaws = (
-        45
+        50
         * smoothstep((t - tstart1) / (tend1 - tstart1))
         * (1 - smoothstep((t - tstart2) / (tend2 - tstart2)))
     )

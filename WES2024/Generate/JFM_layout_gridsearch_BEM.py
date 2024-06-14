@@ -12,18 +12,18 @@ from scipy.optimize import minimize
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 
 FILESTEM = Path(__file__).stem
 
 REGENERATE = True
 PARALLEL = True
 
-PITCH_OPT = -0.018804860075115795
-TSR_OPT = 9.138197665010335
+PITCH_OPT = -0.023146163628916267
+TSR_OPT = 9.23061314763139
 
-bem = BEM(IEA15MW(), BEM_model=DualBEM)
+bem = BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
 windfarm = Windfarm(rotor_model=bem)
-
 layout_single = Layout(np.array([0]), np.array([0.0, 0.0]))
 layout_double = Layout(np.array([0, 8]), np.array([0.0, 0.5]))
 
@@ -83,7 +83,7 @@ def calc_BEM_equiv_setpoint(
         bounds=[(pitch_0 - np.deg2rad(5), np.deg2rad(20)), (0.5, tsr_0 * 1.2)],
         constraints=dict(type="eq", fun=constraint),
     )
-    print(res)
+    # print(res)
     if not res.success:
         return None
     sol = windfarm(
@@ -108,7 +108,7 @@ def _generate(x):
 def generate(regenerate=False):
     params = list(product(Ctprimes, yaws))
 
-    dfs = foreach(_generate, params, parallel=PARALLEL)
+    dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL)
     df = pl.concat((df for df in dfs if df is not None))
     return df
 

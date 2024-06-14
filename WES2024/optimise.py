@@ -133,11 +133,11 @@ class Controller(ABC):
             List[float]: Jacobian of the constraint function.
         """
         return self._grad
-
-
+# Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
+CTPRIME_OPT = 2.10418397932219
 class NoControl(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
-        setpoints = [(2.0, 0.0) for _ in range(self.N)]
+        setpoints = [(CTPRIME_OPT, 0.0) for _ in range(self.N)]
         return self.windfarm(self.layout, setpoints)
 
     def initial_guess(self):
@@ -158,7 +158,7 @@ class YawControl(Controller):
         return [tuple(np.deg2rad((-50, 50)))]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
-        setpoints = [(2.0, _x) for _x in x]
+        setpoints = [(CTPRIME_OPT, _x) for _x in x]
         return self.windfarm(self.layout, setpoints)
 
 
@@ -189,9 +189,16 @@ class JointControl(Controller):
 
 
 # Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
-PITCH_OPT = -0.018804860075115795
-TSR_OPT = 9.138197665010335
-CP_OPT = 0.5065639542511471
+
+# Setpoints using Heck momentum model with high thrust correction (DEPRECIATED)
+# PITCH_OPT = -0.018804860075115795
+# TSR_OPT = 9.138197665010335
+# CP_OPT = 0.5065639542511471
+
+# Setpoints using unified momentum model
+PITCH_OPT = -0.023146163628916267
+TSR_OPT = 9.23061314763139
+CP_OPT = 0.5072138998869634
 
 
 class NoControlBEM(Controller):
@@ -268,7 +275,7 @@ class YawControlKOmegaBEM(Controller):
 
         constraints = [x.real[0] for x in constraints_dual]
         self._Komega_grad = [x.dual[0] for x in constraints_dual]
-        
+
         return constraints
 
     def K_omega_constraint_jac_func(self, x) -> ArrayLike:
@@ -290,7 +297,7 @@ class JointControlBEM(Controller):
     def bounds(self) -> list:
         return (
             [(-np.deg2rad(5), np.deg2rad(10)) for _ in range(self.N)]
-            + [(3, 15) for _ in range(self.N)]
+            + [(3, 10) for _ in range(self.N)]
             + [(-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)]
         )
 

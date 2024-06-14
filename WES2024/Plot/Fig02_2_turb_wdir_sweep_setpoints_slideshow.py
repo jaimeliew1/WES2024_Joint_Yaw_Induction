@@ -128,7 +128,7 @@ def generate(regenerate=False):
     # Concatenate AD and BEM data. remove yaw control data points for wdir=0 to
     # highlight discontinuity.
     df = pl.concat([df_AD, df_BEM], how="diagonal_relaxed").with_columns(
-        pl.when(pl.col("method") == "YawControl", pl.col("yaw").abs() < 1e-2)
+        pl.when(pl.col("method") == "YawControl", pl.col("wdir").abs() < 1e-2)
         .then(np.nan)
         .otherwise(pl.col("yaw"))
         .alias("yaw")

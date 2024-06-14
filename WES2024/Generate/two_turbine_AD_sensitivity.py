@@ -7,6 +7,7 @@ from mitwindfarm.windfarm import Windfarm
 from rich import print
 
 from WES2024 import utils
+from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.Generate import two_turbine_AD
 
 __all__ = ["generate"]
@@ -14,8 +15,8 @@ __all__ = ["generate"]
 FILESTEM = Path(__file__).stem
 
 
-windfarm = Windfarm()
-
+# windfarm = Windfarm()
+windfarm = Windfarm(rotor_model=UnifiedLUTAD())
 
 def _generate(x) -> pl.DataFrame:
     _df = x

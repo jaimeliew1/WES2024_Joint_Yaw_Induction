@@ -8,17 +8,24 @@ from MITRotor.ReferenceTurbines import IEA15MW
 from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024 import utils
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
 layout = Layout(np.array([0.0]), np.array([0.0]))
+# Small input set
+# pitches = np.linspace(-15, 15, 50)
+# tsrs = np.linspace(5, 10.5, 50)
+# yaws = [0.0, 45.0]
+
+# Full input set
 pitches = np.linspace(-15, 15, 150)
-tsrs = np.linspace(5, 15, 150)
+tsrs = np.linspace(5, 10.5, 150)
 yaws = np.arange(0.0, 50.1, 5.0)
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW()))
+windfarm = Windfarm(rotor_model=BEM(IEA15MW(), momentum_model=BEMUnifiedMomentumLUT()))
 
 
 def _generate(x) -> pl.DataFrame:

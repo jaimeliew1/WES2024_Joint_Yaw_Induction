@@ -98,7 +98,7 @@ axis_params = {
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
         title="Optimal yaw angle",
-        ylim=(-30, 30),
+        ylim=(-40, 40),
     ),
     # "pitch": dict(
     #     ylabel=r"$\theta_p$ (deg)",
@@ -140,18 +140,18 @@ def generate(regenerate=False):
     # Concatenate AD and BEM data. remove yaw control data points for wdir=0 to
     # highlight discontinuity.
     df = pl.concat([df_AD, df_BEM], how="diagonal_relaxed").with_columns(
-        pl.when(pl.col("method") == "YawControl", pl.col("yaw").abs() < 1e-2)
+        pl.when(pl.col("method") == "YawControl", pl.col("wdir").abs() < 1e-2)
         .then(np.nan)
         .otherwise(pl.col("yaw"))
         .alias("yaw"),
-        pl.when(pl.col("method") == "YawControl", pl.col("yaw").abs() < 1e-2)
+        pl.when(pl.col("method") == "YawControl", pl.col("wdir").abs() < 1e-2)
         .then(np.nan)
         .otherwise(pl.col("Ct"))
         .alias("Ct"),
-        pl.when(pl.col("method") == "YawControl", pl.col("yaw").abs() < 1e-2)
+        pl.when(pl.col("method") == "YawControl", pl.col("wdir").abs() < 1e-2)
         .then(np.nan)
-        .otherwise(pl.col("Cp"))
-        .alias("Cp"),
+        .otherwise(pl.col("Cp_BEM"))
+        .alias("Cp_BEM"),
     )
     return df
 

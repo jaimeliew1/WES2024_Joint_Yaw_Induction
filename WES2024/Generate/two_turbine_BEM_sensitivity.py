@@ -9,6 +9,7 @@ from rich import print
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 from WES2024.Generate import two_turbine_BEM
 
 __all__ = ["generate"]
@@ -16,7 +17,9 @@ __all__ = ["generate"]
 FILESTEM = Path(__file__).stem
 
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
+windfarm = Windfarm(
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+)
 
 
 def _generate(x) -> pl.DataFrame:
@@ -43,5 +46,5 @@ def generate(regenerate=False):
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=True)
     print(df)

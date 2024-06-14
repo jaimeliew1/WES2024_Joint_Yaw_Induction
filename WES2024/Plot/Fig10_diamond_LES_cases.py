@@ -5,7 +5,8 @@ import numpy as np
 import polars as pl
 
 from WES2024 import utils
-from WES2024.Generate import LES_case_definitions, diamond_AD
+from WES2024.Generate import diamond_AD
+from WES2024.archive import LES_case_definitions
 
 REGENERATE = False
 FILESTEM = Path(__file__).stem

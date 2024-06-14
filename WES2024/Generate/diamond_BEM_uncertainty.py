@@ -10,15 +10,19 @@ from rich import print
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
+from WES2024.CustomRotors import BEMUnifiedMomentumLUT
 from WES2024.Generate import diamond_BEM
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
+PARALLEL = True
+REGENERATE = True
 
-windfarm = Windfarm(rotor_model=BEM(IEA15MW(), BEM_model=DualBEM))
-
+windfarm = Windfarm(
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+)
 
 def _generate(x) -> pl.DataFrame:
     _df, wdir_offset = x
@@ -37,10 +41,10 @@ def generate(regenerate=False):
     wdir_offsets = np.arange(-15.0, 15.1, 1.0)
     params = list(product(df_opt_list, wdir_offsets))
 
-    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=PARALLEL))
     return df
 
 
 if __name__ == "__main__":
-    df = generate()
+    df = generate(regenerate=REGENERATE)
     print(df)

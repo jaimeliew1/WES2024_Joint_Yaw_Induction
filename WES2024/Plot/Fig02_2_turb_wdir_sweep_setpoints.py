@@ -88,7 +88,7 @@ axis_params = {
     "Ctprime": dict(
         ylabel=r"$C_T'$",
         title="c) Optimal thrust coef.",
-        ylim=(1.0, 2.4),
+        ylim=(1.0, 3.0),
     ),
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
@@ -111,6 +111,7 @@ axis_params = {
 def generate(regenerate=False):
     # Load AD data. Convert angles to degrees.
     df_AD = (
+        # two_turbine_AD.generate(regenerate=regenerate)
         two_turbine_AD.generate(regenerate=regenerate)
         .select(pl.exclude("setpoint_0", "setpoint_1"))
         .with_columns(
