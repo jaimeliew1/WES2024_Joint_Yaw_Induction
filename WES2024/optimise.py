@@ -167,7 +167,7 @@ class ThrustControl(Controller):
         return [0.2 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 4.0) for _ in range(self.N)]
+        return [(0.00001, 8.0) for _ in range(self.N)]
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((_x, 0.0) for _x in x)
@@ -179,7 +179,7 @@ class JointControl(Controller):
         return [0.2 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 4.0) for _ in range(self.N)] + [
+        return [(0.00001, 8.0) for _ in range(self.N)] + [
             tuple(np.deg2rad((-50, 50))) for _ in range(self.N)
         ]
 
