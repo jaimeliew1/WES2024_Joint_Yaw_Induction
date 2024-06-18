@@ -64,14 +64,12 @@ def plot_windfarm(sol: WindfarmSolution, ax=None, pad=1, frame=True, axis=False,
         _turb_x = (turb_x - x0) * np.cos(-angle_rad) - (turb_y - y0) * np.sin(-angle_rad)
         _turb_y = (turb_x - x0) * np.sin(-angle_rad) + (turb_y - y0) * np.cos(-angle_rad)
         points = rotmat @ p + np.array([[_turb_x + x0], [_turb_y + y0]])
-        # breakpoint()
-        # color_denom = 0.65
+
         color = "k"  # plt.cm.plasma(rotor.Cp / color_denom)
         ax.plot(points[0, :], points[1, :], lw=2, c=color)
-    
+
     # centerline of 2 turbines
     # plt.axhline(points[1, :].mean(), ls="--", c="k", lw=1)
-
 
     ax.set(frame_on=frame)
     if axis is False:
@@ -87,7 +85,7 @@ def plot(df: pl.DataFrame):
     windfarm_sol = utils.from_polars(_df, windfarm)
     plot_windfarm(windfarm_sol, plt.gca(), angle=wdir, pad=2)
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=1000, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=1000, bbox_inches="tight")
     plt.close()
 
 

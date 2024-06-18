@@ -204,7 +204,7 @@ def plot(df):
     # Legend
     axes[0, 0].legend(loc="lower center", ncol=4, bbox_to_anchor=(1.1, 1.01))
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 def main():

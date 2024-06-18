@@ -109,7 +109,7 @@ def plot_wdir_sweep(df: pl.DataFrame):
     axes[0].set_ylabel(r"$C_{P, \mathrm{farm}}$")
     axes[1].set_ylabel(r"$C_{P, \mathrm{farm}}$ increase (\%)")
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}_wdir_sweep.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}_wdir_sweep.png", dpi=300, bbox_inches="tight")
 
 
 def main():

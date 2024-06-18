@@ -136,7 +136,7 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     axes[1, 0].set_xlabel("Turbine")
     axes[1, 1].set_xlabel("Farm")
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 def main():

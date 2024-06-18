@@ -8,6 +8,8 @@ fig*/
 TEMP*/
 To_animate/
 LES_cases
+archive/
+*.code-workspace
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

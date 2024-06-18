@@ -13,8 +13,6 @@ FILESTEM = Path(__file__).stem
 # Use Latex Fonts
 plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
 
-FIGDIR = Path(__file__).parent.parent / "fig"
-FIGDIR.mkdir(exist_ok=True, parents=True)
 
 PITCHES = np.deg2rad(np.arange(-15, 15.001, 0.5))
 TSRS = np.arange(5, 12.001, 0.125)
@@ -268,7 +266,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
     cbar = plt.colorbar(CF_Ct, cax=axes[1, 2], aspect=20)
     cbar.set_label(label=r"$C_T~$(-)")
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
     plt.close()
 
 

@@ -53,7 +53,7 @@ def plot(df: pl.DataFrame):
 
     plt.xlim(4, 10)
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 def main():

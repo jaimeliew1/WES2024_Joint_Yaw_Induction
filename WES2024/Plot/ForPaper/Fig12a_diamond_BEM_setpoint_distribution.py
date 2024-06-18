@@ -19,7 +19,7 @@ import seaborn as sns
 
 from WES2024 import utils
 from WES2024.Generate import diamond_BEM, minCt_trajectory, pitch_tsr_surface
-from WES2024.Plot.Fig00_single_turbine_surface import plot_surface
+from WES2024.Plot.ForPaper.Fig00_single_turbine_surface import plot_surface
 
 FILESTEM = Path(__file__).stem
 
@@ -131,7 +131,7 @@ def plot(df: pl.DataFrame, df_surface: pl.DataFrame, df_trajectory: pl.DataFrame
         title="Minimum thrust trajectory", loc="lower left", ncol=3, bbox_to_anchor=(0.0, 1.08)
     )
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")
 
 
 def main():

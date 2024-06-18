@@ -115,7 +115,7 @@ def plot(df_surface: pl.DataFrame, df_opt: pl.DataFrame):
         loc="lower center",
     )
     # Save figure to file
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")
     plt.close()
 
 

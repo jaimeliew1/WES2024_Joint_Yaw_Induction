@@ -194,7 +194,7 @@ def plot(df: pl.DataFrame):
     rectangle = Rectangle(box_xy, box_width, box_height, fill=False, ls="--", ec="teal")
     ax_layout.add_patch(rectangle)
 
-    plt.savefig(utils.FIGDIR / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
 def main():
