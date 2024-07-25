@@ -2,6 +2,7 @@ import re
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -117,14 +118,21 @@ def normalize_by_upstream(
 
 
 class VariableKwGaussianWakeModel(WakeModel):
-    def __init__(self, a: float, b: float, c: float, sigma: float = 1 / np.sqrt(8)):
+    def __init__(self, a: float, b: float, c: float, b1: float, sigma: float = 1 / np.sqrt(8)):
         self.a = a
         self.b = b
         self.c = c
+        self.b1 = b1
         self.sigma = sigma
 
     def __call__(self, x, y, z, rotor_sol: "RotorSolution", TIamb: float = None) -> GaussianWake:
-        kw = self.a * rotor_sol.TI**2 + self.b * rotor_sol.TI + self.c
+        # kw = self.a * rotor_sol.TI**2 + self.b * rotor_sol.TI + self.c
+        kw = (
+            self.a * rotor_sol.TI**2
+            + self.b * rotor_sol.TI
+            + self.b1 * rotor_sol.Ctprime
+            + self.c
+        )
         return GaussianWake(x, y, z, rotor_sol, sigma=self.sigma, kw=kw, TIamb=TIamb)
 
 
@@ -146,25 +154,25 @@ class CalibrationCase:
         self.calibrated = False
         self._setpoints = None
 
-    def run_model(self, a: float, b: float, c: float) -> WindfarmSolution:
+    def run_model(self, a: float, b: float, c: float, b1: float) -> WindfarmSolution:
         """
         Run the wind farm model using a variable-wake spreading rate wake model
-        for a given set of wake model parameters, (a, b, c).
+        for a given set of wake model parameters, (a, b, c, b1).
         """
-        wakemodel = VariableKwGaussianWakeModel(a, b, c)
+        wakemodel = VariableKwGaussianWakeModel(a, b, c, b1)
         windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
 
-        setpoints = len(self.layout) * [(2.0, 0.0)]
+        setpoints = len(self.layout) * [(2.0, 0.0)]  # should this be 2.1..?
         sol = windfarm(self.layout, setpoints)
 
         return sol
 
-    def set_calibration(self, a: float, b: float, c: float):
-        self._setpoints = (a, b, c)
+    def set_calibration(self, a: float, b: float, c: float, b1: float):
+        self._setpoints = (a, b, c, b1)
         self.calibrated = True
 
     def calibrate(
-        self, Cp_ref: list[float], x0: tuple[float, float, float] = (0.0, 1.0, 0.0)
+        self, Cp_ref: list[float], x0: tuple[float, ...] = (0.0, 1.0, 0.0, 1.0)
     ) -> "CalibrationCase":
         """
         Calibrate a polynomial mapping between TI at the rotor and wake spreading
@@ -174,15 +182,17 @@ class CalibrationCase:
         p_norm_ref = normalize_by_upstream(Cp_ref, row_indices=self.row_indices)
 
         def func(x):
-            a, b, c = x
-            sol = self.run_model(a, b, c)
+            a, b, c, b1 = x
+            sol = self.run_model(a, b, c, b1)
             Cp_model = np.array([x.Cp for x in sol.rotors])
             p_norm = normalize_by_upstream(Cp_model, self.row_indices)
 
             cost = np.sum((p_norm - p_norm_ref) ** 2)
             return cost
 
-        opt_sol = minimize(func, x0, bounds=[(0, 10), (0, 5), (-1, 1)])
+        opt_sol = minimize(
+            func, x0, bounds=[(0, 10), (0, 5), (-1, 1), (0, 5)]
+        )  # potential error in b1 bounds
 
         # print(opt_sol)
 
@@ -198,8 +208,98 @@ class CalibrationCase:
             return self._setpoints
 
     def calibrated_windfarm(self) -> Windfarm:
-        a, b, c = self.setpoints()
-        wakemodel = VariableKwGaussianWakeModel(a, b, c)
+        a, b, c, b1 = self.setpoints()
+        wakemodel = VariableKwGaussianWakeModel(a, b, c, b1)
+        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
+
+        return windfarm
+
+
+class MultiSimCalibrationCase:
+    def __init__(
+        self,
+        wdir: float,
+        TIamb: float,
+        row_indices: list[list[int]],
+        base_layout: Layout = BASE_LAYOUT,
+    ):
+        self.wdir = wdir
+        self.TIamb = TIamb
+        self.row_indices = row_indices
+
+        self._base_layout = base_layout
+        self.layout = base_layout.rotate(wdir)
+
+        self.calibrated = False
+        self._calibration_setpoints = None
+
+    def run_model(
+        self, a: float, b: float, c: float, b1: float, setpoints: list[tuple[float, float]]
+    ) -> WindfarmSolution:
+        """
+        Run the wind farm model using a variable-wake spreading rate wake model
+        for a given set of wake model parameters, (a, b, c, b1).
+        """
+        wakemodel = VariableKwGaussianWakeModel(a, b, c, b1)
+        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
+
+        # setpoints = len(self.layout) * [(2.0, 0.0)]  # should this be 2.1..?
+        sol = windfarm(self.layout, setpoints)
+
+        return sol
+
+    def set_calibration(self, a: float, b: float, c: float, b1: float):
+        self._calibration_setpoints = (a, b, c, b1)
+        self.calibrated = True
+
+    def calibrate(
+        self,
+        Cp_ref_sets: list[list[float]],
+        control_setpoint_sets: list[list[tuple[float, float]]],
+        x0: tuple[float, ...] = (0.0, 1.0, 0.0, 1.0),
+    ) -> "CalibrationCase":
+        """
+        Calibrate a polynomial mapping between TI at the rotor and wake spreading
+        wake by minimizing the square error of Cp NORMALIZED by the upstream turbines.
+        """
+        assert len(Cp_ref_sets) == len(control_setpoint_sets)
+        p_norm_refs = [
+            normalize_by_upstream(Cp_ref, row_indices=self.row_indices) for Cp_ref in Cp_ref_sets
+        ]
+
+        def func(x):
+            a, b, c, b1 = x
+
+            cost = 0.0
+            for control_setpoints, p_norm_ref in zip(control_setpoint_sets, p_norm_refs):
+                sol = self.run_model(a, b, c, b1, control_setpoints)
+                Cp_model = np.array([x.Cp for x in sol.rotors])
+                p_norm = normalize_by_upstream(Cp_model, self.row_indices)
+
+                cost += np.sum((p_norm - p_norm_ref) ** 2)
+
+            return cost
+
+        opt_sol = minimize(
+            func, x0, bounds=[(0, 10), (0, 5), (-1, 1), (-5, 5)]
+        )  # potential error in b1 bounds
+
+        print(opt_sol)
+
+        self._calibration_setpoints = opt_sol.x
+        self.calibrated = True
+
+        return self
+
+    def setpoints(self):
+        if not self.calibrated:
+            raise ValueError("Case not yet calibrated.")
+        else:
+            return self._calibration_setpoints
+
+    def calibrated_windfarm(self) -> Windfarm:
+        a, b, c, b1 = self.setpoints()
+        wakemodel = VariableKwGaussianWakeModel(a, b, c, b1)
         windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=self.TIamb)
 
         return windfarm
@@ -208,14 +308,14 @@ class CalibrationCase:
 @dataclass
 class TurbineDefinition:
     """
-    Data class representing the definition of a wind turbine.
-
-    Attributes:
-    - x (float): X-coordinate of the turbine in rotor diamters.
-    - y (float): Y-coordinate of the turbine in rotor diamters.
-    - z (float): Z-coordinate (height) of the turbine in rotor diamters.
-    - yaw (float): Yaw angle of the turbine in degrees (positive is anti-clockwise).
-    - ctp (float): Local thrust coefficient of the turbine.
+        Data class representing the definition of a wind turbine.
+    logitech
+        Attributes:
+        - x (float): X-coordinate of the turbine in rotor diamters.
+        - y (float): Y-coordinate of the turbine in rotor diamters.
+        - z (float): Z-coordinate (height) of the turbine in rotor diamters.
+        - yaw (float): Yaw angle of the turbine in degrees (positive is anti-clockwise).
+        - ctp (float): Local thrust coefficient of the turbine.
     """
 
     turbine_ID: str
@@ -305,7 +405,12 @@ def plot_text_on_layout(layout: Layout, vals: list, fn: Path, title=None):
     plt.close()
 
 
-def calibrate_wake_model(wdir: float, LES_fn: Path | str, calibration_fn: Path | str) -> None:
+def calibrate_wake_model(
+    wdir: float,
+    LES_fns: list[Path | str],
+    input_fns: list[Path | str],
+    calibration_fn: Optional[Path | str],
+) -> None:
     """
     Calibrate wake spreading rate as a function of added wake turbulence based
     on LES results (LES_fn). Saves results as a text file (calibration_fn).
@@ -313,18 +418,21 @@ def calibrate_wake_model(wdir: float, LES_fn: Path | str, calibration_fn: Path |
     inputs: LES results filepath (LES_fn)
     outputs: Wake calibration file (calibration_fn)
     """
-    df = pl.read_csv(LES_fn)
+    powers = [pl.read_csv(fn)["Cp"].to_numpy() for fn in LES_fns]
+    setpoints = [extract_setpoints_from_json(fn) for fn in input_fns]
 
-    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
-    calibration = calibration.calibrate(df["Cp"].to_numpy())
+    calibration = MultiSimCalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    calibration = calibration.calibrate(powers, setpoints)
+
     output = ",".join(str(x) for x in calibration.setpoints())
 
-    # Make directory if it does not exist.
-    Path(calibration_fn).parent.mkdir(exist_ok=True, parents=True)
-
     # Write calibration values to file.
+
+    Path(calibration_fn).parent.mkdir(exist_ok=True, parents=True)
     with open(calibration_fn, "w") as f:
         f.write(output)
+
+    return None
 
 
 def no_control_setpoints(wdir: float, setpoint_fn: Path | str) -> None:
@@ -335,8 +443,10 @@ def no_control_setpoints(wdir: float, setpoint_fn: Path | str) -> None:
     inputs: wind direction (wdir)
     outputs: setpoint JSON file (setpoint_fn)
     """
-    calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
-    sol = calibration.run_model(1, 1, 1)
+    setpoints = 25 * [(2.1047, 0.0)]  # should this be 2.1.. yes probably?
+
+    calibration = MultiSimCalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
+    sol = calibration.run_model(1, 1, 1, 1, setpoints)
     sim_dict = make_sim_case(sol, wdir, "nocontrol")
 
     with open(setpoint_fn, "w") as f:
@@ -356,10 +466,10 @@ def find_optimal_setpoints(
     with open(calibration_fn, "r") as f:
 
         out = f.read()
-        a, b, c = [float(x) for x in out.split(",")]
+        a, b, c, b1 = [float(x) for x in out.split(",")]
 
     calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
-    calibration.set_calibration(a, b, c)
+    calibration.set_calibration(a, b, c, b1)
 
     windfarm = calibration.calibrated_windfarm()
     controller = CONTROLLERS[controller_id]
@@ -380,6 +490,17 @@ def combine_results(LES_dir: list[Path], out_fn: Path | str) -> None:
     raise NotImplementedError
 
 
+def extract_setpoints_from_json(fn: Path | str) -> list[tuple[float, float]]:
+    with open(fn, "r") as f:
+        _setpoints = json.load(f)
+
+    yaws = np.deg2rad([turbine["yaw"] for turbine in _setpoints["turbines"]])
+    ctprimes = [turbine["ctp"] for turbine in _setpoints["turbines"]]
+    setpoints = list(zip(ctprimes, yaws))
+
+    return setpoints
+
+
 def run_MITWindfarm(
     wdir: float,
     controller: str,
@@ -390,10 +511,10 @@ def run_MITWindfarm(
     # Make output directory if it does not exist.
     with open(calibration_fn, "r") as f:
         out = f.read()
-        a, b, c = [float(x) for x in out.split(",")]
+        a, b, c, b1 = [float(x) for x in out.split(",")]
 
     calibration = CalibrationCase(wdir, TIAMB, ROW_INDICES[wdir])
-    calibration.set_calibration(a, b, c)
+    calibration.set_calibration(a, b, c, b1)
     windfarm = calibration.calibrated_windfarm()
 
     with open(setpoint_fn, "r") as f:

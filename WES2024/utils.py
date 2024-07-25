@@ -45,9 +45,9 @@ line_params = {
         label=controller_labels["ThrustControl"], c=controller_colors["ThrustControl"]
     ),
     "YawControl": dict(label=controller_labels["YawControl"], c=controller_colors["YawControl"]),
-    "YawKOmegaControl": dict(
-        label=controller_labels["YawKOmegaControl"], c=controller_colors["YawKOmegaControl"]
-    ),
+    # "YawKOmegaControl": dict(
+    #     label=controller_labels["YawKOmegaControl"], c=controller_colors["YawKOmegaControl"]
+    # ),
     "JointControl": dict(
         label=controller_labels["JointControl"], c=controller_colors["JointControl"]
     ),
@@ -65,6 +65,9 @@ DIAMOND_GROUPS = pl.DataFrame(
 
 FIGDIR = Path(__file__).parent.parent / "fig"
 FIGDIR.mkdir(exist_ok=True, parents=True)
+
+FIGDIRFORPAPER = FIGDIR / "for_paper"
+FIGDIRFORPAPER.mkdir(exist_ok=True, parents=True)
 
 CACHEDIR = Path(__file__).parent.parent / "data"
 CACHEDIR.mkdir(exist_ok=True, parents=True)

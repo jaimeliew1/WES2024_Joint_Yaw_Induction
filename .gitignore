@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
 *.prof
+*.csv
 data/
 .vscode
 fig*/
@@ -10,6 +11,10 @@ To_animate/
 LES_cases
 archive/
 *.code-workspace
+scripts/
+WES2024/LES/LES_input/
+WES2024/LES/LES_output/
+WES2024/LES/calibration/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

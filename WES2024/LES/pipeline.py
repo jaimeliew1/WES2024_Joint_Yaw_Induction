@@ -16,10 +16,10 @@ from itertools import product
 from pathlib import Path
 
 import luigi
-import run as backend
+import WES2024.LES.run as backend
 
 
-WDIRS = [-2.5, 0.0, 42.0, 45.0]
+WDIRS = [-2.5]  # , 0.0, 42.0, 45.0]
 CONTROLLERS = ["nocontrol", "yawcontrol", "thrustcontrol", "jointcontrol"]
 
 DATA_DIR = Path(__file__).parent
@@ -29,10 +29,22 @@ class Calibration(luigi.Task):
     wdir = luigi.FloatParameter()
 
     def requires(self) -> luigi.Task:
-        return LES(self.wdir, "nocontrol")
+        return [
+        # LES(self.wdir, "nocontrol"),
+                LES(self.wdir, "thrustcontrolcalibration"),
+                ], [
+            # ZeroSetpoints(self.wdir),
+            Setpoints(self.wdir, "thrustcontrolcalibration"),
+        ]
 
     def run(self):
-        backend.calibrate_wake_model(self.wdir, self.requires().output().path, self.output().path)
+        LES_res, LES_inputs = self.requires()
+        backend.calibrate_wake_model(
+            self.wdir,
+            [x.output().path for x in LES_res],
+            [x.output().path for x in LES_inputs],
+            self.output().path,
+        )
 
     def output(self) -> luigi.LocalTarget:
         return luigi.LocalTarget(DATA_DIR / f"calibration/calibration_wdir{self.wdir}.csv")
@@ -57,6 +69,11 @@ class Setpoints(luigi.Task):
             raise ValueError(
                 "Can't call Setpoints with nocontrol controller. Use ZeroSetpoints instead."
             )
+        elif self.controller == "thrustcontrolcalibration":
+            raise ValueError(
+                "Can't call Setpoints with thrustcontrolcalibration controller. This should be generated manually."
+            )
+
         return Calibration(self.wdir)
 
     def run(self):
