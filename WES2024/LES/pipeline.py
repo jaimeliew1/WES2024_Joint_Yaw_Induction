@@ -18,9 +18,8 @@ from pathlib import Path
 import luigi
 import WES2024.LES.run as backend
 
-
 WDIRS = [-2.5]  # , 0.0, 42.0, 45.0]
-CONTROLLERS = ["nocontrol", "yawcontrol", "thrustcontrol", "jointcontrol"]
+CONTROLLERS = ["nocontrol", "yawcontrol", "thrustcontrol", "jointcontrol", "thrustcontrolcalibration"]
 
 DATA_DIR = Path(__file__).parent
 
@@ -30,9 +29,9 @@ class Calibration(luigi.Task):
 
     def requires(self) -> luigi.Task:
         return [
-        # LES(self.wdir, "nocontrol"),
-                LES(self.wdir, "thrustcontrolcalibration"),
-                ], [
+            # LES(self.wdir, "nocontrol"),
+            LES(self.wdir, "thrustcontrolcalibration"),
+        ], [
             # ZeroSetpoints(self.wdir),
             Setpoints(self.wdir, "thrustcontrolcalibration"),
         ]

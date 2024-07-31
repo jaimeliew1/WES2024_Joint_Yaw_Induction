@@ -30,6 +30,8 @@ LES_input_dir = Path(__file__).parent / "LES_input"
 assert LES_output_dir.exists()
 LES_input_dir.mkdir(exist_ok=True, parents=True)
 
+CASE_NOTE = "test_1.0"
+
 LES_FN_REGEX = re.compile("(\w+)_wdir(-?\d+.\d+)_(\w+).csv")
 
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
@@ -341,6 +343,7 @@ class SimulationDefinition:
     casename: str
     wdir: float
     controller: str
+    case_note: str
     turbines: list[TurbineDefinition]
 
 
@@ -385,7 +388,7 @@ def make_sim_case(sol: WindfarmSolution, wdir: float, controller: str) -> dict:
         )
         turbines.append(_turbine)
 
-    return asdict(SimulationDefinition(casename, wdir, controller, turbines))
+    return asdict(SimulationDefinition(casename, wdir, controller, CASE_NOTE, turbines))
 
 
 def plot_text_on_layout(layout: Layout, vals: list, fn: Path, title=None):
