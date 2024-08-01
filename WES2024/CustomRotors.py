@@ -304,7 +304,7 @@ class UnifiedLUTAD(Rotor):
         - beta (float): Axial induction factor (default is 0.1403).
         """
         if rotor_grid is None:
-            self.rotor_grid = Area()  # Line(1000)#Area(r_disc=15, theta_disc=15)
+            self.rotor_grid = Area()
         else:
             self.rotor_grid = rotor_grid
         self._model = UnifiedMomentumLUT()
@@ -329,7 +329,9 @@ class UnifiedLUTAD(Rotor):
         xs_glob, ys_glob, zs_glob = xs_loc + x, ys_loc + y, zs_loc + z
 
         # sample windfield and calculate rotor effective wind speed
-        Us, TIs = windfield.wsp_and_TI(xs_glob, ys_glob, zs_glob)
+        Us = windfield.wsp(xs_glob, ys_glob, zs_glob)
+        TIs = windfield.TI(xs_glob, ys_glob, zs_glob)
+
         REWS = self.rotor_grid.average(Us)
         RETI = np.sqrt(self.rotor_grid.average(TIs**2))
 
@@ -409,7 +411,9 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         rotor: "MITRotor.RotorDefinition",
         geom: "MITRotor.BEMGeometry",
     ) -> ArrayLike:
-        Ct = geom.annulus_average(aero_props.solidity * aero_props.W**2 * aero_props.Cax)
+        Ct = geom.annulus_average(
+            aero_props.solidity * aero_props.W**2 * aero_props.Cax
+        )
         _Ct = np.clip(Ct, -1, 1.59)
         a = self.Ct_a(_Ct, yaw)[:, None] * np.ones(geom.shape)
 

@@ -180,4 +180,4 @@ class Plot(luigi.Task):
 
 
 if __name__ == "__main__":
-    luigi.build([Combine(), Plot()], local_scheduler=False)
+    luigi.build([Combine()], local_scheduler=False)
