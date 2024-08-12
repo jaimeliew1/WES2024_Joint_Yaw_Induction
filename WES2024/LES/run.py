@@ -258,6 +258,77 @@ class SimulationDefinition:
     case_note: str
     turbines: list[TurbineDefinition]
 
+    @classmethod
+    def from_windfarmsolution(
+        cls,
+        sol: WindfarmSolution,
+        casename: str,
+        wdir: float,
+        controller: str,
+        case_note: str,
+    ) -> "SimulationDefinition":
+        xmin, ymin = sol.layout.x.min(), sol.layout.y.min()
+
+        turbines = []
+        for i, ((x, y, z), rotor) in enumerate(zip(sol.layout, sol.rotors)):
+            _turbine = TurbineDefinition(
+                f"turbine_{i}",
+                x - xmin,
+                y - ymin,
+                z,
+                np.rad2deg(rotor.yaw),
+                rotor.Ctprime,
+            )
+            turbines.append(_turbine)
+
+        return SimulationDefinition(
+            turbines=turbines,
+            casename=casename,
+            wdir=wdir,
+            controller=controller,
+            case_note=case_note,
+        )
+
+    @classmethod
+    def from_json(cls, json_fn: Path) -> "SimulationDefinition":
+        with open(json_fn, "r") as f:
+            data = json.load(f)
+
+        turbines = []
+        for turbine in data["turbines"]:
+            turbines.append(
+                TurbineDefinition(
+                    turbine["turbine_ID"],
+                    turbine["x"],
+                    turbine["y"],
+                    turbine["z"],
+                    turbine["yaw"],
+                    turbine["ctp"],
+                )
+            )
+
+        kwargs = {
+            "casename": data["casename"],
+            "wdir": data["wdir"],
+            "controller": data["controller"],
+            "case_note": data["case_note"],
+        }
+        return SimulationDefinition(turbines=turbines, **kwargs)
+
+    def write_json(self, fn) -> None:
+        with open(fn, "w") as f:
+            json.dump(asdict(self), f, indent=4)
+
+    def layout(self) -> Layout:
+        xs = [x.x for x in self.turbines]
+        ys = [x.y for x in self.turbines]
+        zs = [x.z for x in self.turbines]
+
+        return Layout(xs, ys, zs)
+
+    def setpoints(self) -> list[tuple[float, float]]:
+        return [(turb.ctp, np.deg2rad(turb.yaw)) for turb in self.turbines]
+
 
 def make_sim_case(sol: WindfarmSolution, wdir: float, controller: str) -> dict:
 

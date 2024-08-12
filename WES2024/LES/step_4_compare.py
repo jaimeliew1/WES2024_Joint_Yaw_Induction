@@ -75,7 +75,7 @@ class SimData:
     def from_files(cls, output_fn: Path, name: str = "") -> "SimData":
         _df = pl.read_csv(output_fn)
         Cp_upstream_norm = normalize_by_upstream(
-            _df["Cp"].to_numpy(), row_indices=ROW_INDICES[-2.5]
+            _df["Cp"].to_numpy(), row_indices=ROW_INDICES
         )
 
         df = _df.select(
@@ -167,41 +167,53 @@ if __name__ == "__main__":
             STEP_3_DIR / "LES_wdir-2.5_nocontrol.csv",
             name="LES_nocontrol",
         ),
+        # SimData.from_files(
+        #     STEP_3_DIR / "LES_wdir-2.5_thrustcontrolcalibration.csv",
+        #     name="LES_thrustcontrolcalibration",
+        # ),
+        # SimData.from_files(
+        #     STEP_3_DIR / "LES_wdir-2.5_yawcontrol.csv",
+        #     name="LES_yawcontrol",
+        # ),
+        # SimData.from_files(
+        #     STEP_3_DIR / "LES_wdir-2.5_jointcontrol.csv",
+        #     name="LES_jointcontrol",
+        # ),
+        # SimData.from_files(
+        #     STEP_3_DIR / "LES_wdir-2.5_jointunicontrol.csv",
+        #     name="LES_jointunicontrol",
+        # ),
         SimData.from_files(
-            STEP_3_DIR / "LES_wdir-2.5_thrustcontrolcalibration.csv",
-            name="LES_thrustcontrolcalibration",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_ManualCal_nocontrol.csv",
+            name="MIT_ManualCal_nocontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "LES_wdir-2.5_yawcontrol.csv",
-            name="LES_yawcontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_ManualCal_thrustcontrol.csv",
+            name="MIT_ManualCal_thrustcontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "LES_wdir-2.5_jointcontrol.csv",
-            name="LES_jointcontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_ManualCal_jointcontrol.csv",
+            name="MIT_ManualCal_jointcontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "LES_wdir-2.5_jointunicontrol.csv",
-            name="LES_jointunicontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_ManualCal_yawcontrol.csv",
+            name="MIT_ManualCal_yawcontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "MITWindfarm_wdir-2.5_nocontrol.csv",
-            name="MIT_nocontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_AutoCal_nocontrol.csv",
+            name="MIT_AutoCal_nocontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "MITWindfarm_wdir-2.5_thrustcontrol.csv",
-            name="MIT_thrustcontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_AutoCal_thrustcontrol.csv",
+            name="MIT_AutoCal_thrustcontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "MITWindfarm_wdir-2.5_thrustcontrolcalibration.csv",
-            name="MIT_thrustcontrolcalibration",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_AutoCal_jointcontrol.csv",
+            name="MIT_AutoCal_jointcontrol",
         ),
         SimData.from_files(
-            STEP_3_DIR / "MITWindfarm_wdir-2.5_jointcontrol.csv",
-            name="MIT_jointcontrol",
-        ),
-        SimData.from_files(
-            STEP_3_DIR / "MITWindfarm_wdir-2.5_yawcontrol.csv",
-            name="MIT_yawcontrol",
+            STEP_3_DIR / "MITWindfarm_wdir-2.5_AutoCal_yawcontrol.csv",
+            name="MIT_AutoCal_yawcontrol",
         ),
     ]
     simdata = {x.name: x for x in sims}
@@ -212,25 +224,33 @@ if __name__ == "__main__":
 
     pairs_to_compare = [
         # MIT power gains
-        ("MIT_nocontrol", "MIT_jointcontrol", False),
-        ("MIT_nocontrol", "MIT_yawcontrol", False),
-        ("MIT_nocontrol", "MIT_thrustcontrol", False),
+        ("MIT_ManualCal_nocontrol", "MIT_ManualCal_jointcontrol", False),
+        ("MIT_ManualCal_nocontrol", "MIT_ManualCal_yawcontrol", False),
+        ("MIT_ManualCal_nocontrol", "MIT_ManualCal_thrustcontrol", False),
+        ("MIT_AutoCal_nocontrol", "MIT_AutoCal_jointcontrol", False),
+        ("MIT_AutoCal_nocontrol", "MIT_AutoCal_yawcontrol", False),
+        ("MIT_AutoCal_nocontrol", "MIT_AutoCal_thrustcontrol", False),
+        ("MIT_ManualCal_nocontrol", "MIT_AutoCal_nocontrol", False),
+        ("MIT_ManualCal_jointcontrol", "MIT_AutoCal_jointcontrol", False),
+        ("MIT_ManualCal_yawcontrol", "MIT_AutoCal_yawcontrol", False),
+        ("MIT_ManualCal_thrustcontrol", "MIT_AutoCal_thrustcontrol", False),
         # New thrustcontrol with calibration thrust control
-        ("MIT_thrustcontrol", "MIT_thrustcontrolcalibration", False),
+        # ("MIT_thrustcontrol", "MIT_thrustcontrolcalibration", False),
         # LES power gains
         # ("LES_nocontrol", "LES_thrustcontrol", False),
-        ("LES_nocontrol", "LES_thrustcontrolcalibration", False),
-        ("LES_nocontrol", "LES_yawcontrol", False),
-        ("LES_nocontrol", "LES_jointcontrol", False),
-        ("LES_nocontrol", "LES_jointunicontrol", False),
+        # ("LES_nocontrol", "LES_thrustcontrolcalibration", False),
+        # ("LES_nocontrol", "LES_yawcontrol", False),
+        # ("LES_nocontrol", "LES_jointcontrol", False),
+        # ("LES_nocontrol", "LES_jointunicontrol", False),
         # new thrust control vs calibration thrust control
         # ("LES_thrustcontrol", "LES_thrustcontrolcalibration", False),
         # MIT vs LES
-        ("LES_nocontrol", "MIT_nocontrol", True),
-        ("LES_thrustcontrolcalibration", "MIT_thrustcontrolcalibration", True),
-        ("LES_yawcontrol", "MIT_yawcontrol", True),
-        ("LES_jointcontrol", "MIT_jointcontrol", True),
-        ("LES_jointunicontrol", "MIT_jointcontrol", True),
+        ("LES_nocontrol", "MIT_ManualCal_nocontrol", True),
+        ("LES_nocontrol", "MIT_AutoCal_nocontrol", True),
+        # ("LES_thrustcontrolcalibration", "MIT_thrustcontrolcalibration", True),
+        # ("LES_yawcontrol", "MIT_yawcontrol", True),
+        # ("LES_jointcontrol", "MIT_jointcontrol", True),
+        # ("LES_jointunicontrol", "MIT_jointcontrol", True),
     ]
 
     for sim1, sim2, upstream_norm in tqdm(pairs_to_compare):
