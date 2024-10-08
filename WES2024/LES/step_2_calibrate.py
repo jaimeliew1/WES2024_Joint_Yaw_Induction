@@ -41,6 +41,7 @@ LES_OUTPUT_FN = STEP_1_DIR / "LES_wdir-2.5_calibration_18x3.csv"
 CALIBRATION_FN = STEP_2_DIR / "calibration.csv"
 CALIBRATION_FN2 = STEP_2_DIR / "calibration_opt.csv"
 FIG_FN = STEP_2_DIR / "calibration_results.png"
+FIG_DATA_FN = STEP_2_DIR / "calibration_results_data.csv"
 CACHE_FN = STEP_2_DIR / "cache.csv"
 
 ROW_INDICES = [
@@ -317,6 +318,26 @@ class CalibrateManual(Calibration):
 
     def calibrate(*args, **kwargs):
         return 1.5, 0.027, -0.21, -0.04
+class NoCalibration(Calibration):
+    """
+    Equivalent to the fixed kw model
+    """
+
+    def initial_guess(self) -> tuple[float]:
+        ...
+
+    def bounds(self) -> list[tuple[float]]:
+        ...
+
+    def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
+        a, b, c, d = x
+        wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
+        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+
+        return windfarm(self.layout, control_setpoints)
+
+    def calibrate(*args, **kwargs):
+        return 0.0, 0.0, 0.0, 0.07
 
 
 def sol_to_polars(sol: WindfarmSolution) -> pl.DataFrame:
@@ -341,6 +362,7 @@ calibrations = {
     # "CalibrateLinear": CalibrateLinear,
     # "CalibrateLinearFirstRow": CalibrateLinearFirstRow,
     "CalibrateLinear": CalibrateManual,
+    "NoCalibration": NoCalibration,
 }
 
 
@@ -401,10 +423,11 @@ if __name__ == "__main__":
 
     df = df.with_columns(pl.Series(n_upstream).alias("n_upstream"))
 
+    df.write_csv(FIG_DATA_FN)
     fig, axes = plt.subplots(1, 2, figsize=5 * np.array([2, 1]), sharey=True)
 
     sns.scatterplot(
-        df,
+        df.filter(pl.col("calib_method") != "CalibrateLinear"),
         x="TI",
         y="kw",
         hue="calib_method",
