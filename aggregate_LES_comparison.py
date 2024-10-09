@@ -23,23 +23,28 @@ if __name__ == "__main__":
     df_summary = pl.read_csv(summary_fn)
     df_layout = read_layout(json_with_layout)
 
-    # Temporarily filter out MITWindfarm simulator
-    df_summary = df_summary.filter(pl.col("simulator") != "MITWindfarm")
-
     print(df_summary)
 
+    # iterate over individual simulation results and concatenate them to a single dataframe.
     df_list = []
     for simulator, calibration, controller, results_file in df_summary.iter_rows():
-        df = pl.read_csv(data_dir / results_file).select(
-            pl.lit(simulator).alias("simulator"),
-            pl.lit(calibration).alias("calibration"),
-            pl.lit(controller).alias("controller"),
-            pl.all(),
+        df = (
+            pl.read_csv(data_dir / results_file)
+            .select(["turbine_id", "Cp", "Ctprime", "yaw"])
+            .select(
+                pl.lit(simulator).alias("simulator"),
+                pl.lit(calibration).alias("calibration"),
+                pl.lit(controller).alias("controller"),
+                pl.all(),
+            )
         )
         df_list.append(df)
 
     df = pl.concat(df_list)
+
+    # Add a column for the turbine position
     df = df.join(df_layout, on="turbine_id")
 
+    # Write final dataset to file.
     df.write_csv("LES_DATA.csv")
     print(df)
