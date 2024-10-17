@@ -34,14 +34,27 @@ box_height = 25
 
 # turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 3)["turbine"].to_numpy()
 turbines_to_keep = [17, 20, 21, 22, 16, 12]
-print(turbines_to_keep)
+turbine_group_labels = [
+    "F",
+    "A",
+    "B", #its actually D but is a symmetry group
+    "C",
+    "E",
+    "G",
+    # "B",
+]
 
+print(turbines_to_keep)
+print(utils.DIAMOND_GROUPS.filter(pl.col("turbine").is_in(turbines_to_keep)))
 titles = {
     "Ctprime": r"$C_T'$",
     "yaw": r"$\gamma$",
     "pitch": r"$\theta_p$",
     "tsr": r"$\lambda$",
 }
+
+COLOR_GREY = "0.7"
+COLOR_HIGHLIGHT = "k"
 
 
 def generate(regenerate=False) -> pl.DataFrame:
@@ -73,7 +86,17 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
         "o",
         ms=3,
         markerfacecolor="None",
-        markeredgecolor="k",
+        markeredgecolor=COLOR_GREY,
+        markeredgewidth=1,
+        zorder=300,
+    )
+    ax.plot(
+        LAYOUT.x[turbines_to_keep],
+        LAYOUT.y[turbines_to_keep],
+        "o",
+        ms=3,
+        markerfacecolor="None",
+        markeredgecolor=COLOR_HIGHLIGHT,
         markeredgewidth=1,
         zorder=300,
     )
@@ -142,17 +165,44 @@ def plot_layout_and_powerrose(
         axp.plot(np.pi / 2 + wdirs, _df[method], lw=1, **utils.line_params[method])
 
     xs, ys = LAYOUT.x, LAYOUT.y
+    xs_highlight, ys_highlight = xs[turbines_to_keep], ys[turbines_to_keep]
 
+    # Grey out nonhighlighted turbines
     ax.plot(
         xs,
         ys,
         "o",
         ms=3,
         markerfacecolor="None",
-        markeredgecolor="k",
+        markeredgecolor=COLOR_GREY,
         markeredgewidth=1,
         zorder=300,
     )
+
+    # mark highlighted turbines
+    ax.plot(
+        xs_highlight,
+        ys_highlight,
+        "o",
+        ms=3,
+        markerfacecolor="None",
+        markeredgecolor=COLOR_HIGHLIGHT,
+        markeredgewidth=1,
+        zorder=300,
+    )
+
+    # add turbine group labels
+    for _x, _y, label, idx in zip(xs_highlight, ys_highlight, turbine_group_labels, turbines_to_keep):
+        ax.text(
+            _x + 2,
+            _y,
+            label,
+            fontsize=8,
+            ha="left",
+            va="center",
+            color="k",
+            # f"{idx}",
+        )
 
     # add radial grid lines
     theta = np.linspace(0, np.pi * 2, 200)
