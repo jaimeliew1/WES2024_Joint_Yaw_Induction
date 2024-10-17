@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
+from rich import print
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD, diamond_BEM
@@ -143,6 +144,9 @@ def main():
     df_full = utils.fill_in_other_quadrants(generate(regenerate=False))
 
     df_turb, df_farm = aggregate_turbine(df_full)
+    
+    print(df_turb)
+    print(df_farm)
 
     plot(df_turb, df_farm)
 
