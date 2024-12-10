@@ -34,7 +34,9 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 def aggregate_turbine(df_full: pl.DataFrame) -> tuple[pl.DataFrame, ...]:
     # select only the first turbine in each group
-    turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0)["turbine"]
+    turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0, pl.col("group") != "Dinv")[
+        "turbine"
+    ]
     df = df_full.filter(pl.col("turbine").is_in(turbines_to_keep))
 
     df_agg = df.group_by("group", "method").agg(pl.col("Cp").mean(), pl.col("Ct").mean())
@@ -144,7 +146,7 @@ def main():
     df_full = utils.fill_in_other_quadrants(generate(regenerate=False))
 
     df_turb, df_farm = aggregate_turbine(df_full)
-    
+
     print(df_turb)
     print(df_farm)
 

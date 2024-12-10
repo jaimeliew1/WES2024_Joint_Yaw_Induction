@@ -34,15 +34,7 @@ box_height = 25
 
 # turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 3)["turbine"].to_numpy()
 turbines_to_keep = [17, 20, 21, 22, 16, 12]
-turbine_group_labels = [
-    "F",
-    "A",
-    "B", #its actually D but is a symmetry group
-    "C",
-    "E",
-    "G",
-    # "B",
-]
+turbine_group_labels = ["E", "A", "B", "C", "D", "F"]
 
 print(turbines_to_keep)
 print(utils.DIAMOND_GROUPS.filter(pl.col("turbine").is_in(turbines_to_keep)))
@@ -192,7 +184,9 @@ def plot_layout_and_powerrose(
     )
 
     # add turbine group labels
-    for _x, _y, label, idx in zip(xs_highlight, ys_highlight, turbine_group_labels, turbines_to_keep):
+    for _x, _y, label, idx in zip(
+        xs_highlight, ys_highlight, turbine_group_labels, turbines_to_keep
+    ):
         ax.text(
             _x + 2,
             _y,
