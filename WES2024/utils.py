@@ -70,6 +70,7 @@ FIGDIRFORPAPER = FIGDIR / "for_paper"
 FIGDIRFORPAPER.mkdir(exist_ok=True, parents=True)
 
 CACHEDIR = Path(__file__).parent.parent / "data"
+# CACHEDIR = Path(r"G:\Shared drives\howland_lab\current_projects\2024_WES_jliew_kheck\data")
 CACHEDIR.mkdir(exist_ok=True, parents=True)
 
 
