@@ -1913,11 +1913,15 @@ numpy = ">=1.16.5"
 scipy = ">=1.6"
 unified-momentum-model = {git = "https://github.com/Howland-Lab/Unified-Momentum-Model.git"}
 
+[package.extras]
+dev = ["ipykernel (>=6.25.1,<7.0.0)", "ipython (>=8,<9)", "jupyter (>=1.0.0,<2.0.0)", "matplotlib (>=3.9.2,<4.0.0)", "mypy (>=1.5.1,<2.0.0)", "pytest (>=7.4.2,<8.0.0)", "ruff (>=0.1.7,<0.2.0)"]
+examples = ["matplotlib (>=3.9.2,<4.0.0)"]
+
 [package.source]
 type = "git"
 url = "https://github.com/Howland-Lab/MITWindfarm.git"
-reference = "a08d7e2414c46266e873a0b6b3ddeae470de2917"
-resolved_reference = "a08d7e2414c46266e873a0b6b3ddeae470de2917"
+reference = "3121c820b366a565f00761bf217407a6a5a8a55a"
+resolved_reference = "3121c820b366a565f00761bf217407a6a5a8a55a"
 
 [[package]]
 name = "mypy"
@@ -3679,4 +3683,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "e241cbbd855c13acfe6806777f99d472d79b99f78e60c38e532df7c041ae22f8"
+content-hash = "bf6c1ee908d290673c8ea028ed6f55e573eacaad41812344ca754a1feb42b7f6"
