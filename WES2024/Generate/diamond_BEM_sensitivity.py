@@ -12,7 +12,7 @@ import polars as pl
 from dualitic import DualNumber
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm import BEM, Windfarm
+from mitwindfarm import BEM, Windfarm, Niayifar
 from rich import print
 
 from WES2024 import utils
@@ -28,7 +28,8 @@ PARALLEL = True
 REGENERATE = True
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    superposition=Niayifar(),
 )
 
 
