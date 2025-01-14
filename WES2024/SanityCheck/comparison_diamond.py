@@ -18,7 +18,7 @@ if __name__ == "__main__":
         df_list.append(df)
     df = pl.concat(df_list)
 
-    df_filt = df.filter(wdir=0.0)
+    df_filt = df.filter(wdir=-2.5)
     df_pand = df_filt.to_pandas()
     print(df_filt)
     points = (

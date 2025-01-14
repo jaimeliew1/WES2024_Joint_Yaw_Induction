@@ -22,7 +22,7 @@ REGENERATE = True
 
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
-    superposition=Niayifar(),
+    # superposition=Niayifar(),
 )
 
 
@@ -43,7 +43,7 @@ layouts = {
     # 9: Square(9.0, 5).rotate(45),
     # 10: Square(10.0, 5).rotate(45),
 }
-wdirs = np.arange(0.0, 90.0, 30)
+wdirs = np.concatenate([np.arange(0.0, 90.0, 30), [-2.5]])
 
 
 def _generate(x):
