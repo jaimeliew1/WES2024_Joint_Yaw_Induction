@@ -6,7 +6,7 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from MITRotor import IEA15MW
-from mitwindfarm import BEM, Layout, Windfarm
+from mitwindfarm import BEM, Layout, Windfarm, Niayifar
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
@@ -27,7 +27,8 @@ PARALLEL = True
 
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    superposition=Niayifar(),
 )
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)

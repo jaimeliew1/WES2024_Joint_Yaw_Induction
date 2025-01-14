@@ -16,6 +16,7 @@ from mitwindfarm import (
     # VariableKwGaussianWakeModel,
     Windfarm,
     Square,
+    Niayifar,
 )
 
 from WES2024.LES.shared import STEP_2_DIR, STEP_3_DIR
@@ -39,7 +40,7 @@ CONTROLLERS = {
     "jointcontrol": JointControl,
 }
 
-CASE_NOTE = "calibrated_on_18x3"
+CASE_NOTE = "calibrated_on_18x3_2025_v1"
 
 
 def run(calibration_key: str, output_path: Path) -> None:
@@ -51,7 +52,9 @@ def run(calibration_key: str, output_path: Path) -> None:
 
     # Initialise MITWindfarm using VariableKwGaussianWakeModel
     wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-    windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+    windfarm = Windfarm(
+        rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+    )
 
     # For each controller to optimise...
     for name, controller in CONTROLLERS.items():

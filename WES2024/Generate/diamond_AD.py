@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from foreach import foreach
-from mitwindfarm import Square, Windfarm
+from mitwindfarm import Square, Windfarm, Niayifar
 
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
@@ -20,7 +20,7 @@ PARALLEL = True
 REGENERATE = True
 
 
-windfarm = Windfarm(rotor_model=UnifiedLUTAD())
+windfarm = Windfarm(rotor_model=UnifiedLUTAD(), superposition=Niayifar())
 
 
 methods = {
