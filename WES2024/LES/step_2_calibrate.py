@@ -15,6 +15,7 @@ from mitwindfarm import (
     WakeModel,
     Windfarm,
     WindfarmSolution,
+    Niayifar,
 )
 from rich import print
 from scipy.optimize import minimize
@@ -177,7 +178,6 @@ class Calibration(ABC):
         ...
 
     def cost(self, x, p_norm_ref, control_setpoints) -> float:
-
         sol = self.run_windfarm(x, control_setpoints)
 
         Cp_model = np.array([x.Cp for x in sol.rotors])
@@ -218,7 +218,9 @@ class CalibrateLinear(Calibration):
     def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
         a, b, c = x
         wakemodel = VariableKwGaussianWakeModel(a, b, c)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
@@ -261,7 +263,9 @@ class CalibrateLinearFirstRow2(Calibration):
     def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
         a, b, c, d = x
         wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
@@ -293,7 +297,9 @@ class CalibrateIndividual(Calibration):
 
     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
         wakemodel = CustomKwWakeModel(x)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
@@ -312,12 +318,16 @@ class CalibrateManual(Calibration):
     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
         a, b, c, d = x
         wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
     def calibrate(*args, **kwargs):
         return 1.5, 0.027, -0.21, -0.04
+
+
 class NoCalibration(Calibration):
     """
     Equivalent to the fixed kw model
@@ -332,7 +342,9 @@ class NoCalibration(Calibration):
     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
         a, b, c, d = x
         wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
@@ -366,13 +378,13 @@ calibrations = {
 }
 
 
-def run(LES_output_fns: Path, case_json_fn: Path, cache: Optional[pl.DataFrame] = None):
-
+def run(LES_output_fns: Path, case_json_fn: Path, cache: Optional[pl.DataFrame] = None) -> pl.DataFrame:
     les_powers = pl.read_csv(LES_output_fns)["Cp"].to_numpy()
     control_setpoints = SimulationDefinition.from_json(case_json_fn).setpoints()
 
     df_list = []
     for name, calibration in calibrations.items():
+        print(name)
         if cache is not None and name == "CalibrateIndividual":
             df_list.append(cache.filter(calib_method=name))
         else:

@@ -22,7 +22,7 @@ REGENERATE = True
 
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
-    # superposition=Niayifar(),
+    superposition=Niayifar(),
 )
 
 
