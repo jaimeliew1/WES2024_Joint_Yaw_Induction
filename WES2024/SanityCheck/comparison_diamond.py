@@ -5,8 +5,8 @@ import polars as pl
 
 
 DATA_FNS = {
-    "linear": Path(__file__).parent.parent.parent / "data_linear_superposition/diamond_AD.csv",
-    "niayifar": Path(__file__).parent.parent.parent / "data_niayifar_superposition/diamond_AD.csv",
+    "fixed_kw": Path(__file__).parent.parent.parent / "data_fixed_kw/diamond_AD.csv",
+    "variable_kw": Path(__file__).parent.parent.parent / "data_variable_kw/diamond_AD.csv",
 }
 FIGDIR = Path("fig")
 FIGDIR.mkdir(parents=True, exist_ok=True)
@@ -16,7 +16,15 @@ if __name__ == "__main__":
     for key, fn in DATA_FNS.items():
         df = pl.read_csv(fn).with_columns(superposition=pl.lit(key))
         df_list.append(df)
-    df = pl.concat(df_list)
+    df: pl.DataFrame = pl.concat(df_list)
+
+    df_piv = df.pivot(
+        values="Cp",
+        index="method",
+        columns="superposition",
+        aggregate_function="mean",
+    )
+    print(df_piv)
 
     df_filt = df.filter(wdir=-2.5)
     df_pand = df_filt.to_pandas()

@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from foreach import foreach
-from mitwindfarm import Layout, Windfarm, Niayifar
+from mitwindfarm import Layout, Windfarm, Niayifar, VariableKwGaussianWakeModel
 
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
@@ -21,6 +21,8 @@ REGENERATE = True
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
     superposition=Niayifar(),
+    wake_model=VariableKwGaussianWakeModel(1.4171123532026688, 0.0, -0.05595398649395282, x0=3.0),
+    TIamb=0.053,
 )
 layout = Layout([0, 5], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 30)
