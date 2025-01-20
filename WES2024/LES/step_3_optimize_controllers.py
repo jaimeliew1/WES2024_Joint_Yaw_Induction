@@ -13,20 +13,18 @@ from WES2024.optimise import (
 )
 from rich import print
 from mitwindfarm import (
-    # VariableKwGaussianWakeModel,
+    VariableKwGaussianWakeModel,
     Windfarm,
     Square,
     Niayifar,
 )
 
 from WES2024.LES.shared import STEP_2_DIR, STEP_3_DIR
-from WES2024.LES.step_2_calibrate import VariableKwGaussianWakeModel2
 
 ### Parameters
 # Files
 CALIBRATION_FNS = {
-    "ManualCal": STEP_2_DIR / "calibration.csv",
-    "AutoCal": STEP_2_DIR / "calibration_opt.csv",
+    "LinearCal": STEP_2_DIR / "calibration.csv",
 }
 
 
@@ -40,7 +38,7 @@ CONTROLLERS = {
     "jointcontrol": JointControl,
 }
 
-CASE_NOTE = "calibrated_on_18x3_2025_v1"
+CASE_NOTE = "calibrated_on_diamond"
 
 
 def run(calibration_key: str, output_path: Path) -> None:
@@ -48,14 +46,15 @@ def run(calibration_key: str, output_path: Path) -> None:
 
     with open(CALIBRATION_FNS[calibration_key], "r") as f:
         out = f.read()
-        a, b, c, d = [float(x) for x in out.split(",")]
+        a, b, c = [float(x) for x in out.split(",")]
 
     # Initialise MITWindfarm using VariableKwGaussianWakeModel
-    wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
     windfarm = Windfarm(
-        rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        rotor_model=UnifiedLUTAD(),
+        wake_model=VariableKwGaussianWakeModel(a, b, c, x0=3.0),
+        TIamb=TIAMB,
+        superposition=Niayifar(),
     )
-
     # For each controller to optimise...
     for name, controller in CONTROLLERS.items():
         filestem = f"MITWindfarm_wdir-2.5_{calibration_key}_{name}"
@@ -83,5 +82,4 @@ def run(calibration_key: str, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    run("ManualCal", STEP_3_DIR)
-    run("AutoCal", STEP_3_DIR)
+    run("LinearCal", STEP_3_DIR)
