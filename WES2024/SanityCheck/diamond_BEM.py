@@ -26,8 +26,8 @@ REGENERATE = True
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(1.4171123532026688, 0.0, -0.05595398649395282, x0=3.0),
-    TIamb=0.053,
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=3.0),
+    TIamb=0.056,
 )
 
 

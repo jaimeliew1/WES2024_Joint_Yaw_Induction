@@ -31,7 +31,7 @@ STEP_4_DIR.mkdir(exist_ok=True, parents=True)
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
 CALIBRATION_LAYOUT = BASE_LAYOUT.rotate(-2.5)
 
-TIAMB = 0.053  # Determined from LES.
+TIAMB = 0.056  # Determined from LES.
 
 
 def normalize_by_upstream(Cp_list: list[float], row_indices: list[list[int]]) -> list[float]:
