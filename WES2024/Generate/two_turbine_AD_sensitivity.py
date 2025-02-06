@@ -3,7 +3,7 @@ from pathlib import Path
 import polars as pl
 from dualitic import DualNumber
 from foreach import foreach
-from mitwindfarm import Windfarm, Niayifar
+from mitwindfarm import Windfarm, Niayifar, VariableKwGaussianWakeModel
 from rich import print
 
 from WES2024 import utils
@@ -16,7 +16,14 @@ FILESTEM = Path(__file__).stem
 
 
 # windfarm = Windfarm()
-windfarm = Windfarm(rotor_model=UnifiedLUTAD(), superposition=Niayifar())
+
+windfarm = Windfarm(
+    rotor_model=UnifiedLUTAD(),
+    superposition=Niayifar(),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=3.0),
+    TIamb=0.056,
+)
+
 
 def _generate(x) -> pl.DataFrame:
     _df = x
