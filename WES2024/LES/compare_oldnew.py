@@ -45,8 +45,8 @@ def compare(filename, filename2=None):
 
     # plt.subplots_adjust(wspace=0.4)
     plt.tight_layout()
-    # plt.savefig(FIGPATH / f"compare_{OLD_PATH.stem}.png", dpi=200)
-    plt.show()
+    plt.savefig(FIGPATH / f"compare_{OLD_PATH.stem}.png", dpi=200)
+    plt.close()
 
 
 if __name__ == "__main__": 
