@@ -7,13 +7,6 @@ Kirby Heck
 2024 Nov 12
 """
 
-from mitwindfarm import GridLayout, Windfarm
-from mitwindfarm.Wake import GaussianWakeModel
-from mitwindfarm.Rotor import AD
-from WES2024.CustomRotors import UnifiedLUTAD, CosineAD
-from WES2024.LES.run import TIAMB  # = 0.053
-from WES2024.LES.run_old import VariableKwGaussianWakeModel
-
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -21,22 +14,36 @@ from itertools import product
 from tqdm import tqdm
 from pathlib import Path
 
+from mitwindfarm import GridLayout, Windfarm
+from mitwindfarm.Rotor import AD
+from WES2024.CustomRotors import UnifiedLUTAD, CosineAD
+from WES2024.LES.shared import TIAMB
+from WES2024.LES_new.compare_superposition import (
+    VariableKwGaussianWakeModel,
+    CALIBRATION_RESULTS,
+)
+
+modelname = "04_kw_TI" # this is the name of the calibration results we want to use
+
 # DATAPATH = Path(__file__).parent
 DATAPATH = Path(r"C:\MIT\howland\python_scripts\WES2024_Joint_Yaw_Induction_Final_analysis\data")
 
-rotor_lookup = dict(unified=UnifiedLUTAD(), cosine=CosineAD(Pp=1.9), jfm=AD())
+rotor_lookup = dict(unified=UnifiedLUTAD(), cosine=CosineAD(Pp=1.9), cosine3=CosineAD(Pp=3), jfm=AD())
 
 def run(rotormodel="unified"):
     print("Generating sweep for rotor:", rotormodel)
     layout = GridLayout(6.0133, 0.0, 2, 1).rotate(3.8)
-    kw_params = (0.0, 0.91948314, -0.00896332)  # from calibration
+    # kw_params = dict(a=0.7478, b=0.0, c=0.01156, x0=3, sigma=1/np.sqrt(8))  # from new calibration
     # kw_params = (0, 0, 0.0398)
+    df_cached = pl.read_json(CALIBRATION_RESULTS / "final_calibration_parameters.json")
+    kw_params = np.array(
+        df_cached.filter(wakemodel=modelname, method="LESnew_nocontrol")["params"].to_list()
+    ).squeeze()
+    print("Using calibration parameters a*TI + b*Ctprime + c: (a, b, c) =", kw_params)
 
     # ugh try a few different things here... 
     wf = Windfarm(
-        rotor_model=rotor_lookup[rotormodel], wake_model=GaussianWakeModel(sigma=1/np.sqrt(8), kw=0.04, x0=3, ), 
-        # rotor_model=rotor_lookup[rotormodel], wake_model=GaussianWakeModel(sigma=0.25, kw=0.07), 
-        # rotor_model=rotor_lookup[rotormodel], wake_model=VariableKwGaussianWakeModel(*kw_params), TIamb=TIAMB
+        rotor_model=rotor_lookup[rotormodel], wake_model=VariableKwGaussianWakeModel(*kw_params, x0=3), TIamb=TIAMB
     )
 
     # now we need to sweep over all the set points
@@ -64,4 +71,5 @@ def run(rotormodel="unified"):
 if __name__ == "__main__":
     run("unified")
     run("cosine")
+    run("cosine3")
     run("jfm")
