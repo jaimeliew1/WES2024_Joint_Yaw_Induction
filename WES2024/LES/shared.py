@@ -35,7 +35,7 @@ CALIBRATION_LAYOUT = GridLayout(Sx, Sy, 3, 18).rotate(-2.5)
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
 
 
-TIAMB = 0.053  # Determined from LES.
+TIAMB = 0.0560  # Determined from LES.
 
 
 def normalize_by_upstream(
