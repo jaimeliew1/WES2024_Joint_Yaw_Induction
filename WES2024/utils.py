@@ -73,6 +73,26 @@ CACHEDIR = Path(__file__).parent.parent / "data"
 # CACHEDIR = Path(r"G:\Shared drives\howland_lab\current_projects\2024_WES_jliew_kheck\data")
 CACHEDIR.mkdir(exist_ok=True, parents=True)
 
+ROW_INDICES = [
+    [24],
+    [23, 19],
+    [22, 18, 14],
+    [21, 17, 13, 9],
+    [20, 16, 12, 8, 4],
+    [15, 11, 7, 3],
+    [10, 6, 2],
+    [5, 1],
+    [0],
+]
+
+ROW_MAPPING = {
+    **dict.fromkeys([0, 5, 10, 15, 20, 21, 22, 23, 24], 1),
+    **dict.fromkeys([1, 6, 11, 16, 17, 18, 19], 2),
+    **dict.fromkeys([2, 7, 12, 13, 14], 3),
+    **dict.fromkeys([3, 9], 4),
+    **dict.fromkeys([4], 5),
+}
+
 
 def fill_in_other_quadrants(
     df: pl.DataFrame, diamond_groups: pl.DataFrame = DIAMOND_GROUPS
