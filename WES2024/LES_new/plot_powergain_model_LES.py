@@ -12,6 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
+from WES2024.utils import controller_labels
 
 LES_output_dir = Path(__file__).parent / "LES_output"
 
@@ -35,14 +36,16 @@ def plot_powergain(df, fname):
     df = df.with_columns(
         (pl.col("Cp") / pl.col("Cp_norm") - 1).alias("$C_P$ Gain"),
         pl.col("controller").replace(custom_order, default=None).alias("order"),
+        pl.col("controller").replace(controller_labels).alias("Controller"),
+        pl.col("simulator").alias("Simulator"),  # just capitalize it!
     ).sort(by=["order", "simulator"])
 
     fig, ax = plt.subplots(figsize=(4, 3))
     sns.barplot(
         df,
-        x="controller",
+        x="Controller",
         y="$C_P$ Gain",
-        hue="simulator",
+        hue="Simulator",
         palette=["0.4", "tab:blue", ],
         errorbar=("sd", 2),
         edgecolor='k',
@@ -86,33 +89,6 @@ def run(fsearch="LESnew"):
             df_ls.append(df_LES)
 
     plot_powergain(pl.concat(df_ls, how="diagonal_relaxed"), fname=fsearch)
-
-
-def run_old(fsearch="*LESnew*.csv"):
-    df_ls = []
-
-    for f in LES_output_dir.glob(fsearch):
-        casename = f.name.split("LES_")[-1]
-        print("Running:", casename)
-        try:
-            model_inputs = next(LES_input_dir.glob(f"*{casename}"))
-        except StopIteration as e:
-            print("\tNo model inputs found")
-            continue
-
-        df2 = pl.read_csv(model_inputs)  # model
-        df1 = pl.read_csv(f)
-        df1 = df1.with_columns(
-            pl.lit("LES").alias("simulator"),
-            pl.col("turbine_id").alias("turbine"),
-            pl.lit(df2["controller"].unique()).alias("controller"),
-        )  # .drop("turbine_id", "Cp_rms")
-
-        df2 = df2.select([col for col in df1.columns if col in df2.columns])
-
-        df_ls.append(pl.concat([df1, df2], how="diagonal_relaxed"))
-
-    plot_powergain(pl.concat(df_ls), fname=fsearch.split("*")[1])
 
 
 if __name__ == "__main__":

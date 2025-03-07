@@ -13,28 +13,32 @@ import matplotlib.ticker as mticker
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
 from WES2024.LES_new.compare_superposition import LES_pnormfact
-
+from WES2024.utils import ROW_MAPPING
 from UnifiedMomentumModel import Momentum
+
 unified = Momentum.UnifiedMomentum()
-Betz = unified(2., 0)
+Betz = unified(2.0, 0)
 
 LES_output_dir = Path(__file__).parent / "LES_output"
 
 figpath = Path(__file__).parent / "figs"
 figpath.mkdir(exist_ok=True, parents=True)
 
-ROW_MAPPING = {
-    **dict.fromkeys([0, 5, 10, 15, 20, 21, 22, 23, 24], 0),
-    **dict.fromkeys([1, 6, 11, 16, 17, 18, 19], 1),
-    **dict.fromkeys([2, 7, 12, 13, 14], 1),
-    **dict.fromkeys([3, 9], 3),
-    **dict.fromkeys([4], 4),
+PLOT_ORDER = {"nocontrol": 0, "thrustcontrol": 1, "yawcontrol": 2, "jointcontrol": 3}
+controller_labels = {
+    "nocontrol": "No control",
+    "thrustcontrol": "Thrust control",
+    "yawcontrol": "Yaw control",
+    "jointcontrol": "Joint control",
 }
 
-PLOT_ORDER = {"nocontrol": 0, "thrustcontrol": 1, "yawcontrol": 2, "jointcontrol": 3}
 
-
-def plot_row(df, ax=None, hue="simulator", palette=None, ):
+def plot_row(
+    df,
+    ax=None,
+    hue="simulator",
+    palette=None,
+):
     if ax is None:
         _, ax = plt.subplots()
 
@@ -47,10 +51,10 @@ def plot_row(df, ax=None, hue="simulator", palette=None, ):
         y="Cp",
         hue=hue,
         palette=palette,
-        errorbar=("pi", 100),
-        edgecolor='k', 
+        errorbar=("pi", 100),  # show min/max of the row
+        edgecolor="k",
         lw=0.5,
-        err_kws=dict(color="k", lw=0.5, ls='--'),
+        err_kws=dict(color="k", lw=0.5, ls="--"),
         capsize=0.3,
     )
     ax.set_ylabel("")
@@ -65,9 +69,7 @@ def run(fsearch="LESnew"):
         print("Reading:", casename)
 
         # read model data:
-        df_model = pl.read_csv(f).with_columns(
-            pl.col("Cp") / Betz.Cp
-        )
+        df_model = pl.read_csv(f).with_columns(pl.col("Cp") / Betz.Cp)
         df_ls.append(df_model)
 
         # now read LES data:
@@ -76,10 +78,11 @@ def run(fsearch="LESnew"):
             pl.lit("LES").alias("simulator"),
             pl.lit(casename.split("_")[-1]).alias("controller"),
             pl.col("turbine_id").alias("turbine"),
-            pl.col("Cp") / LES_pnormfact 
+            pl.col("Cp") / LES_pnormfact,
         )
         df_ls.append(df_LES)
 
+    # concatenate model and LES data
     df = (
         pl.concat(df_ls, how="diagonal_relaxed")
         .with_columns(
@@ -95,17 +98,17 @@ def run(fsearch="LESnew"):
     )
 
     for ax, controller in zip(axs, ctrls):
-        ax.set_title(controller)
+        ax.set_title(controller_labels[controller], fontsize=10)
         plot_row(df.filter(controller=controller), ax=ax)
-        if ax != axs[1]: 
+        if ax != axs[1]:
             ax.legend_.remove()
 
     plt.subplots_adjust(bottom=0.4)
-    axs[1].legend(bbox_to_anchor=(1.1, -0.3), loc="upper center", title="Simulator", ncols=2)
-    axs[0].set_ylabel("$P/P_1$")
-    # axs[0].set_ylabel("$C_P$")
+    axs[1].legend(bbox_to_anchor=(1.1, -0.35), loc="upper center", title="Simulator", ncols=2)
+    axs[0].set_ylabel("$\\langle P \\rangle_\\mathrm{col} /P_{1, \\mathrm{Betz}}$")
+
     for ax in axs:
-        ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%d'))
+        ax.xaxis.set_major_formatter(mticker.FormatStrFormatter("%d"))
     plt.savefig(figpath / "P_by_row_norm.png", dpi=300)
     plt.close()
     print("Done")
