@@ -31,6 +31,7 @@ from WES2024.LES.shared import TIAMB
 LES_output_dir = Path(__file__).parent / "LES_output"
 CALIBRATION_RESULTS = Path(__file__).parent / "calibration"
 CALIBRATION_RESULTS.mkdir(exist_ok=True)
+default_fname = "final_calibration.json"
 LES_FN_REGEX = re.compile("(\w+)_wdir(-?\d+.\d+)_(\w+).csv")
 
 BASE_LAYOUT = Square(6.0, 5).rotate(45).rotate(-2.5)
@@ -150,7 +151,7 @@ class CalibrateLinear_niayifar(Calibration):
         return windfarm(self.layout, control_setpoints)
 
 
-def run(regenerate=False, sim_name="LESnew_nocontrol", fname="final_calibration.json"):
+def run(regenerate=False, sim_name="LESnew_nocontrol", fname=default_fname):
     """Run a priori calibration tests"""
     if not regenerate and (CALIBRATION_RESULTS / fname).exists():
         print("File already exists, pass regenerate=True to overwrite.")
