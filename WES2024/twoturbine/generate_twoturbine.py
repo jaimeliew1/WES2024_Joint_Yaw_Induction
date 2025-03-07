@@ -18,32 +18,25 @@ from mitwindfarm import GridLayout, Windfarm
 from mitwindfarm.Rotor import AD
 from WES2024.CustomRotors import UnifiedLUTAD, CosineAD
 from WES2024.LES.shared import TIAMB
-from WES2024.LES_new.compare_superposition import (
+from WES2024.LES_new.final_calibration import (
     VariableKwGaussianWakeModel,
-    CALIBRATION_RESULTS,
+    CALIBRATION_RESULTS, 
+    default_fname
 )
 
-modelname = "04_kw_TI" # this is the name of the calibration results we want to use
-
-# DATAPATH = Path(__file__).parent
-DATAPATH = Path(r"C:\MIT\howland\python_scripts\WES2024_Joint_Yaw_Induction_Final_analysis\data")
+DATAPATH = Path(__file__).parent
 
 rotor_lookup = dict(unified=UnifiedLUTAD(), cosine=CosineAD(Pp=1.9), cosine3=CosineAD(Pp=3), jfm=AD())
 
 def run(rotormodel="unified"):
     print("Generating sweep for rotor:", rotormodel)
     layout = GridLayout(6.0133, 0.0, 2, 1).rotate(3.8)
-    # kw_params = dict(a=0.7478, b=0.0, c=0.01156, x0=3, sigma=1/np.sqrt(8))  # from new calibration
-    # kw_params = (0, 0, 0.0398)
-    df_cached = pl.read_json(CALIBRATION_RESULTS / "final_calibration_parameters.json")
-    kw_params = np.array(
-        df_cached.filter(wakemodel=modelname, method="LESnew_nocontrol")["params"].to_list()
-    ).squeeze()
+    kw_params = pl.read_json(CALIBRATION_RESULTS / default_fname)["params"].item()
     print("Using calibration parameters a*TI + b*Ctprime + c: (a, b, c) =", kw_params)
 
     # ugh try a few different things here... 
     wf = Windfarm(
-        rotor_model=rotor_lookup[rotormodel], wake_model=VariableKwGaussianWakeModel(*kw_params, x0=3), TIamb=TIAMB
+        rotor_model=rotor_lookup[rotormodel], wake_model=VariableKwGaussianWakeModel(**kw_params), TIamb=TIAMB
     )
 
     # now we need to sweep over all the set points
