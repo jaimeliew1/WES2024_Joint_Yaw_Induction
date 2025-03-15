@@ -31,19 +31,19 @@ PARALLEL = False
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=3.0),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=1.0),
     TIamb=0.056,
 )
 layout = Layout([0, 6], [0.0, 0.0])
-# wdirs = np.arange(-20, 20, 0.05)
-wdirs = [0.0, 1.0, 2.0, 3.0]
+wdirs = np.arange(-20, 20, 1)
+# wdirs = [0.0, 1.0, 2.0, 3.0]
 
 
 methods = {
-    "YawKOmegaControl": YawControlKOmegaBEM,
-    "NoControl": NoControlBEM,
-    "YawControl": YawControlBEM,
-    "ThrustControl": ThrustControlBEM,
+    # "YawKOmegaControl": YawControlKOmegaBEM,
+    # "NoControl": NoControlBEM,
+    # "YawControl": YawControlBEM,
+    # "ThrustControl": ThrustControlBEM,
     "JointControl": JointControlBEM,
 }
 

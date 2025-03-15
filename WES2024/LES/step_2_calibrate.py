@@ -83,7 +83,7 @@ class CustomKwWakeModel(WakeModel):
             TIamb=TIamb,
             xmax=self.xmax,
             WATI_sigma_multiplier=self.WATI_sigma_multiplier,
-            x0=3.0,
+            x0=1.0,
         )
 
 
@@ -185,7 +185,7 @@ class CalibrateLinear(Calibration):
         a, b, c = x
         windfarm = Windfarm(
             rotor_model=UnifiedLUTAD(),
-            wake_model=VariableKwGaussianWakeModel(a, b, c, x0=3.0),
+            wake_model=VariableKwGaussianWakeModel(a, b, c, x0=1.0),
             TIamb=TIAMB,
             superposition=Niayifar(),
         )
