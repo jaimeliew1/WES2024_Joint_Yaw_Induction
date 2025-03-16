@@ -36,6 +36,8 @@ methods = {
 
 
 layouts = {
+    2: Square(2.0, 5).rotate(45),
+    3: Square(3.0, 5).rotate(45),
     4: Square(4.0, 5).rotate(45),
     5: Square(5.0, 5).rotate(45),
     6: Square(6.0, 5).rotate(45),
