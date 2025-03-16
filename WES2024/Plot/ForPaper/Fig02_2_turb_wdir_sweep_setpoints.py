@@ -77,22 +77,32 @@ plot_params = {
 axis_params = {
     "Cp_AD": dict(
         ylabel=r"$C_P$",
-        title="a) AD power coef.",
-        ylim=(0.3, 0.65),
+        title="a) AD power coefficient",
+        ylim=(0.35, 0.65),
     ),
     "Cp_BEM": dict(
         ylabel=r"$C_P$",
-        title="b) BEM power coef.",
-        ylim=(0.3, 0.65),
+        title="b) BEM power coefficient",
+        ylim=(0.35, 0.65),
+    ),
+    "Cp": dict(
+        ylabel=r"$C_P$",
+        title="a) power coefficient",
+        ylim=(0.35, 0.65),
     ),
     "Ctprime": dict(
         ylabel=r"$C_T'$",
-        title="c) Optimal thrust coef.",
-        ylim=(1.0, 3.0),
+        title="d) Optimal modified thrust coefficient",
+        ylim=(1.0, 2.5),
+    ),
+    "Ct": dict(
+        ylabel=r"$C_T$",
+        title="b) Optimal thrust coefficient",
+        ylim=(0.6, 1.0),
     ),
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
-        title="d) Optimal yaw angle",
+        title="c) Optimal yaw angle",
         ylim=(-30, 30),
     ),
     "pitch": dict(
@@ -103,7 +113,7 @@ axis_params = {
     "tsr": dict(
         ylabel=r"$\lambda$",
         title="f) Optimal tip speed ratio",
-        ylim=(7.8, 9.4),
+        ylim=(8.0, 9.5),
     ),
 }
 
@@ -116,7 +126,7 @@ def generate(regenerate=False):
         .select(pl.exclude("setpoint_0", "setpoint_1"))
         .with_columns(
             pl.col("yaw").degrees(),
-            pl.col("Cp").alias("Cp_AD"),
+            pl.col("Cp").alias("Cp"),
             pl.lit("AD").alias("type"),
         )
     )
@@ -129,7 +139,7 @@ def generate(regenerate=False):
             pl.col("setpoint_0").degrees().alias("pitch"),
             pl.col("setpoint_1").alias("tsr"),
             pl.col("yaw").degrees(),
-            pl.col("Cp").alias("Cp_BEM"),
+            pl.col("Cp").alias("Cp"),
             pl.lit("BEM").alias("type"),
         )
     )
@@ -152,8 +162,8 @@ def generate(regenerate=False):
             pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
         )
         .then(np.nan)
-        .otherwise(pl.col("Cp_BEM"))
-        .alias("Cp_BEM"),
+        .otherwise(pl.col("Cp"))
+        .alias("Cp"),
     )
     return df
 
@@ -162,7 +172,7 @@ def plot(df):
     fig, axes = plt.subplots(3, 2, sharex=True, figsize=2 * np.array([5, 3]))
     plt.subplots_adjust(wspace=0.2)
 
-    keys = ["Cp_AD", "Cp_BEM", "Ctprime", "yaw", "pitch", "tsr"]
+    keys = ["Cp", "Ct", "yaw", "Ctprime", "pitch", "tsr"]
     methods = ["NoControl", "ThrustControl", "YawControl", "JointControl"]
     if INCLUDE_K_OMEGA:
         methods += ["YawKOmegaControl"]
@@ -175,9 +185,10 @@ def plot(df):
             .filter(pl.col("type") == sim_type)
             .group_by("wdir")
             .agg(
-                pl.col("Cp_BEM").mean(),
-                pl.col("Cp_AD").mean(),
+                pl.col("Cp").mean(),
+                # pl.col("Cp").mean(),
                 pl.col("Ctprime").where(pl.col("turbine") == 0).first(),
+                pl.col("Ct").where(pl.col("turbine") == 0).first(),
                 pl.col("yaw").where(pl.col("turbine") == 0).first(),
                 pl.col("pitch").where(pl.col("turbine") == 0).first(),
                 pl.col("tsr").where(pl.col("turbine") == 0).first(),
