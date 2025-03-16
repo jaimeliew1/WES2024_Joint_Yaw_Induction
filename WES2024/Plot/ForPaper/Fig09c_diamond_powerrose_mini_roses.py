@@ -75,8 +75,8 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
     ax.plot(
         LAYOUT.x,
         LAYOUT.y,
-        "o",
-        ms=3,
+        "2",
+        ms=6,
         markerfacecolor="None",
         markeredgecolor=COLOR_GREY,
         markeredgewidth=1,
@@ -85,8 +85,8 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
     ax.plot(
         LAYOUT.x[turbines_to_keep],
         LAYOUT.y[turbines_to_keep],
-        "o",
-        ms=3,
+        "2",
+        ms=6,
         markerfacecolor="None",
         markeredgecolor=COLOR_HIGHLIGHT,
         markeredgewidth=1,
@@ -148,7 +148,7 @@ def plot_layout_and_powerrose(
     axp.set_theta_direction(-1)
     axp.set_yticks([])
     axp.set_yticklabels([])
-    axp.set_ylim(-0.7, 0.7)
+    axp.set_ylim(-0.2, 0.65)
     axp.grid(linestyle=":")
 
     # Plot the large power rose over the wind farm
@@ -163,8 +163,8 @@ def plot_layout_and_powerrose(
     ax.plot(
         xs,
         ys,
-        "o",
-        ms=3,
+        "2",
+        ms=6,
         markerfacecolor="None",
         markeredgecolor=COLOR_GREY,
         markeredgewidth=1,
@@ -175,8 +175,8 @@ def plot_layout_and_powerrose(
     ax.plot(
         xs_highlight,
         ys_highlight,
-        "o",
-        ms=3,
+        "2",
+        ms=6,
         markerfacecolor="None",
         markeredgecolor=COLOR_HIGHLIGHT,
         markeredgewidth=1,
@@ -200,10 +200,10 @@ def plot_layout_and_powerrose(
 
     # add radial grid lines
     theta = np.linspace(0, np.pi * 2, 200)
-    axp.plot(theta, np.zeros_like(theta), lw=0.7, ls="--", c="0.7")
+    axp.plot(theta, 0.3 * np.ones_like(theta), lw=0.7, ls="--", c="0.7")
     axp.plot(theta, 16 / 27 * np.ones_like(theta), lw=0.7, ls="--", c="0.7")
-    axp.text(np.pi / 2 + 0.05, 0, r"$0$", c="0.7", fontsize=5, va="bottom")
-    axp.text(np.pi / 2 + 0.05, 0.6, r"$0.6$", c="0.7", fontsize=5, va="bottom")
+    axp.text(np.pi / 2 + 0.05, 0.3 - 0.03, r"$0.3$", c="0.7", fontsize=7, va="top")
+    axp.text(np.pi / 2 + 0.05, 0.6 - 0.03, r"$0.6$", c="0.7", fontsize=7, va="top")
 
     ax.set_xlim(xs.min() * 2.2, xs.max() * 2.2)
     ax.set_ylim(ys.min() * 2.2, ys.max() * 2.2)

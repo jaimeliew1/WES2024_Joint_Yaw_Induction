@@ -67,7 +67,7 @@ def aggregate_turbine(df_full: pl.DataFrame) -> tuple[pl.DataFrame, ...]:
 
 def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     fig, axes = plt.subplots(2, 2, width_ratios=[1, 1 / 8], figsize=0.8 * np.array([10, 4]))
-    plt.subplots_adjust(wspace=0.3)
+    plt.subplots_adjust(wspace=0.25)
 
     sns.barplot(
         df_turb,
@@ -127,7 +127,10 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     )
 
     # Set same y lim on both axes
-    [ax.set_ylim(-5, 15) for ax in axes.ravel()]
+    axes[0, 0].set_ylim(-1, 6)
+    axes[0, 1].set_ylim(-1, 6)
+    axes[1, 0].set_ylim(-6, 6)
+    axes[1, 1].set_ylim(-6, 6)
 
     # Set axis labels and ticks
     axes[0, 0].set_xlabel("")

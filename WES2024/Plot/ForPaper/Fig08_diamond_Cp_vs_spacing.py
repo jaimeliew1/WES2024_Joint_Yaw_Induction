@@ -49,9 +49,10 @@ def plot(df: pl.DataFrame):
     plt.legend()
 
     plt.xlabel("Turbine spacing [D]")
-    plt.ylabel(r"Power increase [\%]")
+    plt.ylabel(r"Windfarm power increase [\%]")
 
-    plt.xlim(4, 10)
+    plt.xlim(2, 10)
+    plt.ylim(0, 9)
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
