@@ -26,7 +26,7 @@ FILESTEM = Path(__file__).stem
 REGENERATE = False
 
 XLIM = (-4, 6)
-YLIM = (6, 11)
+YLIM = (6, 10.5)
 
 
 def generate(regenerate=False) -> tuple[pl.DataFrame, ...]:
@@ -128,7 +128,7 @@ def plot(df: pl.DataFrame, df_surface: pl.DataFrame, df_trajectory: pl.DataFrame
     axes[1].set_ylim(*YLIM)
 
     axes[0].legend(
-        title="Minimum thrust trajectory", loc="lower left", ncol=3, bbox_to_anchor=(0.0, 1.08)
+        title="Minimum thrust trajectory", loc="lower center", ncol=3, bbox_to_anchor=(1.3, 1.09)
     )
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=500, bbox_inches="tight")

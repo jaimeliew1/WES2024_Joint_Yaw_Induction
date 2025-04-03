@@ -40,7 +40,7 @@ def plot(df: pl.DataFrame):
     methods = df_farm_Cp.columns
     methods.remove("min_dist")
 
-    plt.figure()
+    plt.figure(figsize=(4, 3))
     for method, _plot_params in utils.line_params.items():
         if method == "NoControl":
             continue
@@ -51,7 +51,7 @@ def plot(df: pl.DataFrame):
     plt.xlabel("Turbine spacing [D]")
     plt.ylabel(r"Power increase [\%]")
 
-    plt.xlim(4, 10)
+    plt.xlim(2, 10)
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
