@@ -392,15 +392,12 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         geom: "MITRotor.BEMGeometry",
     ) -> ArrayLike:
         Ct = aero_props.solidity * aero_props.W**2 * aero_props.Cax
+
         Ct_rotor = geom.rotor_average(geom.annulus_average(Ct))
 
-        a_target = self.Ct_a(Ct_rotor, yaw)
+        a = self.Ct_a(Ct_rotor, yaw)
 
-        a_new = aero_props.F
-        a_rotor = geom.rotor_average(geom.annulus_average(a_new))
-        a_new *= a_target / a_rotor
-
-        return a_new
+        return a
 
     def _func_annulus(
         self,
