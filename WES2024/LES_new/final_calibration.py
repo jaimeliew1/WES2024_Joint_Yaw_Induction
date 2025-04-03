@@ -1,7 +1,7 @@
 """
-Final iteration of LES calibration using the 
+Final iteration of LES calibration using the
 new no control LES data to calibrate a gaussian wake model
-with Niayifar superposition. 
+with Niayifar superposition.
 
 Kirby Heck
 2025 March 07
@@ -28,7 +28,7 @@ from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.utils import ROW_INDICES
 from WES2024.LES.shared import TIAMB
 
-LES_output_dir = Path(__file__).parent / "LES_output"
+LES_output_dir = Path(__file__).parent / "LES_output" / "iter_01"
 CALIBRATION_RESULTS = Path(__file__).parent / "calibration"
 CALIBRATION_RESULTS.mkdir(exist_ok=True)
 default_fname = "final_calibration.json"
@@ -37,8 +37,8 @@ LES_FN_REGEX = re.compile("(\w+)_wdir(-?\d+.\d+)_(\w+).csv")
 BASE_LAYOUT = Square(6.0, 5).rotate(45).rotate(-2.5)
 ROTOR_MODEL = UnifiedLUTAD()
 
-x0 = 3  # diameters
-sigma = 1/np.sqrt(8)  # sigma_0
+x0 = 1  # diameters
+sigma = 1 / np.sqrt(8)  # sigma_0
 
 
 def extract_fn_params(fn: str) -> dict:
@@ -61,9 +61,9 @@ def read_LES_outputs(filepaths):
 
     ret = []
     for file in filepaths:
-        try: 
+        try:
             params = extract_fn_params(file.name)
-        except ValueError: 
+        except ValueError:
             # skip these .csv files
             continue
         df = pl.read_csv(file)
@@ -133,7 +133,7 @@ class CalibrateLinear_niayifar(Calibration):
         return 1.0, 0.0, 0.0
 
     def bounds(self) -> list[tuple[float]]:
-        return [(0, 5), (-5, 5), (-1, 1)]
+        return [(0, 5), (-5, 5), (0, 1)]
 
     def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
         a, b, c = x
@@ -155,8 +155,9 @@ def run(regenerate=False, sim_name="LESnew_nocontrol", fname=default_fname):
     """Run a priori calibration tests"""
     if not regenerate and (CALIBRATION_RESULTS / fname).exists():
         print("File already exists, pass regenerate=True to overwrite.")
-        return
-    
+        with open(CALIBRATION_RESULTS / default_fname, "r") as f:
+            return json.load(f)["params"]
+
     # load (all) LES data
     df = read_LES_outputs(LES_output_dir.glob("*.csv"))
 
@@ -178,11 +179,30 @@ def run(regenerate=False, sim_name="LESnew_nocontrol", fname=default_fname):
     cost = calibration.cost(calib, df["Cp"].to_numpy(), control_setpoints)
 
     # compile results and write to .json
-    ret = dict(calibration_sim=sim_name, wakemodel="04_kw_TI", err=cost, Cp_farm=sol.Cp, params=params)
+    ret = dict(
+        calibration_sim=sim_name, wakemodel="04_kw_TI", err=cost, Cp_farm=sol.Cp, params=params
+    )
     print(f"Saving results to {CALIBRATION_RESULTS / fname}")
     with open(CALIBRATION_RESULTS / fname, "w") as f:
         json.dump(ret, f, indent=4)
 
+    return ret["params"]  # return calibration parameters
+
+
+def get_calibration_params():
+    """Retrieves final calibration parameters for Niayifar wake model"""
+    if (CALIBRATION_RESULTS / default_fname).exists():
+        with open(CALIBRATION_RESULTS / default_fname, "r") as f:
+            params = json.load(f)["params"]
+        return params
+    else:
+        return run()
+
+
+def get_wakemodel():
+    """Returns gaussian wake model with the final calibration parameters"""
+    return VariableKwGaussianWakeModel(**get_calibration_params())
+
 
 if __name__ == "__main__":
-    run(regenerate=False)
+    run(regenerate=True)

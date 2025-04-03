@@ -12,9 +12,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
+from WES2024.LES_new.final_calibration import LES_output_dir
 from WES2024.utils import controller_labels
-
-LES_output_dir = Path(__file__).parent / "LES_output"
 
 figpath = Path(__file__).parent / "figs"
 figpath.mkdir(exist_ok=True, parents=True)
@@ -54,7 +53,7 @@ def plot_powergain(df, fname):
         capsize=0.2,
     )
     ax.axhline(0, color="k", lw=0.5)
-    ax.set_ylim([-0.055, 0.205])
+    ax.set_ylim([-0.055, 0.225])
     plt.tight_layout()
     print("Saving figure", figpath / f"LES_model_Cp_gain_{fname}.png")
     plt.savefig(figpath / f"LES_model_Cp_gain_{fname}.png", dpi=300)
@@ -66,7 +65,8 @@ def run(fsearch="LESnew"):
 
     # try to read farm-aggregated Cp
     try:
-        farm_data = next(LES_output_dir.glob(f"{fsearch}_farm_Cp*"))
+        farm_data = next(LES_output_dir.glob(f"*{fsearch}_farm_Cp*"))
+        print("Reading: ", farm_data)
         df_ls.append(pl.read_csv(farm_data).with_columns(pl.col("farm_cp").alias("Cp")))
         read_LES_case = False
 
@@ -76,7 +76,7 @@ def run(fsearch="LESnew"):
 
     for f in LES_input_dir.glob(f"*{fsearch}*.csv"):
         casename = f.stem.split("MITWindfarm_")[-1]
-        print("Reading:", casename)
+        print("Reading:", f)
 
         df_model = pl.read_csv(f).group_by(["controller", "simulator"]).mean()
         df_ls.append(df_model)
@@ -93,4 +93,4 @@ def run(fsearch="LESnew"):
 
 if __name__ == "__main__":
     run()
-    run(fsearch="unifiedTI")
+    # run(fsearch="unifiedTI")

@@ -20,8 +20,7 @@ from WES2024.CustomRotors import UnifiedLUTAD, CosineAD
 from WES2024.LES.shared import TIAMB
 from WES2024.LES_new.final_calibration import (
     VariableKwGaussianWakeModel,
-    CALIBRATION_RESULTS, 
-    default_fname
+    get_calibration_params
 )
 
 DATAPATH = Path(__file__).parent
@@ -31,7 +30,7 @@ rotor_lookup = dict(unified=UnifiedLUTAD(), cosine=CosineAD(Pp=1.9), cosine3=Cos
 def run(rotormodel="unified"):
     print("Generating sweep for rotor:", rotormodel)
     layout = GridLayout(6.0133, 0.0, 2, 1).rotate(3.8)
-    kw_params = pl.read_json(CALIBRATION_RESULTS / default_fname)["params"].item()
+    kw_params = get_calibration_params()
     print("Using calibration parameters a*TI + b*Ctprime + c: (a, b, c) =", kw_params)
 
     # ugh try a few different things here... 

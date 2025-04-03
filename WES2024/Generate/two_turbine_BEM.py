@@ -1,3 +1,5 @@
+import dualitic
+
 from functools import partial
 from itertools import product
 from pathlib import Path
@@ -18,6 +20,8 @@ from WES2024.optimise import (
     YawControlBEM,
     YawControlKOmegaBEM,
 )
+from WES2024.LES_new.final_calibration import get_wakemodel
+from WES2024.LES.shared import TIAMB
 
 __all__ = ["generate"]
 
@@ -27,10 +31,12 @@ PARALLEL = True
 
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    wake_model=get_wakemodel(),
+    TIamb=TIAMB,
 )
 layout = Layout([0, 6], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 0.05)
+wdirs = np.arange(-20, 20, 0.5)
 # wdirs = [0.0, 1.0, 2.0, 3.0]
 
 
@@ -55,7 +61,7 @@ def _generate(x):
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
-
+    _generate(params[0])  # debug 
     dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL)
     df = pl.concat(dfs)
     return df
