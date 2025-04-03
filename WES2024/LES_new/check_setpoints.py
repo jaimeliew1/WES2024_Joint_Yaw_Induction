@@ -14,9 +14,10 @@ from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
 
 LES_output_dir = Path(__file__).parent / "LES_output"
 
-# LES_input_dir = Path(__file__).parent.parent / "LES" / "LES_newinput"
+LES_input_dir = Path(__file__).parent / "LES_input" / "iter_01"
 
-figpath = Path(__file__).parent / "calibration"  # / "old"
+# figpath = Path(__file__).parent / "calibration"  # / "old"
+figpath = LES_input_dir
 figpath.mkdir(exist_ok=True, parents=True)
 
 

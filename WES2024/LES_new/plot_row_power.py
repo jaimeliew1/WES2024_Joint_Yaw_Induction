@@ -12,14 +12,12 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
-from WES2024.LES_new.compare_superposition import LES_pnormfact
+from WES2024.LES_new.final_calibration import LES_pnormfact, LES_output_dir
 from WES2024.utils import ROW_MAPPING
 from UnifiedMomentumModel import Momentum
 
 unified = Momentum.UnifiedMomentum()
 Betz = unified(2.0, 0)
-
-LES_output_dir = Path(__file__).parent / "LES_output"
 
 figpath = Path(__file__).parent / "figs"
 figpath.mkdir(exist_ok=True, parents=True)
