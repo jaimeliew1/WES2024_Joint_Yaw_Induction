@@ -22,14 +22,14 @@ seaborn = "^0.13.2"
 pandas = "^2.2.1"
 pyarrow = "^15.0.0"
 dualitic = { git = "https://github.com/jaimeliew1/Dualitic.git", rev = "c7e29f4" }
-mitwindfarm = { git = "https://github.com/Howland-Lab/MITWindfarm.git", rev = "a08d7e2" }
-mitrotor = { git = "https://github.com/Howland-Lab/MITRotor.git", rev = "7b8b8d9" }
-unified-momentum-model = { git = "https://github.com/Howland-Lab/Unified-Momentum-Model.git", rev = "868fd05" }
+# mitwindfarm = { git = "https://github.com/Howland-Lab/MITWindfarm.git", rev = "a08d7e2" }
+# mitrotor = { git = "https://github.com/Howland-Lab/MITRotor.git", rev = "afe7433" }
+unified-momentum-model = { git = "https://github.com/Howland-Lab/Unified-Momentum-Model.git" } #, rev = "868fd05" }
 foreach = "^0.4.0"
 bpython = "^0.24"
 luigi = "^3.5.1"
-# mitwindfarm = { path = "../MITWindfarm", develop = true }
-# mitrotor = { path = "../MITRotor", develop = true }
+mitwindfarm = { path = "../MITWindfarm", develop = true }
+mitrotor = { path = "../MITRotor", develop = true }
 # dualitic = {path = "../Dualitic", develop = true}
 
 [tool.poetry.group.dev.dependencies]
