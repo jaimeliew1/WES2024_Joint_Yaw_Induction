@@ -113,10 +113,10 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
         legend=False,
     )
 
-    axes[0, 0].set_ylabel(r"$C_P$ increase (\%)")
-    axes[1, 0].set_ylabel(r"$C_T$ increase (\%)")
-    axes[0, 1].set_ylabel(r"$C_{P,\mathrm{farm}}$ increase (\%)")
-    axes[1, 1].set_ylabel(r"$C_{T,\mathrm{farm}}$ increase (\%)")
+    axes[0, 0].set_ylabel(r"$C_P$ increase (%)")
+    axes[1, 0].set_ylabel(r"$C_T$ increase (%)")
+    axes[0, 1].set_ylabel(r"   $C_{P,\mathrm{farm}}$ increase (%)")
+    axes[1, 1].set_ylabel(r"$C_{T,\mathrm{farm}}$ increase (%)   ")
 
     sns.move_legend(
         axes[0, 0],
@@ -127,10 +127,10 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     )
 
     # Set same y lim on both axes
-    axes[0, 0].set_ylim(-1, 6)
-    axes[0, 1].set_ylim(-1, 6)
-    axes[1, 0].set_ylim(-6, 6)
-    axes[1, 1].set_ylim(-6, 6)
+    axes[0, 0].set_ylim(-1, 8)
+    axes[0, 1].set_ylim(-1, 8)
+    axes[1, 0].set_ylim(-6, 7)
+    axes[1, 1].set_ylim(-6, 7)
 
     # Set axis labels and ticks
     axes[0, 0].set_xlabel("")

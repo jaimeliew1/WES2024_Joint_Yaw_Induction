@@ -11,7 +11,7 @@ from WES2024 import utils
 
 FILESTEM = Path(__file__).stem
 # Use Latex Fonts
-plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
+# plt.rcParams.update({"text.usetex": True, "font.family": "serif"})
 
 
 PITCHES = np.deg2rad(np.arange(-15, 15.001, 0.5))

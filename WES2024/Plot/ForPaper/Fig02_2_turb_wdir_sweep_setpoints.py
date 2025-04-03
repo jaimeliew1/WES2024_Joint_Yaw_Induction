@@ -79,41 +79,49 @@ axis_params = {
         ylabel=r"$C_P$",
         title="a) AD power coefficient",
         ylim=(0.35, 0.65),
+        yticks=None,
     ),
     "Cp_BEM": dict(
         ylabel=r"$C_P$",
         title="b) BEM power coefficient",
         ylim=(0.35, 0.65),
+        yticks=None,
     ),
     "Cp": dict(
         ylabel=r"$C_P$",
-        title="a) power coefficient",
+        title="a) Power coefficient",
         ylim=(0.35, 0.65),
+        yticks=None,
     ),
     "Ctprime": dict(
         ylabel=r"$C_T'$",
         title="d) Optimal modified thrust coefficient",
-        ylim=(1.0, 2.5),
+        ylim=(1.0, 3.0),
+        yticks=None,
     ),
     "Ct": dict(
         ylabel=r"$C_T$",
         title="b) Optimal thrust coefficient",
         ylim=(0.6, 1.0),
+        yticks=None,
     ),
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
         title="c) Optimal yaw angle",
         ylim=(-30, 30),
+        yticks=[-30, -15, 0, 15, 30],
     ),
     "pitch": dict(
         ylabel=r"$\theta_p$ (deg)",
         title="e) Optimal blade pitch",
-        ylim=(-1.5, 2.0),
+        ylim=(-2.0, 2.0),
+        yticks=None,
     ),
     "tsr": dict(
         ylabel=r"$\lambda$",
         title="f) Optimal tip speed ratio",
         ylim=(8.0, 9.5),
+        yticks=None,
     ),
 }
 
@@ -203,7 +211,10 @@ def plot(df):
     for ax, key in zip(axes.ravel(), keys):
         # Set ylabels
         ax.set_ylabel(axis_params[key]["ylabel"])
-        ax.text(0.01, 0.99, axis_params[key]["title"], ha="left", va="top", transform=ax.transAxes)
+        # Set yticks
+        if axis_params[key]["yticks"]: 
+            ax.set_yticks(axis_params[key]["yticks"])
+        ax.text(0.01, 0.97, axis_params[key]["title"], ha="left", va="top", transform=ax.transAxes)
         # Set same ylimits
         if axis_params[key]["ylim"]:
             ax.set_ylim(axis_params[key]["ylim"])
