@@ -27,8 +27,8 @@ def plot(df: pl.DataFrame):
     windfarm = Windfarm()
 
     _df = (
-        df.filter(pl.col("method") == "JointControl")
-        .filter(pl.col("wdir") == 5.0)
+        df.filter(pl.col("method") == "NoControl")
+        .filter(pl.col("wdir") == 2.5)
         .filter(pl.col("min_dist") == 6.0)
     )
     plt.figure()
