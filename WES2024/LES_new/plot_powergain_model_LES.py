@@ -13,11 +13,15 @@ import matplotlib.pyplot as plt
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
 from WES2024.LES_new.final_calibration import LES_output_dir
-from WES2024.utils import controller_labels
 
 figpath = Path(__file__).parent / "figs"
 figpath.mkdir(exist_ok=True, parents=True)
-
+controller_labels = {
+    "nocontrol": "No Control",
+    "thrustcontrol": "Thrust Control",
+    "yawcontrol": "Yaw Control",
+    "jointcontrol": "Joint Control",
+}
 
 def plot_powergain(df, fname):
     print("Plotting power gain: ", fname)
@@ -39,7 +43,7 @@ def plot_powergain(df, fname):
         pl.col("simulator").alias("Simulator"),  # just capitalize it!
     ).sort(by=["order", "simulator"])
 
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4.5, 3))
     sns.barplot(
         df,
         x="Controller",
