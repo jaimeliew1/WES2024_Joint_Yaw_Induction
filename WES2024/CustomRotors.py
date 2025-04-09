@@ -349,7 +349,6 @@ class UnifiedLUTAD(Rotor):
             extra=sol,
         )
 
-
 class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
     def __init__(self, averaging: Literal["sector", "annulus", "rotor"] = "rotor"):
         if averaging == "rotor":
@@ -365,66 +364,10 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         self.averaging = averaging
         self.model = ThrustBasedUnifiedMomentumLUT()
 
-    def Ct_a(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
-
+    def compute_induction(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
         sol = self.model(Ct, yaw)
         return sol.an
-
-    def __call__(
-        self,
-        aero_props: "MITRotor.AerodynamicProperties",
-        pitch: float,
-        tsr: float,
-        yaw: float,
-        rotor: "MITRotor.RotorDefinition",
-        geom: "MITRotor.BEMGeometry",
-    ) -> ArrayLike:
-        an = self._func(aero_props, pitch, tsr, yaw, rotor, geom)
-        return an
-
-    def _func_rotor(
-        self,
-        aero_props: "MITRotor.AerodynamicProperties",
-        pitch: float,
-        tsr: float,
-        yaw: float,
-        rotor: "MITRotor.RotorDefinition",
-        geom: "MITRotor.BEMGeometry",
-    ) -> ArrayLike:
-        Ct = aero_props.solidity * aero_props.W**2 * aero_props.Cax
-
-        Ct_rotor = geom.rotor_average(geom.annulus_average(Ct))
-
-        a = self.Ct_a(Ct_rotor, yaw)
-
-        return a
-
-    def _func_annulus(
-        self,
-        aero_props: "MITRotor.AerodynamicProperties",
-        pitch: float,
-        tsr: float,
-        yaw: float,
-        rotor: "MITRotor.RotorDefinition",
-        geom: "MITRotor.BEMGeometry",
-    ) -> ArrayLike:
-        Ct = geom.annulus_average(
-            aero_props.solidity * aero_props.W**2 * aero_props.Cax
-        )
-        _Ct = np.clip(Ct, -1, 1.59)
-        a = self.Ct_a(_Ct, yaw)[:, None] * np.ones(geom.shape)
-
-        return a
-
-    def _func_sector(
-        self,
-        aero_props: "MITRotor.AerodynamicProperties",
-        pitch: float,
-        tsr: float,
-        yaw: float,
-        rotor: "MITRotor.RotorDefinition",
-        geom: "MITRotor.BEMGeometry",
-    ) -> ArrayLike:
-        Ct = aero_props.solidity * aero_props.W**2 * aero_props.Cax
-        ans = self.Ct_a(Ct.ravel(), yaw)
-        return ans.reshape(geom.shape)
+    
+    def compute_initial_wake_velocities(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+        sol = self.model(Ct, yaw)
+        return sol.u4, sol.v4
