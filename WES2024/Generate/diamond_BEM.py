@@ -8,6 +8,7 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import KraghAerodynamics
 from mitwindfarm import BEM, Square, Windfarm, Niayifar, VariableKwGaussianWakeModel
 
 from WES2024 import utils
@@ -24,7 +25,10 @@ REGENERATE = True
 
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    rotor_model=BEM(IEA15MW(), 
+                    BEM_model=DualBEM, 
+                    momentum_model=BEMUnifiedMomentumLUT(),
+                    aerodynamic_model = KraghAerodynamics()),
     superposition=Niayifar(),
     wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,

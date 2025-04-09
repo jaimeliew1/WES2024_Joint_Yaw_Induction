@@ -90,7 +90,7 @@ axis_params = {
     "Cp": dict(
         ylabel=r"$C_P$",
         title="a) Power coefficient",
-        ylim=(0.35, 0.65),
+        ylim=(0.25, 0.65),
         yticks=None,
     ),
     "Ctprime": dict(
