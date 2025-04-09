@@ -3,11 +3,13 @@ from pathlib import Path
 
 import numpy as np
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import DefaultAerodynamics
 from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024.BEM_gradients import DualBEM
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT, UnifiedLUTAD
 from WES2024.optimise import JointControlBEM, JointControl
+
 
 FILESTEM = Path(__file__).stem
 
@@ -18,7 +20,11 @@ windfarm_AD = Windfarm(rotor_model=UnifiedLUTAD())
 
 
 windfarm_BEM = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+    rotor_model=BEM(IEA15MW(), 
+                    BEM_model=DualBEM, 
+                    momentum_model=BEMUnifiedMomentumLUT(),
+                    aerodynamic_model=DefaultAerodynamics(),
+                    )
 )
 layout = Layout(np.array([0.0]), np.array([0.0]))
 

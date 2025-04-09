@@ -135,7 +135,7 @@ class Controller(ABC):
         return self._grad
 # Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
 CTPRIME_OPT = 2.10418397932219
-CTPRIME_OPT = 2.0
+
 class NoControl(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
         setpoints = [(CTPRIME_OPT, 0.0) for _ in range(self.N)]
@@ -196,11 +196,15 @@ class JointControl(Controller):
 # TSR_OPT = 9.138197665010335
 # CP_OPT = 0.5065639542511471
 
-# Setpoints using unified momentum model
-PITCH_OPT = -0.023146163628916267
-TSR_OPT = 9.23061314763139
-CP_OPT = 0.5072138998869634
+# # Setpoints using unified momentum model
+# PITCH_OPT = -0.023146163628916267
+# TSR_OPT = 9.23061314763139
+# CP_OPT = 0.5072138998869634
 
+# Setpoints using UMM and updated tip losses 04/09/2025
+PITCH_OPT = -0.012798945351374604
+TSR_OPT = 8.892298545477834
+CP_OPT = 0.4311703230782215
 
 class NoControlBEM(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
