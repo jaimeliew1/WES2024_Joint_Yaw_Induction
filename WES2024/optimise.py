@@ -201,10 +201,15 @@ class JointControl(Controller):
 # TSR_OPT = 9.23061314763139
 # CP_OPT = 0.5072138998869634
 
-# Setpoints using UMM and updated tip losses 04/09/2025
-PITCH_OPT = -0.012798945351374604
-TSR_OPT = 8.892298545477834
-CP_OPT = 0.4311703230782215
+# # Setpoints using UMM and updated tip losses 04/09/2025
+# PITCH_OPT = -0.012798945351374604
+# TSR_OPT = 8.892298545477834
+# CP_OPT = 0.4311703230782215
+
+# Setpoints 04/10/2025
+PITCH_OPT = -0.01598691427157328
+TSR_OPT = 9.425553341960999
+CP_OPT = 0.512050723304553
 
 class NoControlBEM(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
