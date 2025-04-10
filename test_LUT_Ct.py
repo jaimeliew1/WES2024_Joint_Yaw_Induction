@@ -12,7 +12,6 @@ yaws = np.linspace(-50, 50, 101)
 FIGDIR = Path("fig")
 FIGDIR.mkdir(exist_ok=True, parents=True)
 
-model = ThrustBasedUnifiedMomentumLUT(regenerate=REGENERATE)
 
 to_plot = [
     "Cp",
@@ -80,5 +79,7 @@ def plot_interpolated_table():
 
 
 if __name__ == "__main__":
+    model = ThrustBasedUnifiedMomentumLUT(regenerate=REGENERATE)
+
     plot_underlying_table()
     plot_interpolated_table()
