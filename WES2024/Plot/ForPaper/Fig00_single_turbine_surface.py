@@ -24,7 +24,7 @@ YLIM = (5, 10.5)
 
 def generate(regenerate=False):
     df_surface = (
-        pitch_tsr_surface.generate(regenerate=regenerate)
+        pitch_tsr_surface.generate(regenerate=True)
         .with_columns(
             pl.col("setpoint_0").alias("pitch"),
             pl.col("setpoint_1").alias("tsr"),
@@ -111,7 +111,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
         cmap="viridis",
     )
     plot_surface(
-        df_surface.filter(yaw=45.0),
+        df_surface.filter(yaw=YAW2),
         "pitch",
         "tsr",
         "Cp",
@@ -131,7 +131,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
         cmap="plasma",
     )
     plot_surface(
-        df_surface.filter(yaw=45.0),
+        df_surface.filter(yaw=YAW2),
         "pitch",
         "tsr",
         "Ct",
@@ -170,7 +170,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             "*",
             color="tab:orange",
-            label=r"$\gamma=45^o$",
+            label=f"$\\gamma={YAW2:.0f}^\\circ$",
             ms=8,
             zorder=10,
         )
@@ -196,7 +196,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             ls="-",
             color="tab:orange",
-            label=r"$\gamma=45^o$",
+            label=f"$\\gamma={YAW2:.0f}^\\circ$",
             ms=8,
             zorder=10,
         )
