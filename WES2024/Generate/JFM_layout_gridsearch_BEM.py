@@ -6,6 +6,7 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import DefaultAerodynamics
 from mitwindfarm import BEM, Layout, Windfarm
 from rich import print
 from scipy.optimize import minimize
@@ -22,7 +23,10 @@ PARALLEL = True
 PITCH_OPT = -0.023146163628916267
 TSR_OPT = 9.23061314763139
 
-bem = BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+bem = BEM(IEA15MW(), 
+          BEM_model=DualBEM, 
+          momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
+          aerodynamic_model=DefaultAerodynamics,)
 windfarm = Windfarm(rotor_model=bem)
 layout_single = Layout(np.array([0]), np.array([0.0, 0.0]))
 layout_double = Layout(np.array([0, 8]), np.array([0.0, 0.5]))

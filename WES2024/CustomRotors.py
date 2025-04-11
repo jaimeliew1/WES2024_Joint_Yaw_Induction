@@ -356,7 +356,7 @@ class UnifiedLUTAD(Rotor):
         )
 
 class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
-    def __init__(self, averaging: Literal["sector", "annulus", "rotor", "rotor_induction_tiploss"] = "rotor"):
+    def __init__(self, averaging: Literal["sector", "annulus", "rotor", "rotor_induction_tiploss"] = "rotor_induction_tiploss"):
         if averaging == "rotor":
             self._func = self._func_rotor
         if averaging == "rotor_induction_tiploss":

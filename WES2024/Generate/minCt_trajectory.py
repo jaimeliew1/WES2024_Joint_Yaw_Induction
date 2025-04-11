@@ -5,6 +5,7 @@ import polars as pl
 from foreach import foreach
 from MITRotor.BEMSolver import BEM, BEMSolution
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import DefaultAerodynamics
 from scipy.interpolate import BSpline, make_interp_spline
 from scipy.optimize import minimize, minimize_scalar, root_scalar
 
@@ -20,7 +21,9 @@ FILESTEM = Path(__file__).stem
 YAWS = np.arange(0.0, 50.1, 2.5)
 
 rotor = IEA15MW()
-bem = BEM(rotor=rotor, momentum_model=BEMUnifiedMomentumLUT())
+bem = BEM(rotor=rotor, 
+          momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
+          aerodynamic_model=DefaultAerodynamics())
 
 
 def find_optimal_setpoint(bem: BEM, yaw: float = 0) -> BEMSolution:
