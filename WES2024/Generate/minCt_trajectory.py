@@ -11,6 +11,7 @@ from scipy.optimize import minimize, minimize_scalar, root_scalar
 
 from WES2024 import utils
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT
+from WES2024.CustomTangentialInduction import NoTiplossTangentialInduction
 
 __all__ = ["generate"]
 
@@ -23,7 +24,8 @@ YAWS = np.arange(0.0, 50.1, 2.5)
 rotor = IEA15MW()
 bem = BEM(rotor=rotor, 
           momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
-          aerodynamic_model=DefaultAerodynamics())
+          aerodynamic_model=DefaultAerodynamics(),
+          tangential_induction_model=NoTiplossTangentialInduction())
 
 
 def find_optimal_setpoint(bem: BEM, yaw: float = 0) -> BEMSolution:

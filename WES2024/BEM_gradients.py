@@ -140,11 +140,13 @@ class DualBEM:
                  rotor: RotorDefinition, 
                  geometry: BEMGeometry = None, 
                  momentum_model=None,
-                 aerodynamic_model=None):
+                 aerodynamic_model=None,
+                 tangential_induction_model=None):
         self.bem = BEM(rotor, 
                        geometry, 
                        momentum_model=momentum_model, 
-                       aerodynamic_model=aerodynamic_model)
+                       aerodynamic_model=aerodynamic_model,
+                       tangential_induction_model=tangential_induction_model)
         self._niter_primal = None
         self.geometry = self.bem.geometry
 

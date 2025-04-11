@@ -14,6 +14,7 @@ from mitwindfarm import BEM, Layout, Windfarm, Niayifar, VariableKwGaussianWakeM
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT
+from WES2024.CustomTangentialInduction import NoTiplossTangentialInduction
 from WES2024.optimise import (
     JointControlBEM,
     NoControlBEM,
@@ -33,7 +34,8 @@ windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), 
                     BEM_model=DualBEM,
                     momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
-                    aerodynamic_model = DefaultAerodynamics()),
+                    aerodynamic_model = DefaultAerodynamics(),
+                    tangential_induction_model=NoTiplossTangentialInduction()),
     superposition=Niayifar(),
     wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,
