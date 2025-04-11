@@ -29,8 +29,8 @@ yaws = np.arange(0.0, 50.1, 5.0)
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), 
                                     momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
-                                    aerodynamic_model=DefaultAerodynamics()),
-                                    tangential_induction_model=NoTiplossTangentialInduction(),
+                                    aerodynamic_model=DefaultAerodynamics(),
+                                    tangential_induction_model=NoTiplossTangentialInduction())
 )
 
 

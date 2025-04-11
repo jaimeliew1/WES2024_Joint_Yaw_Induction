@@ -29,7 +29,7 @@ windfarm = Windfarm(
                     BEM_model=DualBEM, 
                     momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
                     aerodynamic_model = DefaultAerodynamics(),
-                    tangential_induction_model = NoTiplossTangentialInduction),
+                    tangential_induction_model = NoTiplossTangentialInduction()),
     superposition=Niayifar(),
     wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,
