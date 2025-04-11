@@ -26,7 +26,7 @@ TSR_OPT = 9.23061314763139
 bem = BEM(IEA15MW(), 
           BEM_model=DualBEM, 
           momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
-          aerodynamic_model=DefaultAerodynamics,)
+          aerodynamic_model=DefaultAerodynamics())
 windfarm = Windfarm(rotor_model=bem)
 layout_single = Layout(np.array([0]), np.array([0.0, 0.0]))
 layout_double = Layout(np.array([0, 8]), np.array([0.0, 0.5]))
