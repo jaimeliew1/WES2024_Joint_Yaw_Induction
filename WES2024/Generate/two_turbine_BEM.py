@@ -32,7 +32,7 @@ PARALLEL = True
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), 
                     BEM_model=DualBEM,
-                    momentum_model=BEMUnifiedMomentumLUT(),
+                    momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
                     aerodynamic_model = DefaultAerodynamics()),
     superposition=Niayifar(),
     wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),

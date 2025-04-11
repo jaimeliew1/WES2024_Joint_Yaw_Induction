@@ -206,10 +206,15 @@ class JointControl(Controller):
 # TSR_OPT = 8.892298545477834
 # CP_OPT = 0.4311703230782215
 
-# Setpoints 04/10/2025
-PITCH_OPT = -0.01598691427157328
-TSR_OPT = 9.425553341960999
-CP_OPT = 0.512050723304553
+# # Setpoints 04/10/2025
+# PITCH_OPT = -0.01598691427157328
+# TSR_OPT = 9.425553341960999
+# CP_OPT = 0.512050723304553
+
+# Setpoints 04/11/2025 switch back to rotor_induction_tiploss averaging
+PITCH_OPT = -0.02398898322193966
+TSR_OPT = 9.257910345616775
+CP_OPT = 0.4994901389144305
 
 class NoControlBEM(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:

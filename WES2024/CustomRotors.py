@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Literal
 import itertools
 from pathlib import Path
 from typing import Literal
@@ -22,6 +23,11 @@ from UnifiedMomentumModel.Momentum import (
 
 model_Ctprime = UnifiedMomentum()
 model_Ct = ThrustBasedUnified()
+
+if TYPE_CHECKING:
+    from MITRotor.Geometry import BEMGeometry
+    from MITRotor.RotorDefinition import RotorDefinition
+    from MITRotor.Aerodynamics import AerodynamicProperties
 
 CACHE_FN_CTPRIME = Path(__file__).parent / "unified_momentum_model_Ctprime_table.csv"
 CACHE_FN_CT = Path(__file__).parent / "unified_momentum_model_Ct_table.csv"
@@ -350,9 +356,11 @@ class UnifiedLUTAD(Rotor):
         )
 
 class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
-    def __init__(self, averaging: Literal["sector", "annulus", "rotor"] = "rotor"):
+    def __init__(self, averaging: Literal["sector", "annulus", "rotor", "rotor_induction_tiploss"] = "rotor"):
         if averaging == "rotor":
             self._func = self._func_rotor
+        if averaging == "rotor_induction_tiploss":
+            self._func = self._func_rotor_induction_tiploss
         elif averaging == "annulus":
             self._func = self._func_annulus
         elif averaging == "sector":
@@ -371,3 +379,23 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
     def compute_initial_wake_velocities(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
         sol = self.model(Ct, yaw)
         return sol.u4, sol.v4
+    
+    def _func_rotor_induction_tiploss(
+        self,
+        aero_props: "AerodynamicProperties",
+        pitch: float,
+        tsr: float,
+        yaw: float,
+        rotor: "RotorDefinition",
+        geom: "BEMGeometry",
+    ) -> ArrayLike:
+        Ct = aero_props.solidity * aero_props.W**2 * aero_props.C_n
+        Ct_rotor = geom.rotor_average(geom.annulus_average(Ct))
+
+        a_target = self.compute_induction(Ct_rotor, yaw)
+
+        a_new = aero_props.F
+        a_rotor = geom.rotor_average(geom.annulus_average(a_new))
+        a_new *= a_target / a_rotor
+
+        return a_new

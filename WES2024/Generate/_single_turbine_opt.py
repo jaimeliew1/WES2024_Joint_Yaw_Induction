@@ -22,7 +22,7 @@ windfarm_AD = Windfarm(rotor_model=UnifiedLUTAD())
 windfarm_BEM = Windfarm(
     rotor_model=BEM(IEA15MW(), 
                     BEM_model=DualBEM, 
-                    momentum_model=BEMUnifiedMomentumLUT(),
+                    momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
                     aerodynamic_model=DefaultAerodynamics(),
                     )
 )
