@@ -1,0 +1,9 @@
+simulator,calibration,controller,results_file
+MITWindfarm,variable_kw,nocontrol,MITWindfarm_wdir-2.5_AutoCal_nocontrol.csv
+MITWindfarm,variable_kw,thrustcontrol,MITWindfarm_wdir-2.5_AutoCal_thrustcontrol.csv
+MITWindfarm,variable_kw,yawcontrol,MITWindfarm_wdir-2.5_AutoCal_yawcontrol.csv
+MITWindfarm,variable_kw,jointcontrol,MITWindfarm_wdir-2.5_AutoCal_jointcontrol.csv
+LES,variable_kw,nocontrol,LES_wdir-2.5_nocontrol.csv
+LES,variable_kw,thrustcontrol,LES_MITWindfarm_wdir-2.5_AutoCal_thrustcontrol.csv
+LES,variable_kw,yawcontrol,LES_MITWindfarm_wdir-2.5_AutoCal_yawcontrol.csv
+LES,variable_kw,jointcontrol,LES_MITWindfarm_wdir-2.5_AutoCal_jointcontrol.csv

@@ -8,6 +8,7 @@ from mitwindfarm import (
     Layout,
     VariableKwGaussianWakeModel,
     Windfarm,
+    Niayifar,
 )
 from rich import print
 
@@ -17,17 +18,11 @@ from WES2024.LES.shared import STEP_1_DIR, TIAMB, SimulationDefinition, CALIBRAT
 #### PARAMETERS
 
 
-SETPOINT_FN = STEP_1_DIR / "calibration_18x3.json"
+SETPOINT_FN = STEP_1_DIR / "calibration_diamond.json"
 FIG_FN = STEP_1_DIR / "calibration_case_setpoints.png"
 
 
-
-
-# Setpoints
-_Ctprimes = sum([[x, 2.0, 2.0] for x in np.linspace(1, 4, 9)], []) + sum(
-    [[x, 1.0, 2.0] for x in np.linspace(1, 4, 9)], []
-)
-SETPOINTS = [(ctp, 0.0) for ctp in _Ctprimes]
+SETPOINTS = [(2.0, 0.0) for _ in CALIBRATION_LAYOUT]
 
 
 def plot_text_on_layout(
@@ -37,7 +32,6 @@ def plot_text_on_layout(
     as_percent: bool = False,
     textbox: Optional[str] = None,
 ) -> None:
-
     if ax is None:
         plt.figure()
         plt.axis("equal")
@@ -76,23 +70,25 @@ def plot_calibration_case(sim_case: SimulationDefinition, save_fn: Path) -> None
     Ctprimes = [x.ctp for x in sim_case.turbines]
     plot_text_on_layout(Ctprimes, sim_case.layout(), ax)
     ax.axis("equal")
+    ax.grid()
 
     plt.savefig(save_fn, dpi=300, bbox_inches="tight")
     plt.close()
 
 
 def run(fig_fn: Path, les_input_fn: Path) -> None:
-
     # Run model
     wakemodel = VariableKwGaussianWakeModel(0, 0, 0.07)
-    windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+    windfarm = Windfarm(
+        rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+    )
 
     sol = windfarm(CALIBRATION_LAYOUT, SETPOINTS)
     sim_case = SimulationDefinition.from_windfarmsolution(
         sol,
         wdir=-2.5,
         controller="calibration",
-        casename="calibration_18x3",
+        casename="calibration_diamond",
         case_note="attempt_1",
     )
 
@@ -102,5 +98,4 @@ def run(fig_fn: Path, les_input_fn: Path) -> None:
 
 
 if __name__ == "__main__":
-
     run(FIG_FN, SETPOINT_FN)

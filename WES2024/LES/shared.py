@@ -27,20 +27,14 @@ STEP_4_DIR.mkdir(exist_ok=True, parents=True)
 
 
 # Layouts
-Sx = np.sqrt(72)
-Sy = np.sqrt(18)
-
-CALIBRATION_LAYOUT = GridLayout(Sx, Sy, 3, 18).rotate(-2.5)
 
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
+CALIBRATION_LAYOUT = BASE_LAYOUT.rotate(-2.5)
+
+TIAMB = 0.056  # Determined from LES.
 
 
-TIAMB = 0.0560  # Determined from LES.
-
-
-def normalize_by_upstream(
-    Cp_list: list[float], row_indices: list[list[int]]
-) -> list[float]:
+def normalize_by_upstream(Cp_list: list[float], row_indices: list[list[int]]) -> list[float]:
     """
     Return the normalized power output of each turbine normalized by the most
     upstream turbine. uses row indicies provided to determine upstream and
@@ -53,6 +47,7 @@ def normalize_by_upstream(
             P_norm[idx] = Cp_list[idx] / Cp_list[row[0]]
 
     return P_norm
+
 
 @dataclass
 class TurbineDefinition:

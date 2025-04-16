@@ -4,7 +4,7 @@ import polars as pl
 from dualitic import DualNumber
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm import BEM, Windfarm
+from mitwindfarm import BEM, Windfarm, Niayifar, VariableKwGaussianWakeModel
 from rich import print
 
 from WES2024 import utils
@@ -18,7 +18,10 @@ FILESTEM = Path(__file__).stem
 
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT())
+    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    superposition=Niayifar(),
+    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    TIamb=0.056,
 )
 
 

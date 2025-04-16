@@ -7,25 +7,26 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from foreach import foreach
-from mitwindfarm import Square, Windfarm, Niayifar, VariableKwGaussianWakeModel
+from mitwindfarm import Layout, Windfarm, Niayifar, VariableKwGaussianWakeModel
 
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
 
+__all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
-
-PARALLEL = True
 REGENERATE = True
-
 
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=1.0),
     TIamb=0.056,
 )
+layout = Layout([0, 5], [0.0, 0.0])
+wdirs = np.arange(-20, 20, 30)
+
 
 methods = {
     "NoControl": NoControl,
@@ -35,35 +36,20 @@ methods = {
 }
 
 
-layouts = {
-    2: Square(2.0, 5).rotate(45),
-    3: Square(3.0, 5).rotate(45),
-    4: Square(4.0, 5).rotate(45),
-    5: Square(5.0, 5).rotate(45),
-    6: Square(6.0, 5).rotate(45),
-    7: Square(7.0, 5).rotate(45),
-    8: Square(8.0, 5).rotate(45),
-    9: Square(9.0, 5).rotate(45),
-    10: Square(10.0, 5).rotate(45),
-}
-wdirs = np.arange(0.0, 90.0, 0.05)
-
-
 def _generate(x):
-    method, wdir, min_dist = x
-    sol = methods[method](layouts[min_dist].rotate(wdir), windfarm).optimise(use_gradients=True)
+    method, wdir = x
+    sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
+
     return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"),
-        pl.lit(wdir).alias("wdir"),
-        pl.lit(min_dist).alias("min_dist"),
+        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
     )
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
-    params = list(product(methods, wdirs, layouts))
+    params = list(product(methods, wdirs))
 
-    df = pl.concat(foreach(_generate, params, context="spawn", parallel=PARALLEL))
+    df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
     return df
 
 

@@ -15,6 +15,7 @@ from mitwindfarm import (
     WakeModel,
     Windfarm,
     WindfarmSolution,
+    Niayifar,
 )
 from rich import print
 from scipy.optimize import minimize
@@ -36,60 +37,26 @@ from WES2024.LES.shared import (
 # File paths
 
 
-LES_INPUT_JSON_FN = STEP_1_DIR / "calibration_18x3.json"
-LES_OUTPUT_FN = STEP_1_DIR / "LES_wdir-2.5_calibration_18x3.csv"
+LES_INPUT_JSON_FN = STEP_1_DIR / "calibration_diamond.json"
+LES_OUTPUT_FN = STEP_1_DIR / "LES_wdir-2.5_nocontrol.csv"
 CALIBRATION_FN = STEP_2_DIR / "calibration.csv"
 CALIBRATION_FN2 = STEP_2_DIR / "calibration_opt.csv"
 FIG_FN = STEP_2_DIR / "calibration_results.png"
+FIG_DATA_FN = STEP_2_DIR / "calibration_results_data.csv"
 CACHE_FN = STEP_2_DIR / "cache.csv"
 
+
 ROW_INDICES = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [9, 10, 11],
-    [12, 13, 14],
-    [15, 16, 17],
-    [18, 19, 20],
-    [21, 22, 23],
-    [24, 25, 26],
-    [27, 28, 29],
-    [30, 31, 32],
-    [33, 34, 35],
-    [36, 37, 38],
-    [39, 40, 41],
-    [42, 43, 44],
-    [45, 46, 47],
-    [48, 49, 50],
-    [51, 52, 53],
+    [24],
+    [23, 19],
+    [22, 18, 14],
+    [21, 17, 13, 9],
+    [20, 16, 12, 8, 4],
+    [15, 11, 7, 3],
+    [10, 6, 2],
+    [5, 1],
+    [0],
 ]
-
-
-# >==< >==< >==< TEST PARAMETERS. REMOVE WHEN KIRBY HAS NEW DATA >==< >==< >==<
-# LES_INPUT_JSON_FN = (
-#     Path(__file__).parent / "LES_input/diamond_wdir-2.5_thrustcontrolcalibration.json"
-# )
-# LES_OUTPUT_FN = (
-#     Path(__file__).parent / "LES_output/LES_wdir-2.5_thrustcontrolcalibration.csv"
-# )
-
-# from mitwindfarm import Square
-
-# CALIBRATION_LAYOUT = Square(6.0, 5).rotate(45)
-
-# ROW_INDICES = [
-#     [24],
-#     [23, 19],
-#     [22, 18, 14],
-#     [21, 17, 13, 9],
-#     [20, 16, 12, 8, 4],
-#     [15, 11, 7, 3],
-#     [10, 6, 2],
-#     [5, 1],
-#     [0],
-# ]
-
-# >==< >==< >==< END TEST PARAMETERS >==< >==< >==<
 
 
 class CustomKwWakeModel(WakeModel):
@@ -116,46 +83,47 @@ class CustomKwWakeModel(WakeModel):
             TIamb=TIamb,
             xmax=self.xmax,
             WATI_sigma_multiplier=self.WATI_sigma_multiplier,
+            x0=1.0,
         )
 
 
-class VariableKwGaussianWakeModel2(WakeModel):
-    def __init__(
-        self,
-        a: float,
-        b: float,
-        c: float,
-        d: float,
-        sigma: float = 1 / np.sqrt(8),
-        WATI_sigma_multiplier=1.0,
-        xmax: float = 100.0,
-    ):
-        self.a = a
-        self.b = b
-        self.c = c
-        self.d = d
-        self.sigma = sigma
-        self.xmax = xmax
-        self.WATI_sigma_multiplier = WATI_sigma_multiplier
+# class VariableKwGaussianWakeModel2(WakeModel):
+#     def __init__(
+#         self,
+#         a: float,
+#         b: float,
+#         c: float,
+#         d: float,
+#         sigma: float = 1 / np.sqrt(8),
+#         WATI_sigma_multiplier=1.0,
+#         xmax: float = 100.0,
+#     ):
+#         self.a = a
+#         self.b = b
+#         self.c = c
+#         self.d = d
+#         self.sigma = sigma
+#         self.xmax = xmax
+#         self.WATI_sigma_multiplier = WATI_sigma_multiplier
 
-    def __call__(self, x, y, z, rotor_sol: "RotorSolution", TIamb: float = None) -> GaussianWake:
-        kw = (
-            self.a * rotor_sol.TI
-            + self.b * rotor_sol.Ctprime
-            + self.c * rotor_sol.TI * rotor_sol.Ctprime
-            + self.d
-        )
-        return GaussianWake(
-            x,
-            y,
-            z,
-            rotor_sol,
-            sigma=self.sigma,
-            kw=kw,
-            TIamb=TIamb,
-            xmax=self.xmax,
-            WATI_sigma_multiplier=self.WATI_sigma_multiplier,
-        )
+#     def __call__(self, x, y, z, rotor_sol: "RotorSolution", TIamb: float = None) -> GaussianWake:
+#         kw = (
+#             self.a * rotor_sol.TI
+#             + self.b * rotor_sol.Ctprime
+#             + self.c * rotor_sol.TI * rotor_sol.Ctprime
+#             + self.d
+#         )
+#         return GaussianWake(
+#             x,
+#             y,
+#             z,
+#             rotor_sol,
+#             sigma=self.sigma,
+#             kw=kw,
+#             TIamb=TIamb,
+#             xmax=self.xmax,
+#             WATI_sigma_multiplier=self.WATI_sigma_multiplier,
+#         )
 
 
 class Calibration(ABC):
@@ -176,7 +144,6 @@ class Calibration(ABC):
         ...
 
     def cost(self, x, p_norm_ref, control_setpoints) -> float:
-
         sol = self.run_windfarm(x, control_setpoints)
 
         Cp_model = np.array([x.Cp for x in sol.rotors])
@@ -216,67 +183,73 @@ class CalibrateLinear(Calibration):
 
     def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
         a, b, c = x
-        wakemodel = VariableKwGaussianWakeModel(a, b, c)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(),
+            wake_model=VariableKwGaussianWakeModel(a, b, c, x0=1.0),
+            TIamb=TIAMB,
+            superposition=Niayifar(),
+        )
 
         return windfarm(self.layout, control_setpoints)
 
 
-class CalibrateLinearFirstRow(CalibrateLinear):
-    """
-    Calibrates the linear kw model considering the power of the second row
-    turbines only (i.e. the effect of the first row on their immediate
-    downstream turbines).
-    """
+# class CalibrateLinearFirstRow(CalibrateLinear):
+#     """
+#     Calibrates the linear kw model considering the power of the second row
+#     turbines only (i.e. the effect of the first row on their immediate
+#     downstream turbines).
+#     """
 
-    def cost(self, x, p_norm_ref, control_setpoints) -> float:
-        # upstream_turbine_indices = [row[1] for row in self.row_indices if len(row) > 1]
-        most_upstream = [row[0] for row in self.row_indices]
-        downstream = [x for x in range(len(self.layout)) if x not in most_upstream]
+#     def cost(self, x, p_norm_ref, control_setpoints) -> float:
+#         # upstream_turbine_indices = [row[1] for row in self.row_indices if len(row) > 1]
+#         most_upstream = [row[0] for row in self.row_indices]
+#         downstream = [x for x in range(len(self.layout)) if x not in most_upstream]
 
-        sol = self.run_windfarm(x, control_setpoints)
+#         sol = self.run_windfarm(x, control_setpoints)
 
-        Cp_model = np.array([x.Cp for x in sol.rotors])
-        p_norm = normalize_by_upstream(Cp_model, self.row_indices)
+#         Cp_model = np.array([x.Cp for x in sol.rotors])
+#         p_norm = normalize_by_upstream(Cp_model, self.row_indices)
 
-        cost = np.sum((p_norm[downstream] - p_norm_ref[downstream]) ** 2)
+#         cost = np.sum((p_norm[downstream] - p_norm_ref[downstream]) ** 2)
 
-        return cost
+#         return cost
 
 
-class CalibrateLinearFirstRow2(Calibration):
-    """
-    Calibrates the linear kw model considering the power of the second row
-    turbines only (i.e. the effect of the first row on their immediate
-    downstream turbines).
-    """
+# class CalibrateLinearFirstRow2(Calibration):
+#     """
+#     Calibrates the linear kw model considering the power of the second row
+#     turbines only (i.e. the effect of the first row on their immediate
+#     downstream turbines).
+#     """
 
-    def initial_guess(self) -> tuple[float]:
-        return 1.21, 0.027, -0.21, -0.027  # from manual calibration
+#     def initial_guess(self) -> tuple[float]:
+#         return 1.21, 0.027, -0.21, -0.027  # from manual calibration
 
-    def bounds(self) -> list[tuple[float]]:
-        return [(0, 5), (-5, 5), (-1, 1), (-1, 1)]
+#     def bounds(self) -> list[tuple[float]]:
+#         return [(0, 5), (-5, 5), (-1, 1), (-1, 1)]
 
-    def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
-        a, b, c, d = x
-        wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+#     def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
+#         a, b, c, d = x
+#         wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
+#         windfarm = Windfarm(
+#             rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+#         )
 
-        return windfarm(self.layout, control_setpoints)
+#         return windfarm(self.layout, control_setpoints)
 
-    def cost(self, x, p_norm_ref, control_setpoints) -> float:
-        # upstream_turbine_indices = [row[1] for row in self.row_indices if len(row) > 1]
-        most_upstream = [row[0] for row in self.row_indices]
-        downstream = [x for x in range(len(self.layout)) if x not in most_upstream]
+#     def cost(self, x, p_norm_ref, control_setpoints) -> float:
+#         # upstream_turbine_indices = [row[1] for row in self.row_indices if len(row) > 1]
+#         most_upstream = [row[0] for row in self.row_indices]
+#         downstream = [x for x in range(len(self.layout)) if x not in most_upstream]
 
-        sol = self.run_windfarm(x, control_setpoints)
+#         sol = self.run_windfarm(x, control_setpoints)
 
-        Cp_model = np.array([x.Cp for x in sol.rotors])
-        p_norm = normalize_by_upstream(Cp_model, self.row_indices)
+#         Cp_model = np.array([x.Cp for x in sol.rotors])
+#         p_norm = normalize_by_upstream(Cp_model, self.row_indices)
 
-        cost = np.sum((p_norm[downstream] - p_norm_ref[downstream]) ** 2)
+#         cost = np.sum((p_norm[downstream] - p_norm_ref[downstream]) ** 2)
 
-        return cost
+#         return cost
 
 
 class CalibrateIndividual(Calibration):
@@ -292,14 +265,40 @@ class CalibrateIndividual(Calibration):
 
     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
         wakemodel = CustomKwWakeModel(x)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
 
-class CalibrateManual(Calibration):
+# class CalibrateManual(Calibration):
+#     """
+#     Manual calibration of the model.
+#     """
+
+#     def initial_guess(self) -> tuple[float]:
+#         ...
+
+#     def bounds(self) -> list[tuple[float]]:
+#         ...
+
+#     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
+#         a, b, c, d = x
+#         wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
+#         windfarm = Windfarm(
+#             rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+#         )
+
+#         return windfarm(self.layout, control_setpoints)
+
+#     def calibrate(*args, **kwargs):
+#         return 1.5, 0.027, -0.21, -0.04
+
+
+class NoCalibration(Calibration):
     """
-    Manual calibration of the model.
+    Equivalent to the fixed kw model
     """
 
     def initial_guess(self) -> tuple[float]:
@@ -309,14 +308,16 @@ class CalibrateManual(Calibration):
         ...
 
     def run_windfarm(self, x: list[float], control_setpoints) -> WindfarmSolution:
-        a, b, c, d = x
-        wakemodel = VariableKwGaussianWakeModel2(a, b, c, d)
-        windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB)
+        a, b, c = x
+        wakemodel = VariableKwGaussianWakeModel(a, b, c)
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
 
         return windfarm(self.layout, control_setpoints)
 
     def calibrate(*args, **kwargs):
-        return 1.5, 0.027, -0.21, -0.04
+        return 0.0, 0.0, 0.07
 
 
 def sol_to_polars(sol: WindfarmSolution) -> pl.DataFrame:
@@ -335,22 +336,22 @@ def sol_to_polars(sol: WindfarmSolution) -> pl.DataFrame:
     return df
 
 
-calibrations = {
+calibrations: dict[str, Calibration] = {
     "CalibrateIndividual": CalibrateIndividual,
-    "CalibrateLinearOpt": CalibrateLinearFirstRow2,
-    # "CalibrateLinear": CalibrateLinear,
-    # "CalibrateLinearFirstRow": CalibrateLinearFirstRow,
-    "CalibrateLinear": CalibrateManual,
+    "CalibrateLinear": CalibrateLinear,
+    "NoCalibration": NoCalibration,
 }
 
 
-def run(LES_output_fns: Path, case_json_fn: Path, cache: Optional[pl.DataFrame] = None):
-
+def run(
+    LES_output_fns: Path, case_json_fn: Path, cache: Optional[pl.DataFrame] = None
+) -> pl.DataFrame:
     les_powers = pl.read_csv(LES_output_fns)["Cp"].to_numpy()
     control_setpoints = SimulationDefinition.from_json(case_json_fn).setpoints()
 
     df_list = []
     for name, calibration in calibrations.items():
+        print(name)
         if cache is not None and name == "CalibrateIndividual":
             df_list.append(cache.filter(calib_method=name))
         else:
@@ -385,8 +386,8 @@ if __name__ == "__main__":
     last_turbine_idxs = [row[-1] for row in ROW_INDICES]
 
     most_upstream = [row[0] for row in ROW_INDICES]
-    second_upstream = [row[1] for row in ROW_INDICES]
-    last_upstream = [row[2] for row in ROW_INDICES]
+    second_upstream = [row[1] for row in ROW_INDICES if len(row) >= 2]
+    last_upstream = [row[-1] for row in ROW_INDICES]
 
     n_upstream = []
     for idx in df["idx"]:
@@ -397,14 +398,15 @@ if __name__ == "__main__":
         elif idx in last_upstream:
             n_upstream.append(2)
         else:
-            raise ValueError()
+            n_upstream.append(-1)
 
     df = df.with_columns(pl.Series(n_upstream).alias("n_upstream"))
 
+    df.write_csv(FIG_DATA_FN)
     fig, axes = plt.subplots(1, 2, figsize=5 * np.array([2, 1]), sharey=True)
 
     sns.scatterplot(
-        df,
+        df.filter(pl.col("calib_method") != "CalibrateLinear"),
         x="TI",
         y="kw",
         hue="calib_method",

@@ -74,9 +74,7 @@ class SimData:
     @classmethod
     def from_files(cls, output_fn: Path, name: str = "") -> "SimData":
         _df = pl.read_csv(output_fn)
-        Cp_upstream_norm = normalize_by_upstream(
-            _df["Cp"].to_numpy(), row_indices=ROW_INDICES
-        )
+        Cp_upstream_norm = normalize_by_upstream(_df["Cp"].to_numpy(), row_indices=ROW_INDICES)
 
         df = _df.select(
             "Cp",
@@ -118,9 +116,7 @@ def plot_compare(
         Cp_key = "Cp"
     df_diff = sim1.compare_with(sim2)
 
-    fig, axes = plt.subplots(
-        3, 3, sharex=True, sharey=True, figsize=1.0 * np.array([9, 9])
-    )
+    fig, axes = plt.subplots(3, 3, sharex=True, sharey=True, figsize=1.0 * np.array([9, 9]))
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
 
     plot_text_on_layout(
@@ -167,18 +163,18 @@ if __name__ == "__main__":
             STEP_3_DIR / "LES_wdir-2.5_nocontrol.csv",
             name="LES_nocontrol",
         ),
-        # SimData.from_files(
-        #     STEP_3_DIR / "LES_wdir-2.5_thrustcontrolcalibration.csv",
-        #     name="LES_thrustcontrolcalibration",
-        # ),
-        # SimData.from_files(
-        #     STEP_3_DIR / "LES_wdir-2.5_yawcontrol.csv",
-        #     name="LES_yawcontrol",
-        # ),
-        # SimData.from_files(
-        #     STEP_3_DIR / "LES_wdir-2.5_jointcontrol.csv",
-        #     name="LES_jointcontrol",
-        # ),
+        SimData.from_files(
+            STEP_3_DIR / "LES_MITWindfarm_wdir-2.5_AutoCal_thrustcontrol.csv",
+            name="LES_thrustcontrol",
+        ),
+        SimData.from_files(
+            STEP_3_DIR / "LES_MITWindfarm_wdir-2.5_AutoCal_yawcontrol.csv",
+            name="LES_yawcontrol",
+        ),
+        SimData.from_files(
+            STEP_3_DIR / "LES_MITWindfarm_wdir-2.5_AutoCal_jointcontrol.csv",
+            name="LES_jointcontrol",
+        ),
         # SimData.from_files(
         #     STEP_3_DIR / "LES_wdir-2.5_jointunicontrol.csv",
         #     name="LES_jointunicontrol",
@@ -222,6 +218,21 @@ if __name__ == "__main__":
     for key in simdata:
         print(key)
 
+    # save farm power output of each sim to csv.
+    dict_list = []
+    for sim in simdata.values():
+        if "ManualCal" in sim.name:
+            continue
+        dict_list.append(
+            {
+                "name": sim.name,
+                "sim_type": "LES" if "LES" in sim.name else "MIT",
+                "controller": sim.name.split("_")[-1],
+                "Cp_farm": sim.power,
+            }
+        )
+    pl.from_dicts(dict_list).write_csv(STEP_4_DIR / "Cp_farm.csv")
+
     pairs_to_compare = [
         # MIT power gains
         ("MIT_ManualCal_nocontrol", "MIT_ManualCal_jointcontrol", False),
@@ -237,10 +248,10 @@ if __name__ == "__main__":
         # New thrustcontrol with calibration thrust control
         # ("MIT_thrustcontrol", "MIT_thrustcontrolcalibration", False),
         # LES power gains
-        # ("LES_nocontrol", "LES_thrustcontrol", False),
+        ("LES_nocontrol", "LES_thrustcontrol", False),
         # ("LES_nocontrol", "LES_thrustcontrolcalibration", False),
-        # ("LES_nocontrol", "LES_yawcontrol", False),
-        # ("LES_nocontrol", "LES_jointcontrol", False),
+        ("LES_nocontrol", "LES_yawcontrol", False),
+        ("LES_nocontrol", "LES_jointcontrol", False),
         # ("LES_nocontrol", "LES_jointunicontrol", False),
         # new thrust control vs calibration thrust control
         # ("LES_thrustcontrol", "LES_thrustcontrolcalibration", False),

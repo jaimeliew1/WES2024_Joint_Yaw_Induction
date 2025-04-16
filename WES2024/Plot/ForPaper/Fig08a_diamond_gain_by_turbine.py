@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
+from rich import print
 
 from WES2024 import utils
 from WES2024.Generate import diamond_AD, diamond_BEM
@@ -33,7 +34,9 @@ def generate(regenerate=False) -> pl.DataFrame:
 
 def aggregate_turbine(df_full: pl.DataFrame) -> tuple[pl.DataFrame, ...]:
     # select only the first turbine in each group
-    turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0)["turbine"]
+    turbines_to_keep = utils.DIAMOND_GROUPS.filter(pl.col("face") == 0, pl.col("group") != "Dinv")[
+        "turbine"
+    ]
     df = df_full.filter(pl.col("turbine").is_in(turbines_to_keep))
 
     df_agg = df.group_by("group", "method").agg(pl.col("Cp").mean(), pl.col("Ct").mean())
@@ -64,7 +67,7 @@ def aggregate_turbine(df_full: pl.DataFrame) -> tuple[pl.DataFrame, ...]:
 
 def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     fig, axes = plt.subplots(2, 2, width_ratios=[1, 1 / 8], figsize=0.8 * np.array([10, 4]))
-    plt.subplots_adjust(wspace=0.3)
+    plt.subplots_adjust(wspace=0.25)
 
     sns.barplot(
         df_turb,
@@ -110,10 +113,10 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
         legend=False,
     )
 
-    axes[0, 0].set_ylabel(r"$C_P$ increase (\%)")
-    axes[1, 0].set_ylabel(r"$C_T$ increase (\%)")
-    axes[0, 1].set_ylabel(r"$C_{P,\mathrm{farm}}$ increase (\%)")
-    axes[1, 1].set_ylabel(r"$C_{T,\mathrm{farm}}$ increase (\%)")
+    axes[0, 0].set_ylabel(r"$C_P$ increase (%)")
+    axes[1, 0].set_ylabel(r"$C_T$ increase (%)")
+    axes[0, 1].set_ylabel(r"   $C_{P,\mathrm{farm}}$ increase (%)")
+    axes[1, 1].set_ylabel(r"$C_{T,\mathrm{farm}}$ increase (%)   ")
 
     sns.move_legend(
         axes[0, 0],
@@ -124,7 +127,10 @@ def plot(df_turb: pl.DataFrame, df_farm: pl.DataFrame):
     )
 
     # Set same y lim on both axes
-    [ax.set_ylim(-5, 15) for ax in axes.ravel()]
+    axes[0, 0].set_ylim(-1, 8)
+    axes[0, 1].set_ylim(-1, 8)
+    axes[1, 0].set_ylim(-6, 7)
+    axes[1, 1].set_ylim(-6, 7)
 
     # Set axis labels and ticks
     axes[0, 0].set_xlabel("")
@@ -143,6 +149,9 @@ def main():
     df_full = utils.fill_in_other_quadrants(generate(regenerate=False))
 
     df_turb, df_farm = aggregate_turbine(df_full)
+
+    print(df_turb)
+    print(df_farm)
 
     plot(df_turb, df_farm)
 

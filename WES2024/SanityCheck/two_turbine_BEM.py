@@ -7,48 +7,50 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from foreach import foreach
-from MITRotor.ReferenceTurbines import IEA15MW
-from mitwindfarm import BEM, Square, Windfarm, Niayifar, VariableKwGaussianWakeModel
+from MITRotor import IEA15MW
+from mitwindfarm import BEM, Layout, Windfarm, Niayifar,VariableKwGaussianWakeModel
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT
-from WES2024.optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
+from WES2024.optimise import (
+    JointControlBEM,
+    NoControlBEM,
+    ThrustControlBEM,
+    YawControlBEM,
+    YawControlKOmegaBEM,
+)
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 
-PARALLEL = True
-REGENERATE = True
+PARALLEL = False
 
 
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=1.0),
     TIamb=0.056,
 )
-
-layout = Square(6.0, 5).rotate(45)
-wdirs = np.arange(0.0, 90.0, 0.05)
+layout = Layout([0, 6], [0.0, 0.0])
+wdirs = np.arange(-20, 20, 1)
+# wdirs = [0.0, 1.0, 2.0, 3.0]
 
 
 methods = {
-    "NoControl": NoControlBEM,
-    "YawControl": YawControlBEM,
-    "ThrustControl": ThrustControlBEM,
+    # "YawKOmegaControl": YawControlKOmegaBEM,
+    # "NoControl": NoControlBEM,
+    # "YawControl": YawControlBEM,
+    # "ThrustControl": ThrustControlBEM,
     "JointControl": JointControlBEM,
 }
 
 
 def _generate(x):
     method, wdir = x
-    sol = methods[method](layout.rotate(wdir), windfarm).optimise(
-        Cp_constraint=None,
-        use_gradients=True,
-        verbose=False,
-    )
+    sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
 
     return utils.to_polars(sol).with_columns(
         pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
@@ -65,5 +67,5 @@ def generate(regenerate=False):
 
 
 if __name__ == "__main__":
-    df = generate(regenerate=REGENERATE)
+    df = generate(regenerate=True)
     print(df)

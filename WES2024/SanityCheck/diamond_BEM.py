@@ -26,40 +26,45 @@ REGENERATE = True
 windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=1.0),
     TIamb=0.056,
 )
 
+
 layout = Square(6.0, 5).rotate(45)
-wdirs = np.arange(0.0, 90.0, 0.05)
+# wdirs = [60]  # np.arange(0.0, 90.0, 0.05)
+wdirs = np.arange(0.0, 90.0, 1.0)
 
 
 methods = {
-    "NoControl": NoControlBEM,
-    "YawControl": YawControlBEM,
-    "ThrustControl": ThrustControlBEM,
+    # "NoControl": NoControlBEM,
+    # "YawControl": YawControlBEM,
+    # "ThrustControl": ThrustControlBEM,
     "JointControl": JointControlBEM,
 }
 
 
 def _generate(x):
     method, wdir = x
+    print(f"running {x}...")
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(
         Cp_constraint=None,
         use_gradients=True,
         verbose=False,
     )
-
-    return utils.to_polars(sol).with_columns(
+    out = utils.to_polars(sol).with_columns(
         pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
     )
+
+    print(f"{x} complete!")
+    return out
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
 
-    dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL)
+    dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL, processes=13)
     df = pl.concat(dfs)
     return df
 

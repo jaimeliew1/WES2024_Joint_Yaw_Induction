@@ -23,7 +23,7 @@ REGENERATE = True
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736, x0=1.0),
     TIamb=0.056,
 )
 
@@ -36,17 +36,15 @@ methods = {
 
 
 layouts = {
-    2: Square(2.0, 5).rotate(45),
-    3: Square(3.0, 5).rotate(45),
-    4: Square(4.0, 5).rotate(45),
-    5: Square(5.0, 5).rotate(45),
+    # 4: Square(4.0, 5).rotate(45),
+    # 5: Square(5.0, 5).rotate(45),
     6: Square(6.0, 5).rotate(45),
-    7: Square(7.0, 5).rotate(45),
-    8: Square(8.0, 5).rotate(45),
-    9: Square(9.0, 5).rotate(45),
-    10: Square(10.0, 5).rotate(45),
+    # 7: Square(7.0, 5).rotate(45),
+    # 8: Square(8.0, 5).rotate(45),
+    # 9: Square(9.0, 5).rotate(45),
+    # 10: Square(10.0, 5).rotate(45),
 }
-wdirs = np.arange(0.0, 90.0, 0.05)
+wdirs = np.concatenate([np.arange(0.0, 90.0, 30), [-2.5]])
 
 
 def _generate(x):

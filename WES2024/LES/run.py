@@ -37,7 +37,7 @@ LES_FN_REGEX = re.compile("(\w+)_wdir(-?\d+.\d+)_(\w+).csv")
 
 BASE_LAYOUT = Square(6.0, 5).rotate(45)
 
-TIAMB = 0.053  # Determined from LES.
+TIAMB = 0.056  # Determined from LES.
 
 CONTROLLERS = {
     "nocontrol": NoControl,

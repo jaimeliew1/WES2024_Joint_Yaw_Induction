@@ -86,7 +86,7 @@ def plot(df: pl.DataFrame, df_surface: pl.DataFrame, df_trajectory: pl.DataFrame
     CF_Ct = plot_surface(df_surface, "pitch", "tsr", "Ct", ax=axes[1], levels=levels, cmap="plasma")
 
     # Plot minimum thrust trajectories
-    for yaw, _df in df_trajectory.filter(pl.col("yaw").is_in([0, 20, 40])).group_by(
+    for yaw, _df in df_trajectory.filter(pl.col("yaw").is_in([0, 10, 20])).group_by(
         "yaw", maintain_order=True
     ):
         axes[0].plot(

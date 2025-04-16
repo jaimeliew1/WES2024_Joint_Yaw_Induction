@@ -1,6 +1,6 @@
+# dualitic is imported first to ensure correct monkey patching.
 import dualitic
 
-from functools import partial
 from itertools import product
 from pathlib import Path
 
@@ -8,7 +8,7 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from MITRotor import IEA15MW
-from mitwindfarm import BEM, Layout, Windfarm
+from mitwindfarm import BEM, Layout, Windfarm, Niayifar, VariableKwGaussianWakeModel
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
@@ -34,7 +34,9 @@ windfarm = Windfarm(
     rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
     wake_model=get_wakemodel(),
     TIamb=TIAMB,
+    superposition=Niayifar(),
 )
+
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.5)
 # wdirs = [0.0, 1.0, 2.0, 3.0]
