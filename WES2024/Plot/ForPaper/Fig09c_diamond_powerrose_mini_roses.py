@@ -106,7 +106,7 @@ def plot_layout_and_minirose(df: pl.DataFrame, channel: str, ax: plt.Axes):
             _df[channel],
             x=x,
             y=y,
-            r0=0.3,
+            r0=0.26,
             width=5,
             ax=ax,
             c="tab:red",
@@ -226,7 +226,7 @@ def plot(df: pl.DataFrame):
     for ax_id, channel in zip(["A", "B", "C", "D"], channels):
         plot_layout_and_minirose(df, channel, axd[ax_id])
 
-        axd[ax_id].set_xlim(box_xy[0], box_xy[0] + box_width)
+        axd[ax_id].set_xlim(box_xy[0]-1, box_xy[0] + box_width)
         axd[ax_id].set_ylim(box_xy[1], box_xy[1] + box_height)
 
         axd[ax_id].set_title(titles[channel])
@@ -234,8 +234,7 @@ def plot(df: pl.DataFrame):
         for spine in axd[ax_id].spines.values():
             spine.set_linestyle("--")
             spine.set_color("teal")
-
-    rectangle = Rectangle(box_xy, box_width, box_height, fill=False, ls="--", ec="teal")
+    rectangle = Rectangle(box_xy, box_width+2, box_height, fill=False, ls="--", ec="teal")
     ax_layout.add_patch(rectangle)
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")

@@ -40,7 +40,7 @@ def plot(df: pl.DataFrame):
     methods = df_farm_Cp.columns
     methods.remove("min_dist")
 
-    plt.figure()
+    plt.figure(figsize=(4,3))
     for method, _plot_params in utils.line_params.items():
         if method == "NoControl":
             continue

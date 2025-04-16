@@ -43,7 +43,6 @@ windfarm = Windfarm(
 
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
-# wdirs = [0.0, 1.0, 2.0, 3.0]
 
 
 methods = {

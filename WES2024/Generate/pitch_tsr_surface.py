@@ -6,6 +6,7 @@ import polars as pl
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
 from MITRotor.Aerodynamics import DefaultAerodynamics
+from MITRotor.TipLoss import NoTipLoss
 from mitwindfarm import BEM, Layout, Windfarm
 
 from WES2024 import utils
@@ -23,14 +24,15 @@ layout = Layout(np.array([0.0]), np.array([0.0]))
 # yaws = [0.0, 45.0]
 
 # Full input set
-pitches = np.linspace(-15, 15, 150)
-tsrs = np.linspace(5, 10.5, 150)
+pitches = np.linspace(-15, 15, 50)
+tsrs = np.linspace(5, 10.5, 50)
 yaws = np.arange(0.0, 50.1, 5.0)
 
 windfarm = Windfarm(rotor_model=BEM(IEA15MW(), 
                                     momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
                                     aerodynamic_model=DefaultAerodynamics(),
-                                    tangential_induction_model=NoTiplossTangentialInduction())
+                                    tangential_induction_model=NoTiplossTangentialInduction(),
+                                    tiploss_model=NoTipLoss()),
 )
 
 

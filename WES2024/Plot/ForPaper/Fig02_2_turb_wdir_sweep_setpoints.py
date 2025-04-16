@@ -88,9 +88,9 @@ axis_params = {
         yticks=None,
     ),
     "Cp": dict(
-        ylabel=r"$C_P$",
-        title="a) Power coefficient",
-        ylim=(0.25, 0.65),
+        ylabel=r"$C_{P,\textrm{ farm}}$",
+        title="a) Total farm power coefficient",
+        ylim=(0.32, 0.68),
         yticks=None,
     ),
     "Ctprime": dict(
@@ -102,7 +102,7 @@ axis_params = {
     "Ct": dict(
         ylabel=r"$C_T$",
         title="b) Optimal thrust coefficient",
-        ylim=(0.6, 1.0),
+        ylim=(0.65, 0.96),
         yticks=None,
     ),
     "yaw": dict(
@@ -114,13 +114,13 @@ axis_params = {
     "pitch": dict(
         ylabel=r"$\theta_p$ (deg)",
         title="e) Optimal blade pitch",
-        ylim=(-2.0, 2.0),
+        ylim=(-2.0, 1.5),
         yticks=None,
     ),
     "tsr": dict(
         ylabel=r"$\lambda$",
         title="f) Optimal tip speed ratio",
-        ylim=(8.0, 9.5),
+        ylim=(8.0, 10),
         yticks=None,
     ),
 }

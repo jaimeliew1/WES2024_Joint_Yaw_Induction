@@ -16,7 +16,8 @@ FILESTEM = Path(__file__).stem
 
 PITCHES = np.deg2rad(np.arange(-15, 15.001, 0.5))
 TSRS = np.arange(5, 12.001, 0.125)
-YAW2 = 50  # deg
+# YAW2 = 50  # deg
+YAW2 = 45  # deg
 
 XLIM = (-15, 15)
 YLIM = (5, 10.5)
@@ -64,7 +65,6 @@ def plot_surface(
     X = np.array(df_piv_Cp.columns[1:], dtype=float)
     Z = df_piv_Cp.to_numpy()[:, 1:]
     Z[Z < 0] = 0.01
-
     CF = ax.contourf(X, Y, Z, levels=levels, **kwargs)
     CS = ax.contour(X, Y, Z, levels=levels, colors="k", linewidths=0.8)
     ax.clabel(CS, inline=True, fontsize=10)
