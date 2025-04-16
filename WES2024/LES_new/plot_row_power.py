@@ -95,11 +95,15 @@ def run(fsearch="LESnew"):
         ncols=len(ctrls), figsize=(len(ctrls) * 1.5, 2.5), sharex=True, sharey=True
     )
 
+    k = 0
     for ax, controller in zip(axs, ctrls):
-        ax.set_title(controller_labels[controller], fontsize=10)
+        # ax.set_title(controller_labels[controller], fontsize=10)
         plot_row(df.filter(controller=controller), ax=ax)
         if ax != axs[1]:
             ax.legend_.remove()
+
+        ax.text(-0.05, 1.04, f"{chr(k+97)}) {controller_labels[controller]}", transform=ax.transAxes, fontsize=10, va="bottom", ha="left")
+        k += 1
 
     plt.subplots_adjust(bottom=0.4)
     axs[1].legend(bbox_to_anchor=(1.1, -0.35), loc="upper center", title="Simulator", ncols=2)

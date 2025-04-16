@@ -37,17 +37,17 @@ def plot_powergain(df, fname):
     df = df.join(norm_values, on="simulator")
 
     df = df.with_columns(
-        (pl.col("Cp") / pl.col("Cp_norm") - 1).alias("$C_P$ Gain"),
+        ((pl.col("Cp") / pl.col("Cp_norm") - 1) * 100).alias("cp_gain"),
         pl.col("controller").replace(custom_order, default=None).alias("order"),
         pl.col("controller").replace(controller_labels).alias("Controller"),
         pl.col("simulator").alias("Simulator"),  # just capitalize it!
     ).sort(by=["order", "simulator"])
 
-    fig, ax = plt.subplots(figsize=(4.5, 3))
+    fig, ax = plt.subplots(figsize=(5, 3))
     sns.barplot(
         df,
         x="Controller",
-        y="$C_P$ Gain",
+        y="cp_gain",
         hue="Simulator",
         palette=["0.4", "tab:blue", ],
         errorbar=("sd", 2),
@@ -57,7 +57,8 @@ def plot_powergain(df, fname):
         capsize=0.2,
     )
     ax.axhline(0, color="k", lw=0.5)
-    ax.set_ylim([-0.055, 0.225])
+    ax.set_ylim([-5.5, 22.5])
+    ax.set_ylabel("Change in $C_{P, \\mathrm{farm}}$ (\\%)")
     plt.tight_layout()
     print("Saving figure", figpath / f"LES_model_Cp_gain_{fname}.png")
     plt.savefig(figpath / f"LES_model_Cp_gain_{fname}.png", dpi=300)
