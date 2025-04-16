@@ -1,3 +1,7 @@
+"""
+Plot setpoints from LES and MITWindfarm in Appendix A. 
+"""
+
 import numpy as np
 import polars as pl
 from pathlib import Path
