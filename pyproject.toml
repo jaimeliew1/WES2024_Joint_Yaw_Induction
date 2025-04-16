@@ -28,8 +28,8 @@ unified-momentum-model = { git = "https://github.com/Howland-Lab/Unified-Momentu
 foreach = "^0.4.0"
 bpython = "^0.24"
 luigi = "^3.5.1"
-mitwindfarm = { path = "../MITWindfarm", develop = true }
-mitrotor = { path = "../MITRotor", develop = true }
+# mitwindfarm = { path = "../MITWindfarm", develop = true }
+# mitrotor = { path = "../MITRotor", develop = true }
 # dualitic = {path = "../Dualitic", develop = true}
 altair = "^5.5.0"
 vl-convert-python = "^1.7.0"
