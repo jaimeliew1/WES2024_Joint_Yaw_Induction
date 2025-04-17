@@ -19,7 +19,7 @@ from UnifiedMomentumModel.Momentum import (
     MomentumSolution,
     UnifiedMomentum,
     ThrustBasedUnified,
-    LimitedHeck
+    LimitedHeck,
 )
 
 model_Ctprime = UnifiedMomentum()
@@ -356,8 +356,14 @@ class UnifiedLUTAD(Rotor):
             extra=sol,
         )
 
+
 class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
-    def __init__(self, averaging: Literal["sector", "annulus", "rotor", "rotor_induction_tiploss"] = "rotor_induction_tiploss"):
+    def __init__(
+        self,
+        averaging: Literal[
+            "sector", "annulus", "rotor", "rotor_induction_tiploss"
+        ] = "rotor_induction_tiploss",
+    ):
         if averaging == "rotor":
             self._func = self._func_rotor
         if averaging == "rotor_induction_tiploss":
@@ -373,10 +379,14 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         self.averaging = averaging
         self.model = ThrustBasedUnifiedMomentumLUT()
 
-    def Ct_a(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+    def compute_induction(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
 
         sol = self.model(Ct, yaw)
         return sol.an
+
+    def compute_initial_wake_velocities(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+        sol = self.model(Ct, yaw)
+        return sol.u4, sol.v4
 
     def __call__(
         self,
@@ -389,7 +399,7 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
     ) -> ArrayLike:
         an = self._func(aero_props, pitch, tsr, yaw, rotor, geom)
         return an
-    
+
     def _func_rotor(
         self,
         aero_props: "MITRotor.AerodynamicProperties",
@@ -399,14 +409,14 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         rotor: "MITRotor.RotorDefinition",
         geom: "MITRotor.BEMGeometry",
     ) -> ArrayLike:
-        Ct = aero_props.solidity * aero_props.W**2 * aero_props.Cax
+        Ct = aero_props.solidity * aero_props.W**2 * aero_props.C_n
 
         Ct_rotor = geom.rotor_average(geom.annulus_average(Ct))
 
         a = self.Ct_a(Ct_rotor, yaw)
 
         return a
-    
+
     def _func_rotor_induction_tiploss(
         self,
         aero_props: "AerodynamicProperties",
@@ -416,7 +426,7 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         rotor: "RotorDefinition",
         geom: "BEMGeometry",
     ) -> ArrayLike:
-        Ct = aero_props.solidity * aero_props.W**2 * aero_props.Cax
+        Ct = aero_props.solidity * aero_props.W**2 * aero_props.C_n
         Ct_rotor = geom.rotor_average(geom.annulus_average(Ct))
 
         a_target = self.compute_induction(Ct_rotor, yaw)
@@ -427,17 +437,19 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
 
         return a_new
 
+
 # simple Cosine model rotor
+
 
 class CosineAD(Rotor):
     """
-    Simple Cosine model rotor. Uses Shapiro lifting line model for v4. 
+    Simple Cosine model rotor. Uses Shapiro lifting line model for v4.
 
     Methods:
     - __call__(Ctprime, yaw): Calculate the rotor solution for given Ctprime and yaw inputs.
     """
 
-    def __init__(self, rotor_grid: RotorGrid = None, Pp: float = 3.):
+    def __init__(self, rotor_grid: RotorGrid = None, Pp: float = 3.0):
         """
         Initialize the UnifiedAD rotor model with the given axial induction factor.
 
@@ -481,7 +493,7 @@ class CosineAD(Rotor):
         # rotor solution is normalised by REWS. Convert normalisation to U_inf and return
         return RotorSolution(
             yaw,
-            sol_1d.Cp * np.cos(sol.yaw)**self.Pp * REWS**3,
+            sol_1d.Cp * np.cos(sol.yaw) ** self.Pp * REWS**3,
             sol.Ct * REWS**2,
             sol.Ctprime,
             sol.an * REWS,
@@ -491,6 +503,7 @@ class CosineAD(Rotor):
             TI=RETI,
             extra=sol,
         )
+
 
 # class AD(Rotor):
 #     """
@@ -531,7 +544,7 @@ class CosineAD(Rotor):
 #         # sample windfield and calculate rotor effective wind speed
 #         Us = windfield.wsp(xs_glob, ys_glob, zs_glob)
 #         TIs = windfield.TI(xs_glob, ys_glob, zs_glob)
-        
+
 #         REWS = self.rotor_grid.average(Us)
 #         RETI = np.sqrt(self.rotor_grid.average(TIs**2))
 
@@ -548,4 +561,3 @@ class CosineAD(Rotor):
 #             TI=RETI,
 #             extra=sol,
 #         )
-
