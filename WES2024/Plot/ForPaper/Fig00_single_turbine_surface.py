@@ -16,7 +16,8 @@ FILESTEM = Path(__file__).stem
 
 PITCHES = np.deg2rad(np.arange(-15, 15.001, 0.5))
 TSRS = np.arange(5, 12.001, 0.125)
-YAW2 = 50  # deg
+# YAW2 = 50  # deg
+YAW2 = 45  # deg
 
 XLIM = (-15, 15)
 YLIM = (5, 10.5)
@@ -64,7 +65,6 @@ def plot_surface(
     X = np.array(df_piv_Cp.columns[1:], dtype=float)
     Z = df_piv_Cp.to_numpy()[:, 1:]
     Z[Z < 0] = 0.01
-
     CF = ax.contourf(X, Y, Z, levels=levels, **kwargs)
     CS = ax.contour(X, Y, Z, levels=levels, colors="k", linewidths=0.8)
     ax.clabel(CS, inline=True, fontsize=10)
@@ -178,28 +178,49 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
     # Plot zero-yaw trajectory
     for ax in axes.ravel():
         dat = df_trajectory.filter(yaw=0.0)
+        # (strat3,) = ax.plot(
+        #     dat["pitch"],
+        #     dat["tsr"],
+        #     ls="-",
+        #     color="black",
+        #     label=r"$\gamma=0^o$",
+        #     ms=8,
+        #     zorder=10,
+        # )
         (strat3,) = ax.plot(
-            dat["pitch"],
-            dat["tsr"],
-            ls="-",
-            color="black",
-            label=r"$\gamma=0^o$",
-            ms=8,
-            zorder=10,
-        )
+        dat["pitch"],
+        dat["tsr"],
+        ls="",
+        color="black",
+        label=r"$\gamma=0^o$",
+        ms=2,
+        zorder=10,
+        marker="o",
+    )
 
     # Plot 45 degree yaw trajectory
     for ax in axes[:, 1]:
         dat = df_trajectory.filter(yaw=YAW2)
+        # (strat4,) = ax.plot(
+        #     dat["pitch"],
+        #     dat["tsr"],
+        #     ls="-",
+        #     color="tab:orange",
+        #     label=r"$\gamma=45^o$",
+        #     ms=8,
+        #     zorder=10,
+        # )
         (strat4,) = ax.plot(
-            dat["pitch"],
-            dat["tsr"],
-            ls="-",
-            color="tab:orange",
-            label=f"$\\gamma={YAW2:.0f}^\\circ$",
-            ms=8,
-            zorder=10,
-        )
+        dat["pitch"],
+        dat["tsr"],
+        ls="",
+        color="tab:orange",
+        label=f"$\\gamma={YAW2:.0f}^\\circ$",
+        ms=2,
+        zorder=10,
+        # ls = "",
+        marker="o",
+    )
 
     # Plot where the global optimal goes
     dat = df_trajectory.group_by("yaw", maintain_order=True).agg(

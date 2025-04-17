@@ -8,13 +8,14 @@ import numpy as np
 import polars as pl
 from foreach import foreach
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import DefaultAerodynamics
 from mitwindfarm import BEM, Square, Windfarm, Niayifar, VariableKwGaussianWakeModel
 
 from WES2024 import utils
 from WES2024.BEM_gradients import DualBEM
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT
+from WES2024.CustomTangentialInduction import NoTiplossTangentialInduction
 from WES2024.optimise import JointControlBEM, NoControlBEM, ThrustControlBEM, YawControlBEM
-
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
@@ -24,9 +25,13 @@ REGENERATE = True
 
 
 windfarm = Windfarm(
-    rotor_model=BEM(IEA15MW(), BEM_model=DualBEM, momentum_model=BEMUnifiedMomentumLUT()),
+    rotor_model=BEM(IEA15MW(), 
+                    BEM_model=DualBEM, 
+                    momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
+                    aerodynamic_model = DefaultAerodynamics(),
+                    tangential_induction_model = NoTiplossTangentialInduction()),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,
 )
 

@@ -5,11 +5,13 @@ import polars as pl
 from foreach import foreach
 from MITRotor.BEMSolver import BEM, BEMSolution
 from MITRotor.ReferenceTurbines import IEA15MW
+from MITRotor.Aerodynamics import DefaultAerodynamics
 from scipy.interpolate import BSpline, make_interp_spline
 from scipy.optimize import minimize, minimize_scalar, root_scalar
 
 from WES2024 import utils
 from WES2024.CustomRotors import BEMUnifiedMomentumLUT
+from WES2024.CustomTangentialInduction import NoTiplossTangentialInduction
 
 __all__ = ["generate"]
 
@@ -17,10 +19,14 @@ REGENERATE = True
 
 FILESTEM = Path(__file__).stem
 
-YAWS = np.arange(0.0, 50.1, 2.5)
+# YAWS = np.arange(0.0, 50.1, 2.5)
+YAWS = [0.0, 45.0]
 
 rotor = IEA15MW()
-bem = BEM(rotor=rotor, momentum_model=BEMUnifiedMomentumLUT())
+bem = BEM(rotor=rotor, 
+          momentum_model=BEMUnifiedMomentumLUT(averaging="rotor_induction_tiploss"),
+          aerodynamic_model=DefaultAerodynamics(),
+          tangential_induction_model=NoTiplossTangentialInduction())
 
 
 def find_optimal_setpoint(bem: BEM, yaw: float = 0) -> BEMSolution:
@@ -123,7 +129,8 @@ def generate_derate_strat(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 2
     sol_opt: BEMSolution = find_optimal_setpoint(bem, yaw)
     Cp_opt = sol_opt.Cp()
 
-    Cps = np.linspace(0.35 * Cp_opt, Cp_opt - 0.01, N_Cp)
+    # Cps = np.linspace(0.35 * Cp_opt, Cp_opt - 0.01, N_Cp)
+    Cps = np.linspace(0.35 * Cp_opt, Cp_opt, N_Cp, endpoint=False)
 
     trajectory = []
     for Cp in Cps:
@@ -165,7 +172,7 @@ def derate_spline(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 20) -> BS
 
 def _generate(x):
     yaw = x
-    return generate_derate_strat(bem, np.deg2rad(yaw), N_Cp=20).with_columns(yaw=yaw)
+    return generate_derate_strat(bem, np.deg2rad(yaw), N_Cp=40).with_columns(yaw=yaw)
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")

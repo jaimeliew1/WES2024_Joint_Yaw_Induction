@@ -23,7 +23,7 @@ REGENERATE = True
 windfarm = Windfarm(
     rotor_model=UnifiedLUTAD(),
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0, x0=1.0),
+    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,
 )
 
