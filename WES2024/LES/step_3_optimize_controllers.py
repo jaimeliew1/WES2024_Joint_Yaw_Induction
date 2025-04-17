@@ -51,7 +51,7 @@ def run(calibration_key: str, output_path: Path) -> None:
     # Initialise MITWindfarm using VariableKwGaussianWakeModel
     windfarm = Windfarm(
         rotor_model=UnifiedLUTAD(),
-        wake_model=VariableKwGaussianWakeModel(a, b, c, x0=1.0),
+        wake_model=VariableKwGaussianWakeModel(a, b, c),
         TIamb=TIAMB,
         superposition=Niayifar(),
     )
