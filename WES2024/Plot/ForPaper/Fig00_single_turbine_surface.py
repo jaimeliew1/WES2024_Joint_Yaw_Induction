@@ -178,28 +178,49 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
     # Plot zero-yaw trajectory
     for ax in axes.ravel():
         dat = df_trajectory.filter(yaw=0.0)
+        # (strat3,) = ax.plot(
+        #     dat["pitch"],
+        #     dat["tsr"],
+        #     ls="-",
+        #     color="black",
+        #     label=r"$\gamma=0^o$",
+        #     ms=8,
+        #     zorder=10,
+        # )
         (strat3,) = ax.plot(
-            dat["pitch"],
-            dat["tsr"],
-            ls="-",
-            color="black",
-            label=r"$\gamma=0^o$",
-            ms=8,
-            zorder=10,
-        )
+        dat["pitch"],
+        dat["tsr"],
+        ls="",
+        color="black",
+        label=r"$\gamma=0^o$",
+        ms=2,
+        zorder=10,
+        marker="o",
+    )
 
     # Plot 45 degree yaw trajectory
     for ax in axes[:, 1]:
         dat = df_trajectory.filter(yaw=YAW2)
+        # (strat4,) = ax.plot(
+        #     dat["pitch"],
+        #     dat["tsr"],
+        #     ls="-",
+        #     color="tab:orange",
+        #     label=r"$\gamma=45^o$",
+        #     ms=8,
+        #     zorder=10,
+        # )
         (strat4,) = ax.plot(
-            dat["pitch"],
-            dat["tsr"],
-            ls="-",
-            color="tab:orange",
-            label=r"$\gamma=45^o$",
-            ms=8,
-            zorder=10,
-        )
+        dat["pitch"],
+        dat["tsr"],
+        ls="",
+        color="tab:orange",
+        label=r"$\gamma=45^o$",
+        ms=2,
+        zorder=10,
+        # ls = "",
+        marker="o",
+    )
 
     # Plot where the global optimal goes
     dat = df_trajectory.group_by("yaw", maintain_order=True).agg(
