@@ -40,19 +40,19 @@ def plot(df: pl.DataFrame):
     methods = df_farm_Cp.columns
     methods.remove("min_dist")
 
-    plt.figure(figsize=(4,3))
+    plt.figure(figsize=(3.5,2.2))
     for method, _plot_params in utils.line_params.items():
         if method == "NoControl":
             continue
         plt.plot(df_farm_Cp["min_dist"], df_farm_Cp[method], **_plot_params)
 
-    plt.legend()
+    plt.legend(fontsize = 8)
 
-    plt.xlabel("Turbine spacing [D]")
-    plt.ylabel(r"Windfarm power increase [\%]")
+    plt.xlabel("Turbine spacing, $s/D$")
+    plt.ylabel(r"Average power increase (\%)")
 
     plt.xlim(2, 10)
-    plt.ylim(0, 9)
+    plt.ylim(0, 10)
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 

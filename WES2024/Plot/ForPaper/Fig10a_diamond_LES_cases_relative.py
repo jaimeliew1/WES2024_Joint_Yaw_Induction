@@ -78,9 +78,10 @@ def plot_wdir_sweep(df: pl.DataFrame):
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4)
 
     # axes labels
-    ax.set_xlabel("wind direction (deg)")
-    ax.axvline(2.5, lw=1, ls="--", c="k")
-    ax.set_ylabel(r"$C_{P, \mathrm{farm}}$ increase (\%)")
+    ax.set_xlabel("Wind direction (deg.)", fontsize = 12)
+    # ax.set_ylabel(r"$C_{P, \mathrm{farm}}$ increase (\%)")
+    ax.set_ylabel("Increase in farm power (\%)", fontsize=12)
+    ax.axvline(2.5, lw=1, ls=":", c="gray")
 
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
