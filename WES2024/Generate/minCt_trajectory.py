@@ -46,7 +46,7 @@ def find_optimal_setpoint(bem: BEM, yaw: float = 0) -> BEMSolution:
         pitch, tsr = x
         return -bem(pitch, tsr, yaw).Cp()
 
-    res = minimize(to_opt, (0, 9))
+    res = minimize(to_opt, (0, 9), tol=1e-8)  # increased tolerance helps smoothness
     pitch, tsr = res.x
     print(yaw, res)
     return bem(pitch, tsr, yaw)
@@ -111,7 +111,7 @@ def Ctprime_minimising_Cp_setpoint(
     return bem(pitch_opt, tsr_opt, sol_opt.yaw)
 
 
-def generate_derate_strat(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 20) -> pl.DataFrame:
+def generate_derate_strat(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 40) -> pl.DataFrame:
     """
     Generates the Ct-minimising derate strategy trajectory for a given BEM model
     at a given yaw angle.
@@ -173,7 +173,7 @@ def derate_spline(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 20) -> BS
 
 def _generate(x):
     yaw = x
-    return generate_derate_strat(bem, np.deg2rad(yaw), N_Cp=30, N_theta=30).with_columns(yaw=yaw)
+    return generate_derate_strat(bem, np.deg2rad(yaw), N_Cp=20).with_columns(yaw=yaw)
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")

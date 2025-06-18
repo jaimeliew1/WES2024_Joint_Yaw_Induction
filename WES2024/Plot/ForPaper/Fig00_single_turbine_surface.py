@@ -153,7 +153,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             "*",
             color="black",
-            label=r"$\gamma=0^o$",
+            label=r"$\gamma=0^\circ$",
             ms=8,
             zorder=10,
         )
@@ -170,7 +170,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             "*",
             color="tab:orange",
-            label=f"$\\gamma={YAW2:.0f}^\\circ$",
+            label=r"$\gamma=45^\circ$",
             ms=8,
             zorder=10,
         )
@@ -183,7 +183,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             ls="-",
             color="black",
-            label=r"$\gamma=0^o$",
+            label=r"$\gamma=0^\circ$",
             ms=8,
             zorder=10,
         )
@@ -192,7 +192,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
     #     dat["tsr"],
     #     ls="",
     #     color="black",
-    #     label=r"$\gamma=0^o$",
+    #     label=r"$\gamma=0^\circ$",
     #     ms=2,
     #     zorder=10,
     #     marker="o",
@@ -206,20 +206,20 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
             dat["tsr"],
             ls="-",
             color="tab:orange",
-            label=r"$\gamma=45^o$",
+            label=r"$\gamma=45^\circ$",
             ms=8,
             zorder=10,
         )
-        # (strat4,) = ax.plot(
-        # dat["pitch"],
-        # dat["tsr"],
-        # ls="",
-        # color="tab:orange",
-        # label=f"$\\gamma={YAW2:.0f}^\\circ$",
-        # ms=2,
-        # zorder=10,
-        # # ls = "",
-        # marker="o",
+    #     (strat4,) = ax.plot(
+    #     dat["pitch"],
+    #     dat["tsr"],
+    #     ls="",
+    #     color="tab:orange",
+    #     label=r"$\gamma=45^\circ$",
+    #     ms=2,
+    #     zorder=10,
+    #     # ls = "",
+    #     marker="o",
     # )
 
     # Plot where the global optimal goes
@@ -254,28 +254,28 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
     axes[0, 0].text(
         0.02,
         1.01,
-        r"a) $C_P$ ($\gamma=" + f"{0}" + "^o$)",
+        r"a) $C_P$ ($\gamma=" + f"{0}" + r"^\circ$)",
         transform=axes[0, 0].transAxes,
         **text_props,
     )
     axes[0, 1].text(
         0.02,
         1.01,
-        r"b) $C_P$ ($\gamma=" + f"{YAW2}" + "^o$)",
+        r"b) $C_P$ ($\gamma=" + f"{YAW2}" + r"^\circ$)",
         transform=axes[0, 1].transAxes,
         **text_props,
     )
     axes[1, 0].text(
         0.02,
         1.01,
-        r"c) $C_T$ ($\gamma=" + f"{0}" + "^o$)",
+        r"c) $C_T$ ($\gamma=" + f"{0}" + r"^\circ$)",
         transform=axes[1, 0].transAxes,
         **text_props,
     )
     axes[1, 1].text(
         0.02,
         1.01,
-        r"d) $C_T$ ($\gamma=" + f"{YAW2}" + "^o$)",
+        r"d) $C_T$ ($\gamma=" + f"{YAW2}" + r"^\circ$)",
         transform=axes[1, 1].transAxes,
         **text_props,
     )

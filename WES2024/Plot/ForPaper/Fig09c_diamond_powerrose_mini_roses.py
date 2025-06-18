@@ -237,6 +237,28 @@ def plot(df: pl.DataFrame):
     rectangle = Rectangle(box_xy, box_width+2, box_height, fill=False, ls="--", ec="teal")
     ax_layout.add_patch(rectangle)
 
+    # Add letter labels to each of the 5 subplots (a) through (e)
+    for ax_id, label in zip(["polar", "A", "B", "C", "D"], ["(a)", "(b)", "(c)", "(d)", "(e)"]):
+        ax = axd[ax_id]
+        if ax_id == "polar":
+            x = 0.01
+            y = 1.1
+        else:
+            x = 0.02
+            y = 0.97
+
+        ax.text(
+            x,
+            y,
+            label,
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=10,
+            fontweight="bold",
+        )
+
+
     plt.savefig(utils.FIGDIRFORPAPER / f"{FILESTEM}.png", dpi=300, bbox_inches="tight")
 
 
