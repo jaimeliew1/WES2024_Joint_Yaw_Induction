@@ -24,30 +24,31 @@ windfarm = Windfarm(
     wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
     TIamb=0.056,
 )
-layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
 
 
 methods = {
-    "NoControl": NoControl,
     "YawControl": YawControl,
-    "ThrustControl": ThrustControl,
     "JointControl": JointControl,
 }
 
+spacings = [6, 10]
+
 
 def _generate(x):
-    method, wdir = x
+    method, wdir, spacing = x
+    layout = Layout([0, spacing], [0.0, 0.0])
     sol = methods[method](layout.rotate(wdir), windfarm).optimise(Cp_constraint=None)
 
     return utils.to_polars(sol).with_columns(
-        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
+        pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir"),
+        pl.lit(spacing).alias("spacing"),
     )
 
 
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
-    params = list(product(methods, wdirs))
+    params = list(product(methods, wdirs, spacings))
 
     df = pl.concat(foreach(_generate, params, context="spawn", parallel=True))
     return df
