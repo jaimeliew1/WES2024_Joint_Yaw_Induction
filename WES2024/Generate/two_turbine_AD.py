@@ -25,10 +25,8 @@ windfarm = Windfarm(
     wake_model=get_wakemodel(), 
     TIamb=TIAMB,
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
-    TIamb=0.056,
 )
-layout = Layout([0, 6.01], [0.0, 0.0])
+layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)
 
 
