@@ -19,8 +19,8 @@ REGENERATE = True
 
 FILESTEM = Path(__file__).stem
 
-YAWS = np.arange(0.0, 45.1, 5.0)
-# YAWS = [0.0, 45.0]
+# YAWS = np.arange(0.0, 50.1, 2.5)
+YAWS = [0.0, 45.0]
 
 rotor = IEA15MW()
 bem = BEM(rotor=rotor, 
@@ -131,7 +131,7 @@ def generate_derate_strat(bem: BEM, yaw: float, N_Cp: int = 10, N_theta: int = 4
     Cp_opt = sol_opt.Cp()
 
     # Cps = np.linspace(0.35 * Cp_opt, Cp_opt - 0.01, N_Cp)
-    Cps = np.linspace(0.35 * Cp_opt, 0.98 * Cp_opt, N_Cp, endpoint=False)
+    Cps = np.linspace(0.35 * Cp_opt, Cp_opt, N_Cp, endpoint=False)
 
     trajectory = []
     for Cp in Cps:
