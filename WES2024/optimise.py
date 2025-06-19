@@ -134,7 +134,8 @@ class Controller(ABC):
         """
         return self._grad
 # Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
-CTPRIME_OPT = 2.10418397932219
+# CTPRIME_OPT = 2.10418397932219
+CTPRIME_OPT = 2.0
 
 class NoControl(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
