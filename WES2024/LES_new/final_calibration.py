@@ -201,7 +201,9 @@ def get_calibration_params():
 
 def get_wakemodel():
     """Returns gaussian wake model with the final calibration parameters"""
-    return VariableKwGaussianWakeModel(**get_calibration_params())
+    params = get_calibration_params()
+    params.pop("x0")
+    return VariableKwGaussianWakeModel(**params)
 
 
 if __name__ == "__main__":
