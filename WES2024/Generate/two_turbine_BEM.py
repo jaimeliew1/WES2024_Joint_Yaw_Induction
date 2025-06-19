@@ -68,6 +68,7 @@ def _generate(x):
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
+    _generate(params[0])  # debug 
     dfs = foreach(_generate, params, context="spawn", parallel=PARALLEL)
     df = pl.concat(dfs)
     return df

@@ -13,14 +13,13 @@ import matplotlib.ticker as mticker
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
 from WES2024.LES_new.final_calibration import LES_pnormfact, LES_output_dir
-from WES2024.utils import ROW_MAPPING
+from WES2024.utils import ROW_MAPPING, FIGDIRFORPAPER
 from UnifiedMomentumModel import Momentum
 
 unified = Momentum.UnifiedMomentum()
 Betz = unified(2.0, 0)
 
-figpath = Path(__file__).parent / "figs"
-figpath.mkdir(exist_ok=True, parents=True)
+FIGDIRFORPAPER.mkdir(exist_ok=True, parents=True)
 
 PLOT_ORDER = {"nocontrol": 0, "thrustcontrol": 1, "yawcontrol": 2, "jointcontrol": 3}
 controller_labels = {
@@ -111,7 +110,7 @@ def run(fsearch="LESnew"):
 
     for ax in axs:
         ax.xaxis.set_major_formatter(mticker.FormatStrFormatter("%d"))
-    plt.savefig(figpath / "P_by_row_norm.png", dpi=300)
+    plt.savefig(FIGDIRFORPAPER / "P_by_row_norm.png", dpi=300)
     plt.close()
     print("Done")
 

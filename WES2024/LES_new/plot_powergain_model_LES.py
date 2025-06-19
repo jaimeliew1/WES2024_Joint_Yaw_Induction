@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 
 from WES2024.LES_new.step_3_optimize_controllers import LES_input_dir
 from WES2024.LES_new.final_calibration import LES_output_dir
+from WES2024 import utils
 
-figpath = Path(__file__).parent / "figs"
-figpath.mkdir(exist_ok=True, parents=True)
+utils.FIGDIRFORPAPER.mkdir(parents=True, exist_ok=True)
 controller_labels = {
     "nocontrol": "No Control",
     "thrustcontrol": "Thrust Control",
@@ -60,8 +60,8 @@ def plot_powergain(df, fname):
     ax.set_ylim([-5.5, 22.5])
     ax.set_ylabel("Change in $C_{P, \\mathrm{farm}}$ (\\%)")
     plt.tight_layout()
-    print("Saving figure", figpath / f"LES_model_Cp_gain_{fname}.png")
-    plt.savefig(figpath / f"LES_model_Cp_gain_{fname}.png", dpi=300)
+    print("Saving figure", utils.FIGDIRFORPAPER / f"LES_model_Cp_gain_{fname}.png")
+    plt.savefig(utils.FIGDIRFORPAPER / f"LES_model_Cp_gain_{fname}.png", dpi=300)
     plt.close()
 
 
