@@ -23,7 +23,7 @@ XLIM = (-15, 15)
 YLIM = (5, 10.5)
 
 
-def generate(regenerate=False):
+def generate(regenerate=True):
     df_surface = (
         pitch_tsr_surface.generate(regenerate=regenerate)
         .with_columns(
@@ -111,7 +111,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
         cmap="viridis",
     )
     plot_surface(
-        df_surface.filter(yaw=45.0),
+        df_surface.filter(yaw=YAW2),
         "pitch",
         "tsr",
         "Cp",
@@ -131,7 +131,7 @@ def plot(df_surface: pl.DataFrame, df_trajectory: pl.DataFrame):
         cmap="plasma",
     )
     plot_surface(
-        df_surface.filter(yaw=45.0),
+        df_surface.filter(yaw=YAW2),
         "pitch",
         "tsr",
         "Ct",

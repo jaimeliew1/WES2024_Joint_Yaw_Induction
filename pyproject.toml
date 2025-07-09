@@ -32,6 +32,7 @@ luigi = "^3.5.1"
 # dualitic = {path = "../Dualitic", develop = true}
 altair = "^5.5.0"
 vl-convert-python = "^1.7.0"
+pyarrow = "^15.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pdir2 = "^1.1.0"

@@ -13,8 +13,14 @@ archive/
 *.code-workspace
 scripts/
 WES2024/LES/LES_input/
+WES2024/LES/LES_newinput/
 WES2024/LES/LES_output/
 WES2024/LES/calibration/
+WES2024/LES/debug/
+WES2024/LES/LES_archive/
+WES2024/LES/old/
+WES2024/LES_new/**/*.png
+WES2024/LES_new/**/*.json
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

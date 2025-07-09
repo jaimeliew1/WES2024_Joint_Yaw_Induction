@@ -12,6 +12,8 @@ from mitwindfarm import Layout, Windfarm, Niayifar, VariableKwGaussianWakeModel
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
+from WES2024.LES_new.final_calibration import get_wakemodel
+from WES2024.LES.shared import TIAMB
 
 __all__ = ["generate"]
 
@@ -19,10 +21,10 @@ FILESTEM = Path(__file__).stem
 REGENERATE = True
 
 windfarm = Windfarm(
-    rotor_model=UnifiedLUTAD(),
+    rotor_model=UnifiedLUTAD(), 
+    wake_model=get_wakemodel(), 
+    TIamb=TIAMB,
     superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.636, 0.0, 0.0),
-    TIamb=0.056,
 )
 layout = Layout([0, 6], [0.0, 0.0])
 wdirs = np.arange(-20, 20, 0.05)

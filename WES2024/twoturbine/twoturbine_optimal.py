@@ -1,4 +1,8 @@
-# dualitic is imported first to ensure correct monkey patching.
+"""
+Reality check: the optimal control strategy for a two-turbine wind farm
+from this script should be on the AD line at wdir 3.8 of the two-turbine
+sweep if everything is consistent. 
+"""
 import dualitic
 
 from itertools import product
@@ -7,26 +11,22 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from foreach import foreach
-from mitwindfarm import Layout, Windfarm, Niayifar, VariableKwGaussianWakeModel
+from mitwindfarm import GridLayout, Windfarm
 
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.optimise import JointControl, NoControl, ThrustControl, YawControl
+from WES2024.LES_new.final_calibration import get_wakemodel
+from WES2024.LES.shared import TIAMB
 
 __all__ = ["generate"]
 
 FILESTEM = Path(__file__).stem
 REGENERATE = True
 
-windfarm = Windfarm(
-    rotor_model=UnifiedLUTAD(),
-    superposition=Niayifar(),
-    wake_model=VariableKwGaussianWakeModel(0.7683081169878619, 0.0, 0.004825109405157736),
-    TIamb=0.056,
-)
-layout = Layout([0, 5], [0.0, 0.0])
-wdirs = np.arange(-20, 20, 30)
-
+windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=get_wakemodel(), TIamb=TIAMB)
+layout = GridLayout(6.0133, 0.0, 2, 1)  # unrotated 2x1 wind farm
+wdirs = [3.8]  # incident wind direction
 
 methods = {
     "NoControl": NoControl,
@@ -44,7 +44,6 @@ def _generate(x):
         pl.lit(method).alias("method"), pl.lit(wdir).alias("wdir")
     )
 
-
 @utils.cache_polars(utils.CACHEDIR / f"{FILESTEM}.csv")
 def generate(regenerate=False):
     params = list(product(methods, wdirs))
@@ -54,5 +53,5 @@ def generate(regenerate=False):
 
 
 if __name__ == "__main__":
-    df = generate(regenerate=REGENERATE)
-    print(df)
+    df = generate(regenerate=True)
+    print(df.with_columns(pl.col("setpoint_0").alias("ctp_opt"), np.rad2deg(df["setpoint_1"]).alias("yaw_opt")))

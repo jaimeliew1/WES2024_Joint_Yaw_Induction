@@ -2,9 +2,10 @@ from dualitic import DualVariables
 
 from pathlib import Path
 import polars as pl
+import numpy as np
 from WES2024 import utils
 from WES2024.CustomRotors import UnifiedLUTAD
-from WES2024.LES.run import TIAMB, SimulationDefinition
+from WES2024.LES.run import SimulationDefinition
 from WES2024.optimise import (
     JointControl,
     NoControl,
@@ -13,20 +14,16 @@ from WES2024.optimise import (
 )
 from rich import print
 from mitwindfarm import (
-    VariableKwGaussianWakeModel,
     Windfarm,
     Square,
-    Niayifar,
+    Niayifar, 
 )
 
-from WES2024.LES.shared import STEP_2_DIR, STEP_3_DIR
+from WES2024.LES_new.final_calibration import get_wakemodel, TIAMB
 
-### Parameters
-# Files
-CALIBRATION_FNS = {
-    "LinearCal": STEP_2_DIR / "calibration.csv",
-}
-
+modelname = "04_kw_TI"
+LES_input_dir = Path(__file__).parent / "LES_input" / "iter_01"
+LES_input_dir.mkdir(exist_ok=True)
 
 LAYOUT = Square(6.0, 5).rotate(45).rotate(-2.5)
 
@@ -38,26 +35,17 @@ CONTROLLERS = {
     "jointcontrol": JointControl,
 }
 
-CASE_NOTE = "calibrated_on_diamond"
+CASE_NOTE = "calibrated_on_nocontrol"
 
 
 def run(calibration_key: str, output_path: Path) -> None:
-    # Read calibration from calibration file
-
-    with open(CALIBRATION_FNS[calibration_key], "r") as f:
-        out = f.read()
-        a, b, c = [float(x) for x in out.split(",")]
-
     # Initialise MITWindfarm using VariableKwGaussianWakeModel
-    windfarm = Windfarm(
-        rotor_model=UnifiedLUTAD(),
-        wake_model=VariableKwGaussianWakeModel(a, b, c),
-        TIamb=TIAMB,
-        superposition=Niayifar(),
-    )
+    windfarm = Windfarm(rotor_model=UnifiedLUTAD(), wake_model=get_wakemodel(), superposition=Niayifar(), TIamb=TIAMB)
+
     # For each controller to optimise...
     for name, controller in CONTROLLERS.items():
-        filestem = f"MITWindfarm_wdir-2.5_{calibration_key}_{name}"
+        filestem = f"MITWindfarm_iter_01_wdir-2.5_{calibration_key}_{name}"
+        # filestem = f"jaime_niayifar_{calibration_key}_{name}"
 
         # Run optimisation
         sol = controller(LAYOUT, windfarm).optimise(use_gradients=True, verbose=True)
@@ -82,4 +70,5 @@ def run(calibration_key: str, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    run("LinearCal", STEP_3_DIR)
+    # run("LESnew", LES_input_dir)
+    run("LESnew", LES_input_dir)

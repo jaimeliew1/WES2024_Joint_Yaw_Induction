@@ -185,7 +185,7 @@ class CalibrateLinear(Calibration):
         a, b, c = x
         windfarm = Windfarm(
             rotor_model=UnifiedLUTAD(),
-            wake_model=VariableKwGaussianWakeModel(a, b, c, x0=1.0),
+            wake_model=VariableKwGaussianWakeModel(a, b, c),
             TIamb=TIAMB,
             superposition=Niayifar(),
         )

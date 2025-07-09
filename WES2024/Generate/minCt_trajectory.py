@@ -69,7 +69,7 @@ def Cp_isobars(Cp_target: float, bem: BEM, sol_opt: BEMSolution, N_theta: int = 
 
     x0 = np.array([sol_opt.pitch, sol_opt.tsr])
     points = []
-    angles = np.linspace(0.05, 0.7 * np.pi, N_theta)
+    angles = np.linspace(-0.05, 0.7 * np.pi, N_theta)
     for angle in angles:
         dx = np.array([0.1 * np.cos(angle), -3 * np.sin(angle)])
 
@@ -83,7 +83,8 @@ def Cp_isobars(Cp_target: float, bem: BEM, sol_opt: BEMSolution, N_theta: int = 
         if res.converged:
             sol = bem(*(x0 + res.root * dx), sol_opt.yaw)
             points.append((sol.pitch, sol.tsr, sol.Cp(), sol.Ctprime()))
-
+        else:
+            print(res)
     return points
 
 
