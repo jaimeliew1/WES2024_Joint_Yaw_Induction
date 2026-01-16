@@ -96,7 +96,7 @@ axis_params = {
     "Ctprime": dict(
         ylabel=r"$C_T'$",
         title="d) Optimal modified thrust coefficient",
-        ylim=(1.0, 3.0),
+        ylim=(1.0, 4.0),
         yticks=None,
     ),
     "Ct": dict(
@@ -108,8 +108,8 @@ axis_params = {
     "yaw": dict(
         ylabel=r"$\gamma$ (deg)",
         title="c) Optimal yaw angle",
-        ylim=(-30, 30),
-        yticks=[-30, -15, 0, 15, 30],
+        ylim=(-40, 40),
+        yticks=[-45, -30, -15, 0, 15, 30, 45],
     ),
     "pitch": dict(
         ylabel=r"$\theta_p$ (deg)",
@@ -154,24 +154,30 @@ def generate(regenerate=False):
     # Concatenate AD and BEM data. remove yaw control data points for wdir=0 to
     # highlight discontinuity.
     df = pl.concat([df_AD, df_BEM], how="diagonal_relaxed").with_columns(
-        pl.when(
-            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
-        )
-        .then(np.nan)
-        .otherwise(pl.col("yaw"))
-        .alias("yaw"),
-        pl.when(
-            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
-        )
-        .then(np.nan)
-        .otherwise(pl.col("tsr"))
-        .alias("tsr"),
-        pl.when(
-            pl.col("method").is_in(["YawControl", "YawKOmegaControl"]), pl.col("wdir").abs() < 1e-1
-        )
-        .then(np.nan)
-        .otherwise(pl.col("Cp"))
-        .alias("Cp"),
+        # pl.when(
+        #     pl.col("method").is_in(["YawControl", "YawKOmegaControl", "JointControl"]), pl.col("wdir").abs() < 1e-1
+        # )
+        # .then(np.nan)
+        # .otherwise(pl.col("yaw"))
+        # .alias("yaw"),
+        # pl.when(
+        #     pl.col("method").is_in(["YawControl", "YawKOmegaControl", "JointControl"]), pl.col("wdir").abs() < 1e-1
+        # )
+        # .then(np.nan)
+        # .otherwise(pl.col("tsr"))
+        # .alias("tsr"),
+        # pl.when(
+        #     pl.col("method").is_in(["YawControl", "YawKOmegaControl", "JointControl"]), pl.col("wdir").abs() < 1e-1
+        # )
+        # .then(np.nan)
+        # .otherwise(pl.col("Cp"))
+        # .alias("Cp"),
+        # pl.when(
+        #     pl.col("method").is_in(["YawControl", "YawKOmegaControl", "JointControl"]), pl.col("wdir").abs() < 1e-1
+        # )
+        # .then(np.nan)
+        # .otherwise(pl.col("Ctprime"))
+        # .alias("Ctprime"),
     )
     return df
 

@@ -133,9 +133,12 @@ class Controller(ABC):
             List[float]: Jacobian of the constraint function.
         """
         return self._grad
+    
 # Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
 # CTPRIME_OPT = 2.10418397932219
-CTPRIME_OPT = 2.0
+# CTPRIME_OPT = 2.0
+# Ilan GCH update 01/13/2026
+CTPRIME_OPT = 2.1040775623699313
 
 class NoControl(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
@@ -154,7 +157,7 @@ class NoControl(Controller):
 
 class YawControl(Controller):
     def initial_guess(self) -> ArrayLike:
-        return [0.0001 for _ in range(self.N)]
+        return [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
         return [tuple(np.deg2rad((-50, 50)))]
@@ -181,7 +184,7 @@ class JointControl(Controller):
         return [0.2 for _ in range(self.N)] + [0.0 for _ in range(self.N)]
 
     def bounds(self) -> list:
-        return [(0.00001, 4.0) for _ in range(self.N)] + [
+        return [(0.00001, 10.0) for _ in range(self.N)] + [
             tuple(np.deg2rad((-50, 50))) for _ in range(self.N)
         ]
 
@@ -212,10 +215,15 @@ class JointControl(Controller):
 # TSR_OPT = 9.425553341960999
 # CP_OPT = 0.512050723304553
 
-# Setpoints 04/11/2025 switch back to rotor_induction_tiploss averaging
-PITCH_OPT = -0.02398898322193966
-TSR_OPT = 9.257910345616775
-CP_OPT = 0.4994901389144305
+# # Setpoints 04/11/2025 switch back to rotor_induction_tiploss averaging
+# PITCH_OPT = -0.02398898322193966
+# TSR_OPT = 9.257910345616775
+# CP_OPT = 0.4994901389144305
+
+## Setpoints 01/13/2026 Ilan GCH update
+PITCH_OPT = -0.009164725056688125
+TSR_OPT = 9.848004825180636
+CP_OPT = 0.4897156175766164
 
 class NoControlBEM(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:

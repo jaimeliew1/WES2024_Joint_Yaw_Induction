@@ -128,6 +128,30 @@ def fill_in_other_quadrants(
     return df_by_turbine
 
 
+# def to_polars(sol: WindfarmSolution) -> pl.DataFrame:
+#     """
+#     Convert a WindfarmSolution object to a Polars DataFrame.
+
+#     Parameters:
+#     - sol (WindfarmSolution): The WindfarmSolution object to be converted.
+
+#     Returns:
+#     - pl.DataFrame: The Polars DataFrame containing turbine layout, setpoints, and rotor solutions.
+#     """
+#     out = []
+#     for i, ((x, y, z), setpoint, rotor_sol) in enumerate(
+#         zip(sol.layout, sol.setpoints, sol.rotors)
+#     ):
+#         _out = (
+#             dict(turbine=i, x=x, y=y, z=z)
+#             | asdict(rotor_sol)
+#             | {f"setpoint_{j}": s for j, s in enumerate(setpoint)}
+#         )
+
+#         out.append(_out)
+
+#     return pl.from_dicts(out).drop("extra")
+
 def to_polars(sol: WindfarmSolution) -> pl.DataFrame:
     """
     Convert a WindfarmSolution object to a Polars DataFrame.
@@ -148,8 +172,9 @@ def to_polars(sol: WindfarmSolution) -> pl.DataFrame:
             | {f"setpoint_{j}": s for j, s in enumerate(setpoint)}
         )
 
-        out.append(_out)
+        _out_filt = {k: _out[k] for k in _out if k not in ["Vs", "Ws"]}
 
+        out.append(_out_filt)
     return pl.from_dicts(out).drop("extra")
 
 
