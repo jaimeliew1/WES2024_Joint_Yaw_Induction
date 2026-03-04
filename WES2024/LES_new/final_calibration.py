@@ -27,6 +27,7 @@ from scipy.optimize import minimize
 from WES2024.CustomRotors import UnifiedLUTAD
 from WES2024.utils import ROW_INDICES
 from WES2024.LES.shared import TIAMB
+from WES2024.VortexWake import VariableVortexWakeModel
 
 LES_output_dir = Path(__file__).parent / "LES_output" / "iter_01"
 CALIBRATION_RESULTS = Path(__file__).parent / "calibration"
@@ -121,7 +122,8 @@ class Calibration(ABC):
             args=(powers, control_setpoints),
             options={"disp": False},
         )
-        return self.postproc(opt_sol.x)
+        opt_sol.wfsol = self.run_windfarm(opt_sol.x, control_setpoints)
+        return self.postproc(opt_sol)  # return optimal result
 
     def postproc(self, x):
         """Default postprocessing is no postprocessing"""
@@ -141,7 +143,7 @@ class CalibrateLinear_niayifar(Calibration):
             a,
             0,
             c,
-            x0=x0,
+            # x0=x0,
             sigma=sigma,
         )
         windfarm = Windfarm(
@@ -149,6 +151,37 @@ class CalibrateLinear_niayifar(Calibration):
         )
 
         return windfarm(self.layout, control_setpoints)
+
+    def postproc(self, x):
+        params = {a: val for a, val in zip(["a", "b", "c"], x.x)}
+        params.update(x0=x0, sigma=sigma)
+        x.x = params
+        return x
+
+
+class CalibrateVortex(Calibration):
+    def initial_guess(self) -> tuple[float]:
+        return 0.3837, 0.003678  # default parameters from Niayifar and Porte-Agel (2016)
+
+    def bounds(self) -> list[tuple[float]]:
+        return [(0, 5), (0, 1)]
+
+    def run_windfarm(self, x, control_setpoints) -> WindfarmSolution:
+        a, b = x
+        wakemodel = VariableVortexWakeModel(
+            a,
+            b,
+        )
+        windfarm = Windfarm(
+            rotor_model=UnifiedLUTAD(), wake_model=wakemodel, TIamb=TIAMB, superposition=Niayifar()
+        )
+
+        return windfarm(self.layout, control_setpoints)
+
+    def postproc(self, x):
+        params = {a: val for a, val in zip(["a", "b"], x.x)}
+        x.x = params
+        return x
 
 
 def run(regenerate=False, sim_name="LESnew_nocontrol", fname=default_fname):
@@ -163,48 +196,57 @@ def run(regenerate=False, sim_name="LESnew_nocontrol", fname=default_fname):
 
     # select only the no_control data methods to run comparison
     df = df.filter(pl.col("method") == sim_name)
+    control_setpoints = df.select("Ctprime", "yaw").to_numpy()  # set setpoints
+    ret = dict()
 
     # Setup MITWindfarm
-    calibration = CalibrateLinear_niayifar(BASE_LAYOUT, ROW_INDICES)
-    control_setpoints = df.select("Ctprime", "yaw").to_numpy()  # set setpoints
+    to_run = {
+        "04_kw_TI": CalibrateLinear_niayifar(BASE_LAYOUT, ROW_INDICES),
+        "vortex": CalibrateVortex(BASE_LAYOUT, ROW_INDICES),
+    }
 
-    # calibrate wake model parameters
-    calib = calibration.calibrate(df["Cp"].to_numpy(), control_setpoints)
-    params = {a: val for a, val in zip(["a", "b", "c"], calib)}
-    params.update(x0=x0, sigma=sigma)
-    # run MITWindfarm
-    sol = calibration.run_windfarm(calib, control_setpoints)
-
-    # compute error
-    cost = calibration.cost(calib, df["Cp"].to_numpy(), control_setpoints)
+    for modelname, calibration in to_run.items():
+        print(f"Calibrating {modelname}...")
+        # calibrate wake model parameters
+        calib = calibration.calibrate(df["Cp"].to_numpy(), control_setpoints)
+        ret[modelname] = dict(calibration_sim=sim_name, err=calib.fun, Cp_farm=calib.wfsol.Cp, params=calib.x)
 
     # compile results and write to .json
-    ret = dict(
-        calibration_sim=sim_name, wakemodel="04_kw_TI", err=cost, Cp_farm=sol.Cp, params=params
-    )
     print(f"Saving results to {CALIBRATION_RESULTS / fname}")
     with open(CALIBRATION_RESULTS / fname, "w") as f:
         json.dump(ret, f, indent=4)
 
-    return ret["params"]  # return calibration parameters
+    return ret  # return calibration parameters
 
 
-def get_calibration_params():
+def get_calibration_params(modelname=None, regenerate=False):
     """Retrieves final calibration parameters for Niayifar wake model"""
-    if (CALIBRATION_RESULTS / default_fname).exists():
+    modelname = "04_kw_TI" if modelname is None else modelname
+
+    if (CALIBRATION_RESULTS / default_fname).exists() and not regenerate:
         with open(CALIBRATION_RESULTS / default_fname, "r") as f:
-            params = json.load(f)["params"]
+            params = json.load(f)
         return params
     else:
-        return run()
+        return run(regenerate=regenerate)
 
 
-def get_wakemodel():
+def get_wakemodel(modelname=None):
     """Returns gaussian wake model with the final calibration parameters"""
-    params = get_calibration_params()
-    params.pop("x0")
-    return VariableKwGaussianWakeModel(**params)
+    modelname = "04_kw_TI" if modelname is None else modelname
+
+    params = get_calibration_params(modelname=modelname)
+    if modelname == "04_kw_TI":
+        params[modelname]["params"].pop("x0")
+        return VariableKwGaussianWakeModel(**params[modelname]["params"])
+
+    elif modelname == "vortex":
+        return VariableVortexWakeModel(**params[modelname]["params"])
+
+    else:
+        raise ValueError(f"Unknown modelname {modelname}")
 
 
 if __name__ == "__main__":
     run(regenerate=True)
+    print(get_wakemodel())
