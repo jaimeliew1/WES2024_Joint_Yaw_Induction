@@ -3,6 +3,7 @@
 
 *.prof
 *.csv
+!LES_DATA/**/*.csv
 data/
 .vscode
 fig*/
@@ -21,6 +22,7 @@ WES2024/LES/LES_archive/
 WES2024/LES/old/
 WES2024/LES_new/**/*.png
 WES2024/LES_new/**/*.json
+tmp/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
