@@ -17,12 +17,15 @@ class NoTiplossTangentialInduction(MITRotor.TangentialInductionModel):
         yaw: float,
         rotor: RotorDefinition,
         geom: BEMGeometry,
+        tilt: float = 0.0,
     ) -> ArrayLike:
+        if np.any(tilt != 0):
+            raise NotImplementedError("NoTiplossTangentialInduction does not support tilt.")
         tangential_integral = aero_props.W**2 * aero_props.C_tan
 
         aprime = (
             aero_props.solidity
-            / (4 * np.maximum(geom.mu_mesh, 0.1) ** 2 * tsr * (1 - aero_props.an) * np.cos(yaw))
+            / (4 * np.maximum(geom.mu_mesh, 0.1) * tsr * (1 - aero_props.an) * np.cos(yaw))
             * tangential_integral
         )
 

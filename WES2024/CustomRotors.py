@@ -1,19 +1,29 @@
 from abc import ABC, abstractmethod
+from dataclasses import replace
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Literal
 import itertools
+import warnings
 from pathlib import Path
 from typing import Literal
 
 import MITRotor
 import numpy as np
+
+# MITRotor.Geometry calls np.trapezoid directly (added in numpy 2.0); this venv's
+# numpy 1.26.4 only has the deprecated np.trapz alias it replaced.
+if not hasattr(np, "trapezoid"):
+    np.trapezoid = np.trapz
+
 import polars as pl
 from foreach import foreach
 from mitwindfarm import Area, Line, Point, RotorSolution
-from mitwindfarm.Rotor import Rotor
+from mitwindfarm.Rotor import BEM, Rotor, compute_x0_with_TI
 from mitwindfarm.RotorGrid import RotorGrid
 from mitwindfarm.Windfield import Windfield
 from numpy.typing import ArrayLike
-from scipy.interpolate import RectBivariateSpline
+from dualitic import DualNumber
+from scipy.interpolate import NdBSpline, RectBivariateSpline, make_interp_spline
 from UnifiedMomentumModel.Momentum import (
     MomentumBase,
     MomentumSolution,
@@ -343,7 +353,7 @@ class UnifiedLUTAD(Rotor):
         RETI = np.sqrt(self.rotor_grid.average(TIs**2))
 
         # rotor solution is normalised by REWS. Convert normalisation to U_inf and return
-        return RotorSolution(
+        rotor_sol = RotorSolution(
             yaw,
             sol.Cp * REWS**3,
             sol.Ct * REWS**2,
@@ -355,6 +365,165 @@ class UnifiedLUTAD(Rotor):
             TI=RETI,
             extra=sol,
         )
+        # The LUT is built without turbulence, so its x0 is the TI-free near-wake length. Replace it with
+        # the TI-dependent value (consistent with the unified momentum model coupled with TI).
+        sol.x0 = compute_x0_with_TI(rotor_sol)
+        return rotor_sol
+
+
+class BEMTI(BEM):
+    """
+    BEM rotor whose solution carries the TI-dependent near-wake length x0, computed with compute_x0_with_TI
+    from the rotor-averaged induction and initial wake velocity (DualBEM provides only the TI-free LUT x0).
+    """
+
+    def __call__(self, *args, **kwargs) -> RotorSolution:
+        rotor_sol = super().__call__(*args, **kwargs)
+        bem_sol = rotor_sol.extra
+        # compute_x0_with_TI reads the non-dimensional induction and u4 from `extra`, but BEMSolution.a() is a method
+        proxy = SimpleNamespace(
+            yaw=rotor_sol.yaw,
+            tilt=rotor_sol.tilt,
+            TI=rotor_sol.TI,
+            extra=SimpleNamespace(an=bem_sol.a(), u4=bem_sol.u4),
+        )
+        bem_sol.x0 = compute_x0_with_TI(proxy)
+        return rotor_sol
+
+
+class BEMLUTTable:
+    """
+    Tensor-product cubic-spline interpolation of the uniform-inflow BEM table (R1/generate_bem_lut.py):
+    (pitch [rad], TSR, yaw [rad]) -> Cp, Ct, Ctprime, an, u4, v4, all normalised by the rotor-effective wind speed.
+    Dual-number inputs are propagated with the analytic spline derivatives. Inputs outside the table domain (the
+    bounds of the BEM controllers) are clipped.
+    """
+
+    OUTPUTS = ("Cp", "Ct", "Ctprime", "an", "u4", "v4")
+
+    def __init__(self, df: pl.DataFrame, show_warnings: bool = True):
+        df = df.sort("pitch", "tsr", "yaw")
+        n_bad = (~df["converged"]).sum()
+        if n_bad and show_warnings:
+            bad = df.filter(~pl.col("converged"))
+            warnings.warn(
+                f"BEM table has {n_bad} non-converged points (pitch {bad['pitch'].min():g} to "
+                f"{bad['pitch'].max():g} deg, tsr {bad['tsr'].min():g} to {bad['tsr'].max():g}); "
+                "using the tabulated values as-is (they are smooth with their converged neighbours)."
+            )
+        axes = [np.unique(df["pitch"].to_numpy()), np.unique(df["tsr"].to_numpy()), np.unique(df["yaw"].to_numpy())]
+        self.axes = [np.deg2rad(axes[0]), axes[1], np.deg2rad(axes[2])]
+        values = np.stack([df[k].to_numpy() for k in self.OUTPUTS], axis=-1).reshape(*(len(a) for a in axes), -1)
+        c, knots = values, []
+        for a, x in enumerate(self.axes):  # exact tensor-product interpolation, one axis at a time
+            bs = make_interp_spline(x, c, k=3, axis=a)
+            c = np.moveaxis(bs.c, 0, a)
+            knots.append(bs.t)
+        self._spline = NdBSpline(tuple(knots), c, k=3)
+        self.lo = np.array([a[0] for a in self.axes])
+        self.hi = np.array([a[-1] for a in self.axes])
+
+    @staticmethod
+    def _split(v):
+        if isinstance(v, DualNumber):
+            return float(v.real.ravel()[0]), v.dual.reshape(-1, v.dual.shape[-1])[0]
+        return float(v), None
+
+    def __call__(self, pitch, tsr, yaw) -> dict:
+        parts = [self._split(v) for v in (pitch, tsr, yaw)]
+        x = np.clip([p[0] for p in parts], self.lo, self.hi)[None, :]
+        values = self._spline(x)[0]
+        duals = [p[1] for p in parts]
+        n = next((len(d) for d in duals if d is not None), None)
+        if n is None:
+            return dict(zip(self.OUTPUTS, values))
+        jac = np.stack([self._spline(x, nu=tuple(int(i == j) for i in range(3)))[0] for j in range(3)], axis=-1)  # (out, 3)
+        out = {}
+        for k, name in enumerate(self.OUTPUTS):
+            grad = sum(jac[k, j] * d for j, d in enumerate(duals) if d is not None)
+            out[name] = DualNumber(values[k], grad)
+        return out
+
+
+class BEMLUT(Rotor):
+    """
+    BEM rotor in uniform inflow, tabulated at a converged radial resolution (see BEMLUTTable). Like UnifiedLUTAD, the
+    rotor-effective wind speed is the average of the windfield over a small rotor grid and the table supplies the
+    REWS-normalised rotor response, so the cost per rotor is independent of the BEM resolution. Neglects shear, veer and
+    wake deficits across the disk (the BEM rotor resolves them); set points are (pitch, TSR, yaw) as for BEM.
+    """
+
+    def __init__(self, table: BEMLUTTable | pl.DataFrame, rotor_grid: RotorGrid = None, show_warnings: bool = True):
+        """`show_warnings=False` silences the "non-converged points" warning of BEMLUTTable (when `table` is a DataFrame)."""
+        self.table = table if isinstance(table, BEMLUTTable) else BEMLUTTable(table, show_warnings=show_warnings)
+        self.rotor_grid = Area() if rotor_grid is None else rotor_grid
+
+    def __call__(self, x: float, y: float, z: float, windfield: Windfield, pitch, tsr, yaw=0, tilt=0) -> RotorSolution:
+        if np.any(np.asarray(getattr(tilt, "real", tilt)) != 0):
+            raise NotImplementedError("BEMLUT does not support tilt.")
+        t = self.table(pitch, tsr, yaw)
+        xs_loc, ys_loc, zs_loc = self.rotor_grid.grid_points()
+        xs, ys, zs = xs_loc + x, ys_loc + y, zs_loc + z
+        Us = windfield.wsp(xs, ys, zs)
+        TIs = windfield.TI(xs, ys, zs)
+        REWS = self.rotor_grid.average(Us)
+        RETI = np.sqrt(self.rotor_grid.average(TIs**2))
+        sol = SimpleNamespace(pitch=pitch, tsr=tsr, yaw=yaw, **t)
+        rotor_sol = RotorSolution(
+            yaw,
+            t["Cp"] * REWS**3,
+            t["Ct"] * REWS**2,
+            t["Ctprime"],
+            t["an"] * REWS,
+            t["u4"] * REWS,
+            t["v4"] * REWS,
+            REWS,
+            tilt=0.0,
+            w4=0.0 * t["v4"] * REWS,
+            TI=RETI,
+            extra=sol,
+        )
+        # TI-dependent near-wake length, as for UnifiedLUTAD and BEMTI
+        sol.x0 = compute_x0_with_TI(rotor_sol)
+        return rotor_sol
+
+
+class BEMCosine(BEMTI):
+    """
+    BEM rotor with the cosine yaw laws of Tamaro et al. (WES 2024): the yaw-aligned BEM solution at the same pitch, TSR and
+    inflow is scaled with the yaw misalignment,
+
+        Cp(pitch, TSR, yaw) = Cp(pitch, TSR, 0) cos(yaw)^Pp,    Ct(pitch, TSR, yaw) = Ct(pitch, TSR, 0) cos(yaw)^Tp,
+
+    Tp = 2/3 Pp (Pp = 1.88 -> Tp = 1.253). The returned rotor solution carries the actual yaw, so the wake model deflects
+    and weights the wake with the scaled Ct and the yaw. Ct', an, u4, v4 are those of the yaw-aligned solution (the
+    Gaussian BP2016 wake only reads Ct and yaw; kw does not depend on Ct' with the default b = 0). No K-omega^2 law is
+    involved: pitch and TSR are free set points.
+    """
+
+    def __init__(self, *args, Pp: float = 1.88, Tp: float | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Pp = Pp
+        self.Tp = Pp * 2 / 3 if Tp is None else Tp
+
+    def __call__(self, x, y, z, windfield, pitch, tsr, yaw=0, tilt=0) -> RotorSolution:
+        aligned = super().__call__(x, y, z, windfield, pitch, tsr, yaw * 0, tilt)
+        c = np.cos(yaw)
+        return replace(aligned, yaw=yaw, Cp=aligned.Cp * c**self.Pp, Ct=aligned.Ct * c**self.Tp)
+
+
+class BEMLUTCosine(BEMLUT):
+    """BEMCosine for the tabulated BEM rotor: the yaw-aligned values are read from the table at yaw = 0."""
+
+    def __init__(self, *args, Pp: float = 1.88, Tp: float | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Pp = Pp
+        self.Tp = Pp * 2 / 3 if Tp is None else Tp
+
+    def __call__(self, x, y, z, windfield, pitch, tsr, yaw=0, tilt=0) -> RotorSolution:
+        aligned = super().__call__(x, y, z, windfield, pitch, tsr, yaw * 0, tilt)
+        c = np.cos(yaw)
+        return replace(aligned, yaw=yaw, Cp=aligned.Cp * c**self.Pp, Ct=aligned.Ct * c**self.Tp)
 
 
 class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
@@ -379,14 +548,26 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         self.averaging = averaging
         self.model = ThrustBasedUnifiedMomentumLUT()
 
-    def compute_induction(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
-
+    def compute_induction(self, Ct: ArrayLike, yaw: float, tilt: float = 0.0) -> ArrayLike:
+        self._check_no_tilt(tilt)
         sol = self.model(Ct, yaw)
         return sol.an
 
-    def compute_initial_wake_velocities(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+    def compute_initial_wake_velocities(
+        self, Ct: ArrayLike, yaw: float, tilt: float = 0.0
+    ) -> ArrayLike:
+        self._check_no_tilt(tilt)
         sol = self.model(Ct, yaw)
-        return sol.u4, sol.v4
+        return sol.u4, sol.v4, 0.0 * sol.v4  # no vertical wake deflection without tilt
+
+    def compute_x0(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+        """Near-wake length from the same unified-momentum LUT that provides u4 and v4."""
+        return self.model(Ct, yaw).x0
+
+    @staticmethod
+    def _check_no_tilt(tilt):
+        if np.any(tilt != 0):
+            raise NotImplementedError("BEMUnifiedMomentumLUT does not support tilt.")
 
     def __call__(
         self,
@@ -396,7 +577,9 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
         yaw: float,
         rotor: "MITRotor.RotorDefinition",
         geom: "MITRotor.BEMGeometry",
+        tilt: float = 0.0,
     ) -> ArrayLike:
+        self._check_no_tilt(tilt)
         an = self._func(aero_props, pitch, tsr, yaw, rotor, geom)
         return an
 
@@ -431,11 +614,60 @@ class BEMUnifiedMomentumLUT(MITRotor.Momentum.MomentumModel):
 
         a_target = self.compute_induction(Ct_rotor, yaw)
 
-        a_new = aero_props.F
-        a_rotor = geom.rotor_average(geom.annulus_average(a_new))
-        a_new *= a_target / a_rotor
+        # Not in place: `a_new *= ...` on the float array would also rescale aero_props.F, which the tangential induction
+        # model (DefaultTangentialInduction: C_tau / F) reads afterwards. Dual numbers rebind on `*=`, so float and
+        # dual evaluations disagreed by ~1.6 % in Cp and AD != FD.
+        a_rotor = geom.rotor_average(geom.annulus_average(aero_props.F))
+        a_new = aero_props.F * (a_target / a_rotor)
 
         return a_new
+
+
+class BEMUnifiedMomentumLUTAnnulus(BEMUnifiedMomentumLUT):
+    """
+    Annulus-averaged BEM momentum closure: the standard local tip-loss correction (Cx_corr = Cx/F,
+    inverted independently at each annulus from its own local thrust) through the Unified Momentum
+    Model (via its LUT) instead of Buhl/Heck's empirical high-thrust correction -- i.e. the same
+    architecture classical BEM codes use (AeroDyn's BEMT module, CCBlade: Prandtl F + Buhl), just with
+    UMM standing in for Buhl/Glauert. This matches the coupling described in Liew, Heck & Howland 2024
+    ("classical momentum theory is directly replaced... there is no need to modify the blade element
+    portion of BEM"), unlike BEMUnifiedMomentumLUT's default "rotor_induction_tiploss" averaging (one
+    disk-integrated UMM solve, redistributed radially in proportion to F -- likely a numerical
+    workaround for the issue below, not the published method).
+
+    Cx_corr is clipped before being passed to the UMM: F -> 0 at the root and tip makes Cx_corr = Cx/F
+    blow up without bound (e.g. Ct ~ 15 at the hub-center node for IEA15MW), which is both unphysical
+    and outside the LUT's tabulated domain. Default Ct_clip matches ThrustBasedUnifiedMomentumLUT's own
+    tabulated domain (Ct in [-1, 1.5], yaw in [-50, 50] deg).
+    """
+
+    # Single-turbine (yaw=0) unyawed optimum for *this* closure, computed 2026-10-26 via
+    # R1/wakemodels.get_bem_annulus_rotor (Nr=128, Ntheta=12, not the LUT, to avoid baking in interpolation error):
+    # JointControlBEM (SLSQP, AD) and a tight 5-start Nelder-Mead polish agree to ~6 digits (no flat-ridge ambiguity
+    # here, unlike the old closure's history in optimise.py). Kept on the class, not in optimise.py, because
+    # PITCH_OPT/TSR_OPT/CP_OPT there were derived for get_bem_rotor's "rotor_induction_tiploss" closure and are
+    # specific to it; scripts using this closure should read these instead of those globals.
+    #
+    # Notably Cp is ~7.3% lower than the old closure's CP_OPT (0.535510 at pitch -1.0 deg, tsr 9.165275): the old
+    # "rotor_induction_tiploss" averaging (one disk-integrated UMM solve redistributed radially by F, never divides
+    # by F) appears to systematically over-predict Cp relative to the per-annulus local closure used here, which is
+    # the architecture classical BEM codes (AeroDyn, CCBlade) actually use. Worth a closer look if it recurs elsewhere.
+    PITCH_OPT = -0.005035990848671321  # rad (-0.288541 deg)
+    TSR_OPT = 9.232356732737388
+    CP_OPT = 0.49650303785016325
+
+    def __init__(self, Ct_clip: tuple[float, float] = (-1.0, 1.5)):
+        super().__init__(averaging="annulus")
+        self.Ct_clip = Ct_clip
+
+    def compute_induction(self, Ct: ArrayLike, yaw: float, tilt: float = 0.0) -> ArrayLike:
+        return super().compute_induction(np.clip(Ct, *self.Ct_clip), yaw, tilt=tilt)
+
+    def compute_initial_wake_velocities(self, Ct: ArrayLike, yaw: float, tilt: float = 0.0) -> ArrayLike:
+        return super().compute_initial_wake_velocities(np.clip(Ct, *self.Ct_clip), yaw, tilt=tilt)
+
+    def compute_x0(self, Ct: ArrayLike, yaw: float) -> ArrayLike:
+        return super().compute_x0(np.clip(Ct, *self.Ct_clip), yaw)
 
 
 # simple Cosine model rotor

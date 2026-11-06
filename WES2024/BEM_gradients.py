@@ -1,10 +1,14 @@
+from dataclasses import dataclass, fields
 from typing import Callable, Any
 from MITRotor import BEM, BEMSolution, BEMGeometry, IEA15MW, RotorDefinition
+from MITRotor.BEMSolver import average
+from MITRotor.Geometry import expand_to_Np
 
 from dualitic import DualNumber, DualVariables
 from numpy.typing import ArrayLike
 import numpy as np
 from rich import print
+from scipy.integrate import trapezoid
 
 from UnifiedMomentumModel.Utilities.FixedPointIteration import (
     FixedPointIterationCompatible,
@@ -134,7 +138,38 @@ def undual(x):
     return x
 
 
-@dualadaptivefixedpointiteration(max_iter=500, relaxations=[0.25, 0.5, 0.96])
+class DualBEMGeometry(BEMGeometry):
+    """BEMGeometry whose averages keep dual parts (MITRotor's versions pass through np.asarray)."""
+
+    def annulus_average(self, X):
+        return (1 / (2 * np.pi)) * trapezoid(X, self.theta, axis=-1)
+
+    def rotor_average(self, X):
+        return 2 * trapezoid(X * self.mu, self.mu, axis=-1)
+
+
+@dataclass
+class DualBEMSolution(BEMSolution):
+    """
+    BEMSolution whose power coefficients keep dual parts (MITRotor's versions call np.asarray(tsr)).
+    Also carries the near-wake length x0, which the curled wake models read from `rotor_solution.extra`. This is the
+    TI-free LUT value; WES2024.CustomRotors.BEMTI overwrites it with the TI-dependent x0.
+    """
+
+    x0: float = np.inf
+
+    def Cp(self, grid="rotor"):
+        return average(self.geom, self.tsr * self.geom.mu_mesh * self.Ctau_uncorr(grid="sector"), grid)
+
+    def Cp_corr(self, grid="rotor"):
+        return average(self.geom, self.tsr * self.geom.mu_mesh * self.Ctau(grid="sector"), grid)
+
+
+# Relaxations: the fixed-point iteration (aero_props -> an, a') is unstable for relax <~ 0.4 at nonzero yaw (a failed stage
+# wastes max_iter iterations); relax 0.5 converges in ~22 iterations at every set point tried (pitch -10..10 deg,
+# TSR 3..10, yaw 0..45 deg), 0.8 in ~66 and 0.96 in ~360. The old schedule [0.25, 0.5, 0.96] spent 500 iterations on
+# the failing 0.25 stage for any yaw != 0.
+@dualadaptivefixedpointiteration(max_iter=500, relaxations=[0.5, 0.8, 0.96])
 class DualBEM:
     def __init__(self, 
                  rotor: RotorDefinition, 
@@ -142,6 +177,11 @@ class DualBEM:
                  momentum_model=None,
                  aerodynamic_model=None,
                  tangential_induction_model=None):
+        # Nr = 128 gives ~0.1% error in Cp, Ct, Cq (R1/plot_bem_convergence.py); the old Nr = 10 was 4-6% low.
+        # Ntheta converges spectrally: 12 gives ~1e-9.
+        geometry = geometry or BEMGeometry(Nr=128, Ntheta=12)
+        if not isinstance(geometry, DualBEMGeometry):
+            geometry = DualBEMGeometry(geometry.Nr, geometry.Ntheta)
         self.bem = BEM(rotor, 
                        geometry, 
                        momentum_model=momentum_model, 
@@ -150,26 +190,42 @@ class DualBEM:
         self._niter_primal = None
         self.geometry = self.bem.geometry
 
-    def sample_points(self, yaw: float = 0.0) -> tuple:
-        return self.bem.sample_points(yaw)
+    def sample_points(self, yaw: float = 0.0, tilt: float = 0.0) -> tuple:
+        return self.bem.sample_points(yaw, tilt)
 
-    def initial_guess(self, pitch, tsr, yaw, U=1.0, wdir=0.0):
-        # sol = self.bem(undual(pitch), undual(tsr), undual(yaw))
-        # self._niter_primal = sol.niter
-        # return sol.a(grid="radial"), sol.aprime(grid="radial")
+    def pre_process(self, pitch, tsr, yaw=0.0, U=1.0, wdir=0.0, tilt=0.0):
+        """
+        Dual-number counterpart of BEM.pre_process for scalar setpoints. The effective yaw is kept as
+        the (possibly dual) yaw so that gradients propagate; tilt is not supported.
+        """
+        if np.any(np.asarray(undual(tilt)) != 0):
+            raise NotImplementedError("DualBEM does not support tilt.")
+        self.bem.scalar_inputs = True
+        self.bem.aerodynamic_model.eff_yaw = yaw
+        self.bem.aerodynamic_model.delta_theta = 0.0
+        geom = self.bem.geometry
+        geom.mu_mesh = expand_to_Np(geom.mu_mesh)
+        geom.theta_mesh = expand_to_Np(geom.theta_mesh)
+
+    def initial_guess(self, pitch, tsr, yaw=0.0, U=1.0, wdir=0.0, tilt=0.0):
         return self.bem.initial_guess(
             undual(pitch), undual(tsr), undual(yaw), undual(U), undual(wdir)
         )
 
-    def residual(self, x, pitch, tsr, yaw, U=1.0, wdir=0.0):
-        res = self.bem.residual(x, pitch, tsr, yaw, U, wdir)
+    def residual(self, x, pitch, tsr, yaw=0.0, U=1.0, wdir=0.0, tilt=0.0):
+        res = self.bem.residual(x, pitch, tsr, yaw, U, wdir, tilt)
         return res
 
     def post_process(
-        self, result: FixedPointIterationResult, pitch, tsr, yaw, U=1.0, wdir=0.0
+        self, result: FixedPointIterationResult, pitch, tsr, yaw=0.0, U=1.0, wdir=0.0, tilt=0.0
     ) -> BEMSolution:
         result.niter = (self._niter_primal, result.niter)
-        return self.bem.post_process(result, pitch, tsr, yaw, U, wdir)
+        sol = self.bem.post_process(result, pitch, tsr, yaw, U, wdir, tilt)
+        kwargs = {f.name: getattr(sol, f.name) for f in fields(sol)}
+        momentum = self.bem.momentum_model
+        if hasattr(momentum, "compute_x0"):
+            kwargs["x0"] = momentum.compute_x0(average(sol.geom, sol.aero_props.C_x), yaw)
+        return DualBEMSolution(**kwargs)
 
 
 if __name__ == "__main__":
