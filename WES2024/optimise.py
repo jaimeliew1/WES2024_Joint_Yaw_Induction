@@ -192,7 +192,7 @@ class JointControl(Controller):
 
 # Calculated in separate optimisation (see WES2024.Generate._single_turbine_opt)
 
-# Setpoints using Heck momentum model with high thrust correction (DEPRECIATED)
+# Setpoints using Heck momentum model with high thrust correction (DEPRECATED)
 # PITCH_OPT = -0.018804860075115795
 # TSR_OPT = 9.138197665010335
 # CP_OPT = 0.5065639542511471
@@ -213,9 +213,35 @@ class JointControl(Controller):
 # CP_OPT = 0.512050723304553
 
 # Setpoints 04/11/2025 switch back to rotor_induction_tiploss averaging
-PITCH_OPT = -0.02398898322193966
-TSR_OPT = 9.257910345616775
-CP_OPT = 0.4994901389144305
+# PITCH_OPT = -0.02398898322193966
+# TSR_OPT = 9.257910345616775
+# CP_OPT = 0.4994901389144305
+
+# Setpoints 2026-10-22: re-optimised with current MITRotor (tilt API) and the R1 BEM rotor
+# (WES2024.R1.wakemodels.get_bem_rotor: then NoTiplossTangentialInduction); Nr=128, Ntheta=12
+# PITCH_OPT = -0.018751817483427077
+# TSR_OPT = 9.1469
+# CP_OPT = 0.52785
+
+# Setpoints 2026-10-24: as above after correcting the tangential induction denominator (mu^2 -> mu); Nelder-Mead
+# "polish" optimum of R1/generate_single_turbine_optimum.py (pitch -3.940 deg). Cp is flat along the (pitch, TSR) ridge:
+# the previous set point loses only 0.12 % Cp.
+# PITCH_OPT = -0.06875972083189821
+# TSR_OPT = 8.086616550895156
+# CP_OPT = 0.5363824290154755
+
+# Setpoints 2026-10-24 (first F-model attempt, INVALID: computed while BEMUnifiedMomentumLUT rescaled aero_props.F in place)
+# PITCH_OPT = -0.02072656709530801
+# TSR_OPT = 9.127291466791846
+# CP_OPT = 0.5269363192840171
+
+# Setpoints 2026-10-24: R1 BEM rotor with MITRotor's DefaultTangentialInduction (mu^1 and Prandtl F in a'), Nr=128, Ntheta=12.
+# Cp is flat along the (pitch, TSR) ridge: the formal maximum is pitch -3.937 deg, TSR 8.0852, Cp 0.536186
+# (R1/generate_single_turbine_optimum.py); pitch -1.0 deg with TSR optimised (9.1653) loses only 0.12 % Cp and is
+# closer to the IEA 15 MW reference design (pitch 0 deg, TSR 9.0, which loses 1.3 % Cp in this BEM). The latter is used.
+PITCH_OPT = -0.017453292519943295
+TSR_OPT = 9.165275050491946
+CP_OPT = 0.5355096708791204
 
 class NoControlBEM(Controller):
     def optimise(self, **kwargs) -> WindfarmSolution:
@@ -255,6 +281,26 @@ class YawControlBEM(Controller):
 
     def solve_for_setpoints(self, x) -> WindfarmSolution:
         setpoints = list((PITCH_OPT, TSR_OPT, _x3) for _x3 in x)
+        return self.windfarm(self.layout, setpoints)
+
+
+class YawControlModBEM(Controller):
+    """
+    Yaw control at a constant *modified* tip-speed ratio, lambda~ = Omega R / (U cos(yaw)) = TSR_OPT (Li & Yang, JFM 2021),
+    with pitch fixed. The rotor speed therefore falls as cos(yaw), so the blades see the same flow in the disk-normal
+    direction as when unyawed. In the LES of Li & Yang this recovers a cos^2 thrust and cos^3 power loss. The
+    setpoint TSR is defined with the rotor-effective wind speed, like all BEM setpoints here. For an actuator disk this
+    is (to leading order) holding Ct' constant, i.e. YawControl.
+    """
+
+    def initial_guess(self) -> ArrayLike:
+        return [0.0 for _ in range(self.N)]
+
+    def bounds(self) -> list:
+        return [(-np.deg2rad(45), np.deg2rad(45)) for _ in range(self.N)]
+
+    def solve_for_setpoints(self, x) -> WindfarmSolution:
+        setpoints = list((PITCH_OPT, TSR_OPT * np.cos(_x3), _x3) for _x3 in x)
         return self.windfarm(self.layout, setpoints)
 
 

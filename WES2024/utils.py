@@ -25,6 +25,7 @@ controller_colors = {
     "ThrustControl": "tab:blue",
     "YawControl": "tab:orange",
     "YawKOmegaControl": "tab:pink",
+    "YawModControl": "tab:purple",
     "JointControl": "tab:green",
 }
 
@@ -33,7 +34,8 @@ controller_labels = {
     "NoControl": "No Control",
     "ThrustControl": "Thrust Control",
     "YawControl": "Yaw Control",
-    "YawKOmegaControl": r"Yaw Control ($K\Omega$)",
+    "YawKOmegaControl": r"Yaw Control ($K\Omega^2$)",
+    "YawModControl": r"Yaw Control (const. $\tilde{\lambda}$)",
     "JointControl": "Joint Control",
 }
 
